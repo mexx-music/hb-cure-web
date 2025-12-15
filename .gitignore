@@ -29,3 +29,17 @@ ios/Flutter/ephemeral/
 
 # OS
 .DS_Store
+
+# Flutter
+build/
+.dart_tool/
+.idea/
+*.iml
+*.log
+
+# Android
+android/.gradle/
+android/local.properties
+
+# iOS
+ios/Pods/
