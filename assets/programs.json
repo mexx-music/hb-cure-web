@@ -1,0 +1,1068 @@
+{
+  "rootTitle": "Available Programs",
+  "categories": [
+    {
+      "id": "animals",
+      "title": "Animals",
+      "subcategories": [],
+      "programs": [
+        { "id": "animals_canine_parvo_virus_1", "name": "Canine Parvo-Virus" },
+        { "id": "animals_canine_parvo_virus_b_1", "name": "Canine Parvo-Virus B" },
+        { "id": "animals_canine_parvo_virus_m_1", "name": "Canine Parvo-Virus M" },
+        { "id": "animals_feline_immunodeficiency_virus_fiv_1", "name": "Feline ImmunoDeficiency Virus (FIV)" },
+        { "id": "animals_feline_leukemia_1", "name": "Feline Leukemia" },
+        { "id": "animals_fleas_1", "name": "Fleas" },
+        { "id": "animals_heart_2_1", "name": "Heart 2" },
+        { "id": "animals_hemobartonella_felis_1", "name": "Hemobartonella Felis" },
+        { "id": "animals_new_canine_parvo_virus_1", "name": "New Canine Parvo-Virus" },
+        { "id": "animals_parvovirus_b19_1", "name": "ParvoVirus B19" },
+        { "id": "animals_pericarditis_1", "name": "Pericarditis" },
+        { "id": "animals_rhinopneumonia_1", "name": "Rhinopneumonia" }
+      ]
+    },
+    {
+      "id": "antiparasitic",
+      "title": "Antiparasitic",
+      "subcategories": [
+        {
+          "id": "allergy",
+          "title": "Allergy",
+          "programs": [
+            { "id": "antiparasitic_allergy_allergy_1", "name": "Allergy" },
+            { "id": "antiparasitic_allergy_allergy_and_rhinitis_1", "name": "Allergy and Rhinitis" },
+            { "id": "antiparasitic_allergy_ant_stings_1", "name": "Ant Stings" },
+            { "id": "antiparasitic_allergy_asthma_1", "name": "Asthma" },
+            { "id": "antiparasitic_allergy_asthma_parasites_1", "name": "Asthma Parasites" },
+            { "id": "antiparasitic_allergy_asthma_caused_by_ascariasis_1", "name": "Asthma caused by Ascariasis" },
+            { "id": "antiparasitic_allergy_asthmatic_bronchitis_1", "name": "Asthmatic Bronchitis" },
+            { "id": "antiparasitic_allergy_asthmatic_seizure_1", "name": "Asthmatic Seizure" },
+            { "id": "antiparasitic_allergy_common_asthma_1", "name": "Common Asthma" },
+            { "id": "antiparasitic_allergy_immune_system_stabilization_1", "name": "Immune System Stabilization" },
+            { "id": "antiparasitic_allergy_insect_stings_1", "name": "Insect Stings" },
+            { "id": "antiparasitic_allergy_laryngeal_edema_1", "name": "Laryngeal Edema" },
+            { "id": "antiparasitic_allergy_mucosal_hypersensitivity_1", "name": "Mucosal Hypersensitivity" },
+            { "id": "antiparasitic_allergy_pollinosis_1", "name": "Pollinosis" },
+            { "id": "antiparasitic_allergy_respiratory_allergy_1", "name": "Respiratory Allergy" },
+            { "id": "antiparasitic_allergy_sun_allergy_1", "name": "Sun Allergy" }
+          ]
+        },
+        {
+          "id": "arthrology",
+          "title": "Arthrology",
+          "programs": [
+            {
+              "id": "antiparasitic_arthrology_arthritis_1",
+              "name": "Arthritis"
+            },
+            {
+              "id": "antiparasitic_arthrology_arthritis_2",
+              "name": "Arthritis"
+            },
+            {
+              "id": "antiparasitic_arthrology_arthritis_basic_1",
+              "name": "Arthritis-Basic"
+            },
+            {
+              "id": "antiparasitic_arthrology_arthrosis_1",
+              "name": "Arthrosis"
+            },
+            {
+              "id": "antiparasitic_arthrology_bursitis_pain_1",
+              "name": "Bursitis Pain"
+            },
+            {
+              "id": "antiparasitic_arthrology_frozen_shoulder_1",
+              "name": "Frozen Shoulder"
+            },
+            {
+              "id": "antiparasitic_arthrology_gout_1",
+              "name": "Gout"
+            },
+            {
+              "id": "antiparasitic_arthrology_octeoarthritis_1",
+              "name": "OcteoArthritis"
+            },
+            {
+              "id": "antiparasitic_arthrology_octeoarthritis_pain_1",
+              "name": "OcteoArthritis Pain"
+            },
+            {
+              "id": "antiparasitic_arthrology_secondary_arthritis_1",
+              "name": "Secondary Arthritis"
+            },
+            {
+              "id": "antiparasitic_arthrology_tendinitis_1",
+              "name": "Tendinitis"
+            },
+            {
+              "id": "antiparasitic_arthrology_tennis_elbow_1",
+              "name": "Tennis Elbow"
+            }
+          ]
+        },
+        {
+          "id": "dentistry",
+          "title": "Dentistry",
+          "programs": [
+            { "id": "antiparasitic_dentistry_alveolitis_1", "name": "Alveolitis" },
+            { "id": "antiparasitic_dentistry_aphthous_stomatitis_1", "name": "Aphthous Stomatitis" },
+            { "id": "antiparasitic_dentistry_caries_1", "name": "Caries" },
+            { "id": "antiparasitic_dentistry_dental_frequencies_1", "name": "Dental Frequencies" },
+            { "id": "antiparasitic_dentistry_fistula_1", "name": "Fistula" },
+            { "id": "antiparasitic_dentistry_gingivitis_1", "name": "Gingivitis" },
+            { "id": "antiparasitic_dentistry_gingivitis_2", "name": "Gingivitis" },
+            { "id": "antiparasitic_dentistry_gingivitis_stomatitis_v_1", "name": "Gingivitis-Stomatitis v" },
+            { "id": "antiparasitic_dentistry_gnathitis_1", "name": "Gnathitis" },
+            { "id": "antiparasitic_dentistry_granulomatous_periodontitis_1", "name": "Granulomatous Periodontitis" },
+            { "id": "antiparasitic_dentistry_halitosis_1", "name": "Halitosis" },
+            { "id": "antiparasitic_dentistry_infections_of_oral_cavity_1", "name": "Infections of Oral Cavity" },
+            { "id": "antiparasitic_dentistry_mucosal_disorder_1", "name": "Mucosal Disorder" },
+            { "id": "antiparasitic_dentistry_oral_fissure_1", "name": "Oral Fissure" },
+            { "id": "antiparasitic_dentistry_parodontosen_1", "name": "Parodontosen" },
+            { "id": "antiparasitic_dentistry_periodontitis_1", "name": "Periodontitis" },
+            { "id": "antiparasitic_dentistry_periostitis_1", "name": "Periostitis" },
+            { "id": "antiparasitic_dentistry_pulpitis_1", "name": "Pulpitis" },
+            { "id": "antiparasitic_dentistry_pyorrhea_1", "name": "Pyorrhea" },
+            { "id": "antiparasitic_dentistry_stomatitis_1", "name": "Stomatitis" },
+            { "id": "antiparasitic_dentistry_tongue_ulcer_1", "name": "Tongue Ulcer" },
+            { "id": "antiparasitic_dentistry_tooth_ache_1", "name": "Tooth Ache" },
+            { "id": "antiparasitic_dentistry_tooth_infections_and_ears_1", "name": "Tooth Infections and Ears" }
+          ]
+        },
+        {
+          "id": "dermatology",
+          "title": "Dermatology",
+          "programs": [
+            { "id": "antiparasitic_dermatology_foot_callus_1", "name": "Foot Callus" },
+            { "id": "antiparasitic_dermatology_acne_1", "name": "Acne" },
+            { "id": "antiparasitic_dermatology_acne_secondary_1", "name": "Acne-Secondary" },
+            { "id": "antiparasitic_dermatology_acneiform_rash_1", "name": "Acneiform Rash" },
+            { "id": "antiparasitic_dermatology_alopecia_1", "name": "Alopecia" },
+            { "id": "antiparasitic_dermatology_atopic_dermatitis_1", "name": "Atopic Dermatitis" },
+            { "id": "antiparasitic_dermatology_bacterial_eczema_1", "name": "Bacterial Eczema" },
+            { "id": "antiparasitic_dermatology_callus_1", "name": "Callus" },
+            { "id": "antiparasitic_dermatology_contagious_dermatitis_1", "name": "Contagious Dermatitis" },
+            { "id": "antiparasitic_dermatology_dermatophytosis_1", "name": "Dermatophytosis" },
+            { "id": "antiparasitic_dermatology_eczema_3_1", "name": "Eczema 3" },
+            { "id": "antiparasitic_dermatology_eczema_herpes_1", "name": "Eczema-Herpes" },
+            { "id": "antiparasitic_dermatology_erysipelas_1", "name": "Erysipelas" },
+            { "id": "antiparasitic_dermatology_erysipelas_2", "name": "Erysipelas" },
+            { "id": "antiparasitic_dermatology_erythema_1", "name": "Erythema" },
+            { "id": "antiparasitic_dermatology_furunculosis_herpetiformis_1", "name": "Furunculosis Herpetiformis" },
+            { "id": "antiparasitic_dermatology_fussures_1", "name": "Fussures" },
+            { "id": "antiparasitic_dermatology_hair_growth_stimulation_1", "name": "Hair Growth Stimulation" },
+            { "id": "antiparasitic_dermatology_hair_regeneration_1", "name": "Hair Regeneration" },
+            { "id": "antiparasitic_dermatology_nevus_1", "name": "Nevus" },
+            { "id": "antiparasitic_dermatology_non_herpetic_eczema_1", "name": "Non Herpetic Eczema" },
+            { "id": "antiparasitic_dermatology_pemphigus_1", "name": "Pemphigus" },
+            { "id": "antiparasitic_dermatology_plantar_warts_1", "name": "Plantar Warts" },
+            { "id": "antiparasitic_dermatology_psoriasis_1", "name": "Psoriasis" },
+            { "id": "antiparasitic_dermatology_psoriasis_secondary_1", "name": "Psoriasis-Secondary" },
+            { "id": "antiparasitic_dermatology_psoriatic_eruption_1", "name": "Psoriatic Eruption" },
+            { "id": "antiparasitic_dermatology_pyoderma_1", "name": "Pyoderma" },
+            { "id": "antiparasitic_dermatology_rhytide_effacement_1", "name": "Rhytide Effacement" },
+            { "id": "antiparasitic_dermatology_scabies_1", "name": "Scabies" },
+            { "id": "antiparasitic_dermatology_scabious_pruritus_1", "name": "Scabious Pruritus" },
+            { "id": "antiparasitic_dermatology_seborrhea_1", "name": "Seborrhea" },
+            { "id": "antiparasitic_dermatology_seborrhea_furfuracea_1", "name": "Seborrhea Furfuracea" },
+            { "id": "antiparasitic_dermatology_sensitive_skin_1", "name": "Sensitive Skin" },
+            { "id": "antiparasitic_dermatology_skin_problems_1", "name": "Skin Problems" },
+            { "id": "antiparasitic_dermatology_skin_rash_1_1", "name": "Skin Rash 1" },
+            { "id": "antiparasitic_dermatology_skin_tonus_1", "name": "Skin Tonus" },
+            { "id": "antiparasitic_dermatology_syphilis_sore_1", "name": "Syphilis Sore" },
+            { "id": "antiparasitic_dermatology_tinea_1", "name": "Tinea" },
+            { "id": "antiparasitic_dermatology_varicos_eczema_1", "name": "Varicos Eczema" },
+            { "id": "antiparasitic_dermatology_vitiligo_1", "name": "Vitiligo" },
+            { "id": "antiparasitic_dermatology_warts_1", "name": "Warts" },
+            { "id": "antiparasitic_dermatology_warts_basic_1", "name": "Warts-Basic" }
+          ]
+        },
+        {
+          "id": "effects",
+          "title": "Effects",
+          "programs": [
+            { "id": "antiparasitic_effects_acidosis_1", "name": "Acidosis" },
+            { "id": "antiparasitic_effects_calcipexy_1", "name": "Calcipexy" },
+            { "id": "antiparasitic_effects_candida_1", "name": "Candida" },
+            { "id": "antiparasitic_effects_catarrh_1", "name": "Catarrh" },
+            { "id": "antiparasitic_effects_dna_restoration_1", "name": "DNA Restoration" },
+            { "id": "antiparasitic_effects_drainage_1_1", "name": "Drainage 1" },
+            { "id": "antiparasitic_effects_helminth_1", "name": "Helminth" },
+            { "id": "antiparasitic_effects_hyperlipidemia_1", "name": "Hyperlipidemia" },
+            { "id": "antiparasitic_effects_increase_of_appetite_1", "name": "Increase of Appetite" },
+            { "id": "antiparasitic_effects_l_lysin_stimulation_1", "name": "L-Lysin Stimulation" },
+            { "id": "antiparasitic_effects_loss_of_appetite_1", "name": "Loss of Appetite" },
+            { "id": "antiparasitic_effects_potassium_sodium_1", "name": "Potassium-Sodium" },
+            { "id": "antiparasitic_effects_protozoa_1_1", "name": "Protozoa 1" },
+            { "id": "antiparasitic_effects_recovering_from_sickness_1", "name": "Recovering from Sickness" },
+            { "id": "antiparasitic_effects_recovery_1", "name": "Recovery" },
+            { "id": "antiparasitic_effects_recovery_acceleration_1", "name": "Recovery Acceleration" },
+            { "id": "antiparasitic_effects_regeneration_1", "name": "Regeneration" },
+            { "id": "antiparasitic_effects_vitalisation_1", "name": "Vitalisation" }
+          ]
+        },
+        {
+          "id": "ophthalmology",
+          "title": "Ophthalmology",
+          "programs": [
+            {
+              "id": "antiparasitic_ophthalmology_astigmatism_1_1",
+              "name": "Astigmatism 1"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_atherosclerosis_1",
+              "name": "AtheroSclerosis"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_bifocal_vision_1",
+              "name": "Bifocal Vision"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_blepharitis_1",
+              "name": "Blepharitis"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_blepharospasm_1",
+              "name": "BlepharoSpasm"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_conjunctivitus_1_1",
+              "name": "Conjunctivitus 1"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_glaucoma_1_1",
+              "name": "Glaucoma 1"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_hyperopia_1",
+              "name": "Hyperopia"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_myopia_1_1",
+              "name": "Myopia 1"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_ocular_hemorrage_1",
+              "name": "Ocular Hemorrage"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_stye_1",
+              "name": "Stye"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_vision_1",
+              "name": "Vision"
+            },
+            {
+              "id": "antiparasitic_ophthalmology_visual_fatigue_1",
+              "name": "Visual Fatigue"
+            }
+          ]
+        },
+        {
+          "id": "otolaryngologist",
+          "title": "Otolaryngologist",
+          "programs": [
+            { "id": "antiparasitic_otolaryngologist_acute_laryngitis_1", "name": "Acute Laryngitis" },
+            { "id": "antiparasitic_otolaryngologist_adenoiditis_1", "name": "Adenoiditis" },
+            { "id": "antiparasitic_otolaryngologist_adenoids_1", "name": "Adenoids" },
+            { "id": "antiparasitic_otolaryngologist_cholesteatoma_1", "name": "Cholesteatoma" },
+            { "id": "antiparasitic_otolaryngologist_chronic_sinusitis_1", "name": "Chronic Sinusitis" },
+            { "id": "antiparasitic_otolaryngologist_chronic_throat_inflammation_1", "name": "Chronic Throat Inflammation" },
+            { "id": "antiparasitic_otolaryngologist_common_ear_problems_1", "name": "Common Ear Problems" },
+            { "id": "antiparasitic_otolaryngologist_ear_mycosis_1", "name": "Ear Mycosis" },
+            { "id": "antiparasitic_otolaryngologist_ear_pain_1", "name": "Ear Pain" },
+            { "id": "antiparasitic_otolaryngologist_ears_basic_programme_1", "name": "Ears-Basic Programme" },
+            { "id": "antiparasitic_otolaryngologist_eustachitis_1", "name": "Eustachitis" },
+            { "id": "antiparasitic_otolaryngologist_external_otitis_1", "name": "External Otitis" },
+            { "id": "antiparasitic_otolaryngologist_frontal_sinusitis_1", "name": "Frontal Sinusitis" },
+            { "id": "antiparasitic_otolaryngologist_hearing_disorder_1", "name": "Hearing Disorder" },
+            { "id": "antiparasitic_otolaryngologist_hearing_loss_3_1", "name": "Hearing Loss 3" },
+            { "id": "antiparasitic_otolaryngologist_larynx_1", "name": "Larynx" },
+            { "id": "antiparasitic_otolaryngologist_laryngeal_polyp_1", "name": "Laryngeal Polyp" },
+            { "id": "antiparasitic_otolaryngologist_laryngitis_1", "name": "Laryngitis" },
+            { "id": "antiparasitic_otolaryngologist_lymph_nodes_hypertrophy_1", "name": "Lymph Nodes Hypertrophy" },
+            { "id": "antiparasitic_otolaryngologist_nasal_polyp_1", "name": "Nasal Polyp" },
+            { "id": "antiparasitic_otolaryngologist_nasopharyngitis_1_1", "name": "Nasopharyngitis 1" },
+            { "id": "antiparasitic_otolaryngologist_nasopharyngitis_2_1", "name": "Nasopharyngitis 2" },
+            { "id": "antiparasitic_otolaryngologist_otitis_1", "name": "Otitis" },
+            { "id": "antiparasitic_otolaryngologist_otitis_media_1", "name": "Otitis Media" },
+            { "id": "antiparasitic_otolaryngologist_otitis_bathing_1", "name": "Otitis-Bathing" },
+            { "id": "antiparasitic_otolaryngologist_pharyngitis_1", "name": "Pharyngitis" },
+            { "id": "antiparasitic_otolaryngologist_regional_lymphadenitis_1", "name": "Regional Lymphadenitis" },
+            { "id": "antiparasitic_otolaryngologist_respiratory_organs_1", "name": "Respiratory Organs" },
+            { "id": "antiparasitic_otolaryngologist_rhinitis_1", "name": "Rhinitis" },
+            { "id": "antiparasitic_otolaryngologist_sinusitis_1_1", "name": "Sinusitis 1" },
+            { "id": "antiparasitic_otolaryngologist_sinusitis_2_1", "name": "Sinusitis 2" },
+            { "id": "antiparasitic_otolaryngologist_throat_inflammation_1", "name": "Throat Inflammation" },
+            { "id": "antiparasitic_otolaryngologist_tonsillitis_1_1", "name": "Tonsillitis 1" },
+            { "id": "antiparasitic_otolaryngologist_tonsillitis_2_1", "name": "Tonsillitis 2" },
+            { "id": "antiparasitic_otolaryngologist_tympanitis_1", "name": "Tympanitis" }
+          ]
+        },
+        {
+          "id": "pulmonology",
+          "title": "Pulmonology",
+          "programs": [
+            {
+              "id": "antiparasitic_pulmonology_secondary_bronchitis_1",
+              "name": "Secondary Bronchitis"
+            },
+            {
+              "id": "antiparasitic_pulmonology_bacterial_pleuritis_1",
+              "name": "Bacterial Pleuritis"
+            },
+            {
+              "id": "antiparasitic_pulmonology_breathing_1",
+              "name": "Breathing"
+            },
+            {
+              "id": "antiparasitic_pulmonology_bronchopneumonia_1",
+              "name": "Bronchopneumonia"
+            },
+            {
+              "id": "antiparasitic_pulmonology_chronic_bronchitis_1",
+              "name": "Chronic Bronchitis"
+            },
+            {
+              "id": "antiparasitic_pulmonology_cough_1",
+              "name": "Cough"
+            },
+            {
+              "id": "antiparasitic_pulmonology_cough_vaccine_1",
+              "name": "Cough-Vaccine"
+            },
+            {
+              "id": "antiparasitic_pulmonology_dry_cough_1",
+              "name": "Dry Cough"
+            },
+            {
+              "id": "antiparasitic_pulmonology_emphysema_1",
+              "name": "Emphysema"
+            },
+            {
+              "id": "antiparasitic_pulmonology_general_pneumonia_1",
+              "name": "General Pneumonia"
+            },
+            {
+              "id": "antiparasitic_pulmonology_general_pneumonia_v_1",
+              "name": "General Pneumonia V"
+            },
+            {
+              "id": "antiparasitic_pulmonology_lung_congestion_1",
+              "name": "Lung Congestion"
+            },
+            {
+              "id": "antiparasitic_pulmonology_lungs_1",
+              "name": "Lungs"
+            },
+            {
+              "id": "antiparasitic_pulmonology_pleuritis_1",
+              "name": "Pleuritis"
+            },
+            {
+              "id": "antiparasitic_pulmonology_pneumonia_1",
+              "name": "Pneumonia"
+            },
+            {
+              "id": "antiparasitic_pulmonology_pulmonary_fibrosis_1",
+              "name": "Pulmonary Fibrosis"
+            },
+            {
+              "id": "antiparasitic_pulmonology_rough_breathing_1",
+              "name": "Rough Breathing"
+            },
+            {
+              "id": "antiparasitic_pulmonology_secondary_bronchopneumonia_1",
+              "name": "Secondary Bronchopneumonia"
+            },
+            {
+              "id": "antiparasitic_pulmonology_stimulation_of_breathing_1",
+              "name": "Stimulation of Breathing"
+            }
+          ]
+        },
+        {
+          "id": "sympthoms_and_syndromes",
+          "title": "Sympthoms and Syndromes",
+          "programs": [
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_chronic_fatigue_1",
+              "name": "Chronic Fatigue"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_chronic_fatigue_syndrome_1",
+              "name": "Chronic Fatigue Syndrome"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_edema_1_1",
+              "name": "Edema 1"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_edema_2_1",
+              "name": "Edema 2"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_fatigue_1",
+              "name": "Fatigue"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_fever_caused_by_sun_stroke_1",
+              "name": "Fever Caused by Sun Stroke"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_food_poisoning_1",
+              "name": "Food Poisoning"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_general_fatigue_1",
+              "name": "General Fatigue"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_high_fever_1",
+              "name": "High Fever"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_1",
+              "name": "Hypothermia"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_of_the_body_1",
+              "name": "Hypothermia of the Body"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_influenza_1",
+              "name": "Hypothermia-Influenza"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_itchy_feet_1",
+              "name": "Itchy Feet"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_leg_swelling_1",
+              "name": "Leg Swelling"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_liver_itching_1",
+              "name": "Liver Itching"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_nausea_and_spasms_1",
+              "name": "Nausea and Spasms"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_perinal_itch_1",
+              "name": "Perinal Itch"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_physical_fatigue_1",
+              "name": "Physical Fatigue"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sea_sickness_1_1",
+              "name": "Sea Sickness 1"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_shivering_1",
+              "name": "Shivering"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sneezing_1",
+              "name": "Sneezing"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_spasms_1",
+              "name": "Spasms"
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sun_stroke_1",
+              "name": "Sun Stroke"
+            }
+          ]
+        }
+      ],
+      "programs": []
+    },
+    {
+      "id": "general_energy_vitalisation",
+      "title": "General Energy, Vitalisation",
+      "subcategories": [],
+      "programs": [
+        { "id": "general_energy_vitalisation_biological_exercise_1", "name": "Biological Exercise" },
+        { "id": "general_energy_vitalisation_body_defenses_strengthening_1", "name": "Body Defenses Strengthening" },
+        { "id": "general_energy_vitalisation_cachexy_1", "name": "Cachexy" },
+        { "id": "general_energy_vitalisation_emotional_exhaustion_1", "name": "Emotional Exhaustion" },
+        { "id": "general_energy_vitalisation_energey_charging_1", "name": "Energey Charging" },
+        { "id": "general_energy_vitalisation_energy_flow_1", "name": "Energy Flow" },
+        { "id": "general_energy_vitalisation_energy_input_1", "name": "Energy Input" },
+        { "id": "general_energy_vitalisation_energy_output_1", "name": "Energy Output" },
+        { "id": "general_energy_vitalisation_energy_delivering_effect_1", "name": "Energy-Delivering Effect" },
+        { "id": "general_energy_vitalisation_excessive_sweating_2_1", "name": "Excessive Sweating 2" },
+        { "id": "general_energy_vitalisation_general_exercise_1", "name": "General Exercise" },
+        { "id": "general_energy_vitalisation_healing_centre_2_1", "name": "Healing Centre 2" },
+        { "id": "general_energy_vitalisation_heat_and_cold_4_1", "name": "Heat and Cold 4" },
+        { "id": "general_energy_vitalisation_low_temperature_1", "name": "Low Temperature" },
+        { "id": "general_energy_vitalisation_metabolism_1", "name": "Metabolism" },
+        { "id": "general_energy_vitalisation_muscle_strengthening_1", "name": "Muscle Strengthening" },
+        { "id": "general_energy_vitalisation_nerve_strengthening_1", "name": "Nerve Strengthening" },
+        { "id": "general_energy_vitalisation_postural_disorder_1", "name": "Postural Disorder" },
+        { "id": "general_energy_vitalisation_senile_disorders_1", "name": "Senile Disorders" },
+        { "id": "general_energy_vitalisation_slow_recovery_process_4_1", "name": "Slow Recovery Process 4" },
+        { "id": "general_energy_vitalisation_strength_of_earth_1", "name": "Strength of Earth" },
+        { "id": "general_energy_vitalisation_stress_4_1", "name": "Stress 4" },
+        { "id": "general_energy_vitalisation_vital_energey_2_1", "name": "Vital Energey 2" },
+        { "id": "general_energy_vitalisation_vitalisation_1_1", "name": "Vitalisation 1" },
+        { "id": "general_energy_vitalisation_vitalisation_2_1", "name": "Vitalisation 2" }
+      ]
+    },
+    {
+      "id": "pain",
+      "title": "Pain",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "pain_headache_due_to_urogenital_disorder_1",
+          "name": "Headache due to Urogenital Disorder"
+        },
+        {
+          "id": "pain_abdominal_pain_1",
+          "name": "Abdominal Pain"
+        },
+        {
+          "id": "pain_acute_pain_1",
+          "name": "Acute Pain"
+        },
+        {
+          "id": "pain_back_pain_1",
+          "name": "Back Pain"
+        },
+        {
+          "id": "pain_cancer_pain_1",
+          "name": "Cancer Pain"
+        },
+        {
+          "id": "pain_cholecystitis_pain_1",
+          "name": "Cholecystitis Pain"
+        },
+        {
+          "id": "pain_chronic_low_back_pain_1",
+          "name": "Chronic Low-Back Pain"
+        },
+        {
+          "id": "pain_elbow_pain_1",
+          "name": "Elbow Pain"
+        },
+        {
+          "id": "pain_general_pain_1",
+          "name": "General Pain"
+        },
+        {
+          "id": "pain_headache_1",
+          "name": "Headache"
+        },
+        {
+          "id": "pain_headache_due_to_parasitic_infection_1",
+          "name": "Headache due to Parasitic Infection"
+        },
+        {
+          "id": "pain_headache_due_to_stomach_dysfunction_1",
+          "name": "Headache due to Stomach Dysfunction"
+        },
+        {
+          "id": "pain_headache_due_to_toxic_genesis_1",
+          "name": "Headache due to Toxic Genesis"
+        },
+        {
+          "id": "pain_headache_of_unknown_origin_1",
+          "name": "Headache of Unknown Origin"
+        },
+        {
+          "id": "pain_headache_integrated_1",
+          "name": "Headache-Integrated"
+        },
+        {
+          "id": "pain_headache_migraine_1",
+          "name": "Headache-Migraine"
+        },
+        {
+          "id": "pain_hip_pain_1",
+          "name": "Hip Pain"
+        },
+        {
+          "id": "pain_intercoastal_muscles_pain_1",
+          "name": "Intercoastal Muscles Pain"
+        },
+        {
+          "id": "pain_joint_pain_1",
+          "name": "Joint Pain"
+        },
+        {
+          "id": "pain_joint_pain_2",
+          "name": "Joint Pain"
+        },
+        {
+          "id": "pain_joint_pain_basic_1",
+          "name": "Joint Pain-Basic"
+        },
+        {
+          "id": "pain_knee_pain_1",
+          "name": "Knee Pain"
+        },
+        {
+          "id": "pain_low_back_pain_1",
+          "name": "Low-Back Pain"
+        },
+        {
+          "id": "pain_migraine_1",
+          "name": "Migraine"
+        },
+        {
+          "id": "pain_pain_infection_1",
+          "name": "Pain-Infection"
+        },
+        {
+          "id": "pain_pain_paralysis_1",
+          "name": "Pain-Paralysis"
+        },
+        {
+          "id": "pain_post_surgery_pain_1",
+          "name": "Post-Surgery Pain"
+        },
+        {
+          "id": "pain_psychogenic_pain_1",
+          "name": "Psychogenic Pain"
+        },
+        {
+          "id": "pain_spasm_and_pain_1",
+          "name": "Spasm and Pain"
+        },
+        {
+          "id": "pain_vertebragenic_headache_1",
+          "name": "Vertebragenic Headache"
+        }
+      ]
+    },
+    {
+      "id": "set_of_programs",
+      "title": "Set of Programs",
+      "subcategories": [
+        {
+          "id": "allergy",
+          "title": "Allergy",
+          "programs": [
+            { "id": "set_of_programs_allergy_allergy_1_1", "name": "Allergy 1" },
+            { "id": "set_of_programs_allergy_allergy_2_1", "name": "Allergy 2" },
+            { "id": "set_of_programs_allergy_allergy_3_1", "name": "Allergy 3" },
+            { "id": "set_of_programs_allergy_allergy_4_1", "name": "Allergy 4" },
+            { "id": "set_of_programs_allergy_allergy_5_1", "name": "Allergy 5" },
+            { "id": "set_of_programs_allergy_allergy_6_1", "name": "Allergy 6" },
+            { "id": "set_of_programs_allergy_allergy_7_1", "name": "Allergy 7" },
+            { "id": "set_of_programs_allergy_allergy_8_1", "name": "Allergy 8" }
+          ]
+        },
+        {
+          "id": "arthritis_arthrosis",
+          "title": "Arthritis /Arthrosis",
+          "programs": [
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_1_1", "name": "Arthritis 1" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_2_1", "name": "Arthritis 2" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_3_1", "name": "Arthritis 3" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_4_1", "name": "Arthritis 4" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_5_1", "name": "Arthritis 5" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_6_1", "name": "Arthritis 6" },
+            { "id": "set_of_programs_arthritis_arthrosis_arthritis_7_1", "name": "Arthritis 7" }
+          ]
+        },
+        {
+          "id": "arthritis_treatment",
+          "title": "Arthritis Treatment",
+          "programs": [
+            { "id": "set_of_programs_arthritis_treatment_causative_agent_1", "name": "Causative Agent" },
+            { "id": "set_of_programs_arthritis_treatment_inflammation_1", "name": "Inflammation" },
+            { "id": "set_of_programs_arthritis_treatment_pain_1", "name": "Pain" }
+          ]
+        },
+        {
+          "id": "bronchial_asthma",
+          "title": "Bronchial Asthma",
+          "programs": [
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma1_1", "name": "Bronchial Asthma1" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma2_1", "name": "Bronchial Asthma2" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma4_1", "name": "Bronchial Asthma4" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma5_1", "name": "Bronchial Asthma5" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthmab_1", "name": "Bronchial Asthmaб" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma7_1", "name": "Bronchial Asthma7" },
+            { "id": "set_of_programs_bronchial_asthma_bronchial_asthma8_1", "name": "Bronchial Asthma8" }
+          ]
+        },
+        {
+          "id": "colitis",
+          "title": "Colitis",
+          "programs": [
+            { "id": "set_of_programs_colitis_colitis_1_1", "name": "Colitis 1" },
+            { "id": "set_of_programs_colitis_colitis_2_1", "name": "Colitis 2" },
+            { "id": "set_of_programs_colitis_colitis_3_1", "name": "Colitis 3" },
+            { "id": "set_of_programs_colitis_colitis_4_1", "name": "Colitis 4" },
+            { "id": "set_of_programs_colitis_colitis_5_1", "name": "Colitis 5" }
+          ]
+        },
+        {
+          "id": "cosmetology",
+          "title": "Cosmetology",
+          "programs": [
+            { "id": "set_of_programs_cosmetology_cosmetology1_1", "name": "Cosmetology1" },
+            { "id": "set_of_programs_cosmetology_cosmetology2_1", "name": "Cosmetology2" },
+            { "id": "set_of_programs_cosmetology_cosmetology3_1", "name": "Cosmetology3" },
+            { "id": "set_of_programs_cosmetology_cosmetology4_1", "name": "Cosmetology4" },
+            { "id": "set_of_programs_cosmetology_cosmetology5_1", "name": "Cosmetology5" }
+          ]
+        },
+        {
+          "id": "cystitis",
+          "title": "Cystitis",
+          "programs": [
+            { "id": "set_of_programs_cystitis_cystitis_1_1", "name": "Cystitis 1" },
+            { "id": "set_of_programs_cystitis_cystitis_2_1", "name": "Cystitis 2" },
+            { "id": "set_of_programs_cystitis_cystitis_3_1", "name": "Cystitis 3" },
+            { "id": "set_of_programs_cystitis_cystitis_4_1", "name": "Cystitis 4" },
+            { "id": "set_of_programs_cystitis_cystitis_5_1", "name": "Cystitis 5" },
+            { "id": "set_of_programs_cystitis_cystitis_6_1", "name": "Cystitis 6" }
+          ]
+        },
+        {
+          "id": "diabetes_mellitus",
+          "title": "Diabetes Mellitus",
+          "programs": [
+            { "id": "set_of_programs_diabetes_mellitus_candida_albicans_1_1", "name": "Candida Albicans 1" },
+            { "id": "set_of_programs_diabetes_mellitus_chlamydia_pneumoniae_1", "name": "Chlamydia Pneumoniae" },
+            { "id": "set_of_programs_diabetes_mellitus_circulation_loss_1_1", "name": "Circulation Loss 1" },
+            { "id": "set_of_programs_diabetes_mellitus_cytomegalovirus_1", "name": "CytomegaloVirus" },
+            { "id": "set_of_programs_diabetes_mellitus_diabetes_mellitus_1", "name": "Diabetes Mellitus" },
+            { "id": "set_of_programs_diabetes_mellitus_eczema_2_1", "name": "Eczema 2" },
+            { "id": "set_of_programs_diabetes_mellitus_helicobacter_pylori_2_1", "name": "Helicobacter Pylori 2" },
+            { "id": "set_of_programs_diabetes_mellitus_herpes_zoster_1_1", "name": "Herpes Zoster 1" },
+            { "id": "set_of_programs_diabetes_mellitus_joint_stiffness_1", "name": "Joint Stiffness" },
+            { "id": "set_of_programs_diabetes_mellitus_nanobacteria_1", "name": "Nanobacteria" }
+          ]
+        },
+        {
+          "id": "dysmenorrhea",
+          "title": "Dysmenorrhea",
+          "programs": [
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_1_1", "name": "Dysmenorrhea 1" },
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_2_1", "name": "Dysmenorrhea 2" },
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_3_1", "name": "Dysmenorrhea 3" },
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_4_1", "name": "Dysmenorrhea 4" },
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_5_1", "name": "Dysmenorrhea 5" },
+            { "id": "set_of_programs_dysmenorrhea_dysmenorrhea_6_1", "name": "Dysmenorrhea 6" }
+          ]
+        },
+        {
+          "id": "electromagnetic_therapy",
+          "title": "Electromagnetic Therapy Programmes",
+          "programs": [
+            { "id": "set_of_programs_electromagnetic_therapy_anti_pain_1", "name": "Anti-Pain" },
+            { "id": "set_of_programs_electromagnetic_therapy_antistress_1", "name": "Antistress" },
+            { "id": "set_of_programs_electromagnetic_therapy_back_fatigue_1", "name": "Back Fatigue" },
+            { "id": "set_of_programs_electromagnetic_therapy_blood_circulation_1_1", "name": "Blood Circulation 1" },
+            { "id": "set_of_programs_electromagnetic_therapy_cholesterol_2_1", "name": "Cholesterol 2" },
+            { "id": "set_of_programs_electromagnetic_therapy_deep_cleansing_1", "name": "Deep Cleansing" },
+            { "id": "set_of_programs_electromagnetic_therapy_disbacteriosis_1", "name": "Disbacteriosis" },
+            { "id": "set_of_programs_electromagnetic_therapy_female_genitourinary_system_1", "name": "Female Genitourinary System" },
+            { "id": "set_of_programs_electromagnetic_therapy_git_regulation_1", "name": "GIT Regulation" },
+            { "id": "set_of_programs_electromagnetic_therapy_heart_regulation_1", "name": "Heart Regulation" },
+            { "id": "set_of_programs_electromagnetic_therapy_kidney_pattern_1", "name": "Kidney Pattern" },
+            { "id": "set_of_programs_electromagnetic_therapy_male_genitourinary_system_1", "name": "Male Genitourinary System" },
+            { "id": "set_of_programs_electromagnetic_therapy_proactive_defence_1", "name": "Proactive Defence" }
+          ]
+        },
+        {
+          "id": "gallstone_disease",
+          "title": "Gallstone Disease",
+          "programs": [
+            { "id": "set_of_programs_gallstone_disease_gallstone1_1", "name": "Gallstone1" },
+            { "id": "set_of_programs_gallstone_disease_gallstone2_1", "name": "Gallstone2" },
+            { "id": "set_of_programs_gallstone_disease_gallstone3_1", "name": "Gallstone3" },
+            { "id": "set_of_programs_gallstone_disease_gallstone4_1", "name": "Gallstone4" },
+            { "id": "set_of_programs_gallstone_disease_gallstone5_1", "name": "Gallstone5" },
+            { "id": "set_of_programs_gallstone_disease_gallstone6_1", "name": "Gallstone6" }
+          ]
+        },
+        {
+          "id": "gastric_ulcer",
+          "title": "Gastric Ulcer",
+          "programs": [
+            { "id": "set_of_programs_gastric_ulcer_ulcer_disease1_1", "name": "Ulcer Disease1" },
+            { "id": "set_of_programs_gastric_ulcer_ulcer_disease2_1", "name": "Ulcer Disease2" },
+            { "id": "set_of_programs_gastric_ulcer_ulcer_disease_4_1", "name": "Ulcer Disease 4" },
+            { "id": "set_of_programs_gastric_ulcer_ulcer_disease_5_1", "name": "Ulcer Disease 5" },
+            { "id": "set_of_programs_gastric_ulcer_ulcer_disease_6_1", "name": "Ulcer Disease 6" }
+          ]
+        },
+        {
+          "id": "gastritis",
+          "title": "Gastritis",
+          "programs": [
+            { "id": "set_of_programs_gastritis_gastritis_1_1", "name": "Gastritis 1" },
+            { "id": "set_of_programs_gastritis_gastritis_2_1", "name": "Gastritis 2" },
+            { "id": "set_of_programs_gastritis_gastritis_3_1", "name": "Gastritis 3" },
+            { "id": "set_of_programs_gastritis_gastritis_4_1", "name": "Gastritis 4" },
+            { "id": "set_of_programs_gastritis_gastritis_5_1", "name": "Gastritis 5" },
+            { "id": "set_of_programs_gastritis_gastritis_6_1", "name": "Gastritis 6" }
+          ]
+        },
+        {
+          "id": "hypertension",
+          "title": "Hypertension",
+          "programs": [
+            { "id": "set_of_programs_hypertension_hypertension_1_1", "name": "Hypertension 1" },
+            { "id": "set_of_programs_hypertension_hypertension_2_1", "name": "Hypertension 2" },
+            { "id": "set_of_programs_hypertension_hypertension_3_1", "name": "Hypertension 3" },
+            { "id": "set_of_programs_hypertension_hypertension_4_1", "name": "Hypertension 4" },
+            { "id": "set_of_programs_hypertension_hypertension_5_1", "name": "Hypertension 5" },
+            { "id": "set_of_programs_hypertension_hypertension_6_1", "name": "Hypertension 6" }
+          ]
+        },
+        {
+          "id": "insomnia",
+          "title": "Insomnia",
+          "programs": [
+            { "id": "set_of_programs_insomnia_insomnia_2_1", "name": "Insomnia 2" },
+            { "id": "set_of_programs_insomnia_insomnia_3_1", "name": "Insomnia 3" },
+            { "id": "set_of_programs_insomnia_insomnia_4_1", "name": "Insomnia 4" },
+            { "id": "set_of_programs_insomnia_insomnia_4_2", "name": "Insomnia 4" },
+            { "id": "set_of_programs_insomnia_insomnia_5_1", "name": "Insomnia 5" },
+            { "id": "set_of_programs_insomnia_insomnia_6_1", "name": "Insomnia 6" }
+          ]
+        },
+        {
+          "id": "mammary_glands",
+          "title": "Mammary Glands",
+          "programs": [
+            { "id": "set_of_programs_mammary_glands_mastopathy_1_1", "name": "Mastopathy 1" },
+            { "id": "set_of_programs_mammary_glands_mastopathy_2_1", "name": "Mastopathy 2" },
+            { "id": "set_of_programs_mammary_glands_mastopathy_3_1", "name": "Mastopathy 3" },
+            { "id": "set_of_programs_mammary_glands_mastopathy_4_1", "name": "Mastopathy 4" },
+            { "id": "set_of_programs_mammary_glands_mastopathy_5_1", "name": "Mastopathy 5" },
+            { "id": "set_of_programs_mammary_glands_mastopathy_6_1", "name": "Mastopathy 6" }
+          ]
+        },
+        {
+          "id": "menopause",
+          "title": "Menopause",
+          "programs": [
+            { "id": "set_of_programs_menopause_menopause_1_1", "name": "Menopause 1" },
+            { "id": "set_of_programs_menopause_menopause_2_1", "name": "Menopause 2" },
+            { "id": "set_of_programs_menopause_menopause_3_1", "name": "Menopause 3" },
+            { "id": "set_of_programs_menopause_menopause_4_1", "name": "Menopause 4" },
+            { "id": "set_of_programs_menopause_menopause_5_1", "name": "Menopause 5" },
+            { "id": "set_of_programs_menopause_menopause_6_1", "name": "Menopause 6" }
+          ]
+        },
+        {
+          "id": "myoma",
+          "title": "Myoma",
+          "programs": [
+            { "id": "set_of_programs_myoma_myoma_1_1", "name": "Myoma 1" },
+            { "id": "set_of_programs_myoma_myoma_2_1", "name": "Myoma 2" },
+            { "id": "set_of_programs_myoma_myoma_3_1", "name": "Myoma 3" },
+            { "id": "set_of_programs_myoma_myoma_4_1", "name": "Myoma 4" },
+            { "id": "set_of_programs_myoma_myoma_5_1", "name": "Myoma 5" },
+            { "id": "set_of_programs_myoma_myoma_6_1", "name": "Myoma 6" }
+          ]
+        },
+        {
+          "id": "obesity",
+          "title": "Obesity",
+          "programs": [
+            { "id": "set_of_programs_obesity_obesity_1_1", "name": "Obesity 1" },
+            { "id": "set_of_programs_obesity_obesity_2_1", "name": "Obesity 2" },
+            { "id": "set_of_programs_obesity_obesity_3_1", "name": "Obesity 3" },
+            { "id": "set_of_programs_obesity_obesity_4_1", "name": "Obesity 4" },
+            { "id": "set_of_programs_obesity_obesity_5_1", "name": "Obesity 5" }
+          ]
+        },
+        {
+          "id": "otitis",
+          "title": "Otitis",
+          "programs": [
+            { "id": "set_of_programs_otitis_otitis_1_1", "name": "Otitis 1" },
+            { "id": "set_of_programs_otitis_otitis_2_1", "name": "Otitis 2" },
+            { "id": "set_of_programs_otitis_otitis_3_1", "name": "Otitis 3" },
+            { "id": "set_of_programs_otitis_otitis_4_1", "name": "Otitis 4" },
+            { "id": "set_of_programs_otitis_otitis_5_1", "name": "Otitis 5" },
+            { "id": "set_of_programs_otitis_otitis_6_1", "name": "Otitis 6" }
+          ]
+        },
+        {
+          "id": "post_influenza_complications",
+          "title": "Post-Influenza Complications",
+          "programs": [
+            { "id": "set_of_programs_post_influenza_complications_mycoplasma_1", "name": "Mycoplasma" },
+            { "id": "set_of_programs_post_influenza_complications_streptococcus_pneumonia_1", "name": "Streptococcus Pneumonia" }
+          ]
+        },
+        {
+          "id": "prostatic_adenoma",
+          "title": "Prostatic Adenoma",
+          "programs": [
+            { "id": "set_of_programs_prostatic_adenoma_active_protection_1", "name": "Active protection" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_1_1", "name": "Adenoma 1" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_2_1", "name": "Adenoma 2" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_4_1", "name": "Adenoma 4" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_5_1", "name": "Adenoma 5" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_6_1", "name": "Adenoma 6" },
+            { "id": "set_of_programs_prostatic_adenoma_adenoma_7_1", "name": "Adenoma 7" }
+          ]
+        },
+        {
+          "id": "prostatitis",
+          "title": "Prostatitis",
+          "programs": [
+            { "id": "set_of_programs_prostatitis_prostatitis_1_1", "name": "Prostatitis 1" },
+            { "id": "set_of_programs_prostatitis_prostatitis_2_1", "name": "Prostatitis 2" },
+            { "id": "set_of_programs_prostatitis_prostatitis_3_1", "name": "Prostatitis 3" },
+            { "id": "set_of_programs_prostatitis_prostatitis_4_1", "name": "Prostatitis 4" },
+            { "id": "set_of_programs_prostatitis_prostatitis_5_1", "name": "Prostatitis 5" },
+            { "id": "set_of_programs_prostatitis_prostatitis_6_1", "name": "Prostatitis 6" }
+          ]
+        },
+        {
+          "id": "pyelonephritis",
+          "title": "Pyelonephritis",
+          "programs": [
+            { "id": "set_of_programs_pyelonephritis_pyelonephritis1_1", "name": "Pyelonephritis1" },
+            { "id": "set_of_programs_pyelonephritis_pyelonephritis2_1", "name": "Pyelonephritis2" },
+            { "id": "set_of_programs_pyelonephritis_pyelonephritis3_1", "name": "Pyelonephritis3" },
+            { "id": "set_of_programs_pyelonephritis_pyelonephritis4_1", "name": "Pyelonephritis4" },
+            { "id": "set_of_programs_pyelonephritis_pyelonephritis5_1", "name": "Pyelonephritis5" }
+          ]
+        },
+        {
+          "id": "sinusitis",
+          "title": "Sinusitis",
+          "programs": [
+            { "id": "set_of_programs_sinusitis_sinusitis_1_1", "name": "Sinusitis 1" },
+            { "id": "set_of_programs_sinusitis_sinusitis_2_1", "name": "Sinusitis 2" },
+            { "id": "set_of_programs_sinusitis_sinusitis_3_1", "name": "Sinusitis 3" },
+            { "id": "set_of_programs_sinusitis_sinusitis_4_1", "name": "Sinusitis 4" },
+            { "id": "set_of_programs_sinusitis_sinusitis_5_1", "name": "Sinusitis 5" },
+            { "id": "set_of_programs_sinusitis_sinusitis_6_1", "name": "Sinusitis 6" }
+          ]
+        },
+        {
+          "id": "spinal_disorders",
+          "title": "Spinal Disorders",
+          "programs": [
+            { "id": "set_of_programs_spinal_disorders_spinal_column1_1", "name": "Spinal Column1" },
+            { "id": "set_of_programs_spinal_disorders_spinal_column2_1", "name": "Spinal Column2" },
+            { "id": "set_of_programs_spinal_disorders_spinal_column4_1", "name": "Spinal Column4" },
+            { "id": "set_of_programs_spinal_disorders_spinal_column5_1", "name": "Spinal Column5" },
+            { "id": "set_of_programs_spinal_disorders_spinal_column6_1", "name": "Spinal Column6" }
+          ]
+        },
+        {
+          "id": "tonsillitis",
+          "title": "Tonsillitis",
+          "programs": [
+            { "id": "set_of_programs_tonsillitis_tonsillitis_1_1", "name": "Tonsillitis 1" },
+            { "id": "set_of_programs_tonsillitis_tonsillitis_2_1", "name": "Tonsillitis 2" },
+            { "id": "set_of_programs_tonsillitis_tonsillitis_3_1", "name": "Tonsillitis 3" },
+            { "id": "set_of_programs_tonsillitis_tonsillitis_4_1", "name": "Tonsillitis 4" },
+            { "id": "set_of_programs_tonsillitis_tonsillitis_5_1", "name": "Tonsillitis 5" },
+            { "id": "set_of_programs_tonsillitis_tonsillitis_6_1", "name": "Tonsillitis 6" }
+          ]
+        },
+        {
+          "id": "type_2_diabetes_mellitus",
+          "title": "Type 2 Diabetes Mellitus",
+          "programs": [
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_1_1", "name": "Diabetes 1" },
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_2_1", "name": "Diabetes 2" },
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_3_1", "name": "Diabetes 3" },
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_4_1", "name": "Diabetes 4" },
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_5_1", "name": "Diabetes 5" },
+            { "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_6_1", "name": "Diabetes 6" }
+          ]
+        },
+        {
+          "id": "urolithiasis",
+          "title": "Urolithiasis",
+          "programs": [
+            { "id": "set_of_programs_urolithiasis_kidney_stones1_1", "name": "Kidney Stones1" },
+            { "id": "set_of_programs_urolithiasis_kidney_stones_2_1", "name": "Kidney Stones 2" },
+            { "id": "set_of_programs_urolithiasis_kidney_stones3_1", "name": "Kidney Stones3" },
+            { "id": "set_of_programs_urolithiasis_kidney_stones4_1", "name": "Kidney Stones4" },
+            { "id": "set_of_programs_urolithiasis_kidney_stones5_1", "name": "Kidney Stones5" }
+          ]
+        },
+        {
+          "id": "varicose_veins",
+          "title": "Varicose Veins",
+          "programs": [
+            { "id": "set_of_programs_varicose_veins_varicosis_1_1", "name": "Varicosis 1" },
+            { "id": "set_of_programs_varicose_veins_varicosis_2_1", "name": "Varicosis 2" },
+            { "id": "set_of_programs_varicose_veins_varicosis_3_1", "name": "Varicosis 3" },
+            { "id": "set_of_programs_varicose_veins_varicosis_4_1", "name": "Varicosis 4" },
+            { "id": "set_of_programs_varicose_veins_varicosis_5_1", "name": "Varicosis 5" },
+            { "id": "set_of_programs_varicose_veins_varicosis_6_1", "name": "Varicosis 6" },
+            { "id": "set_of_programs_varicose_veins_varicosis_7_1", "name": "Varicosis 7" }
+          ]
+        },
+        {
+          "id": "vision_disorders",
+          "title": "Vision Disorders",
+          "programs": [
+            { "id": "set_of_programs_vision_disorders_astigmatism_1", "name": "Astigmatism" },
+            { "id": "set_of_programs_vision_disorders_cataract_1", "name": "Cataract" },
+            { "id": "set_of_programs_vision_disorders_conjunctivitis_1", "name": "Conjunctivitis" },
+            { "id": "set_of_programs_vision_disorders_eye_fatigue_1", "name": "Eye Fatigue" },
+            { "id": "set_of_programs_vision_disorders_glaucoma_1", "name": "Glaucoma" },
+            { "id": "set_of_programs_vision_disorders_hyperopia_1", "name": "Hyperopia" },
+            { "id": "set_of_programs_vision_disorders_myopia_1", "name": "Myopia" },
+            { "id": "set_of_programs_vision_disorders_retina_recovery_1", "name": "Retina Recovery" },
+            { "id": "set_of_programs_vision_disorders_squint_1", "name": "Squint" },
+            { "id": "set_of_programs_vision_disorders_vision_1_1", "name": "Vision 1" },
+            { "id": "set_of_programs_vision_disorders_vision_2_1", "name": "Vision 2" },
+            { "id": "set_of_programs_vision_disorders_vision_3_1", "name": "Vision 3" },
+            { "id": "set_of_programs_vision_disorders_vision_4_1", "name": "Vision 4" }
+          ]
+        }
+      ],
+      "programs": []
+    },
+    {
+      "id": "seven_chakras",
+      "title": "Seven Chakras",
+      "subcategories": [],
+      "programs": []
+    },
+    {
+      "id": "acupuncture",
+      "title": "Acupuncture",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "acupuncture_blockage_in_meridians_due_to_cicatrix_1",
+          "name": "Blockage in Meridians due to Cicatrix"
+        },
+        {
+          "id": "acupuncture_block_of_acupuncture_points_1",
+          "name": "Block of Acupuncture Points"
+        },
+        {
+          "id": "acupuncture_recovery_of_aura_1",
+          "name": "Recovery of Aura"
+        },
+        {
+          "id": "acupuncture_resistance_1",
+          "name": "Resistance"
+        },
+        {
+          "id": "acupuncture_sedation_1",
+          "name": "Sedation"
+        }
+      ]
+    }
+  ]
+}

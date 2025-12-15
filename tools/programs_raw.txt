@@ -1,0 +1,650 @@
+Aviable programs 
+
+	Animals
+	Antiparasitic
+	General Energy, Vitalisation
+	Pain
+	Set of Programs
+	Seven Chakras
+
+Animals— kein unterordner  :
+
+Programme : 
+
+Canine Parvo-Virus
+Canine Parvo-Virus B
+Canine Parvo-Virus M
+Feline ImmunoDeficiency Virus (FIV)
+Feline Leukemia
+Fleas
+Heart 2
+Hemobartonella Felis
+New Canine Parvo-Virus
+ParvoVirus B19
+Pericarditis
+Rhinopneumonia
+
+Antiparasitic : unterordner :
+
+Allergy
+Arthrology
+Dentistry
+Dermatology
+Effects
+Ophthalmology
+Otolaryngologist
+Pulmonology
+Sympthoms and Syndromes
+
+Allergie:Programme :
+
+Allergy	
+Allergy and Rhinitis	
+Ant Stings	
+Asthma	
+Asthma Parasites	
+Asthma caused by Ascariasis	
+Asthmatic Bronchitis	
+Asthmatic Seizure	
+Common Asthma	
+Immune System Stabilization	
+Insect Stings	
+Laryngeal Edema	
+Mucosal Hypersensitivity	
+Pollinosis	
+Respiratory Allergy	
+Sun Allergy	
+
+Arthrology: Programme :
+
+Arthritis
+Arthritis
+Arthritis-Basic
+Arthrosis
+Bursitis Pain
+Frozen Shoulder
+Gout
+OcteoArthritis
+OcteoArthritis Pain
+Secondary Arthritis
+Tendinitis
+Tennis Elbow
+
+Dentistry Programme :
+
+Alveolitis
+Aphthous Stomatitis
+Caries
+Dental Frequencies
+Fistula
+Gingivitis
+Gingivitis
+Gingivitis-Stomatitis v
+Gnathitis
+Granulomatous Periodontitis
+Halitosis
+Infections of Oral Cavity
+Mucosal Disorder
+Oral Fissure
+Parodontosen
+Periodontitis
+Periostitis
+Pulpitis
+
+Dermatology: Programme 
+
+Foot Callus
+Acne
+Acne-Secondary
+Acneiform Rash
+Alopecia
+Atopic Dermatitis
+Bacterial Eczema
+Callus
+Contagious Dermatitis
+Dermatophytosis
+Eczema 3
+Eczema-Herpes
+Erysipelas
+Erysipelas
+Erythema	
+Furunculosis Herpetiformis	
+Fussures	
+Hair Growth Stimulation	
+Hair Regeneration	
+Nevus	
+Non Herpetic Eczema	
+Pemphigus	
+Plantar Warts	
+Psoriasis	
+Psoriasis-Secondary	
+Psoriatic Eruption	
+Pyoderma	
+Rhytide Effacement
+Scabies
+Scabious Pruritus
+Seborrhea
+Seborrhea Furfuracea
+Sensitive Skin
+Skin Problems
+Skin Rash 1
+Skin Tonus
+Syphilis Sore
+Tinea
+Tinea, Sclerosis: Programme 
+Varicos Eczema
+Vitiligo
+Warts
+Warts-Basic
+
+Effects  :programme :
+
+Acidosis	
+Calcipexy	
+Candida	
+Catarrh	
+DNA Restoration	
+Drainage 1	
+Helminth	
+Hyperlipidemia	
+Increase of Appetite	
+L-Lysin Stimulation	
+Loss of Appetite	
+Potassium-Sodium	
+Protozoa 1	
+Recovering from Sickness	
+Recovery	
+Recovery Acceleration	
+Regeneration	
+Vitalisation
+
+
+Ophthalmology: Programme:
+
+Astigmatism 1
+AtheroSclerosis
+Bifocal Vision
+Blepharitis
+BlepharoSpasm
+Conjunctivitus 1
+Glaucoma 1
+Hyperopia
+Myopia 1
+Ocular Hemorrage
+Stye
+Vision
+Visual Fatigue
+
+Otolaryngologist: Programme:
+
+Hearing Loss 3	
+Larynx	
+Laryngeal Polyp	
+Laryngitis	
+Lymph Nodes Hypertrophy	
+Nasal Polyp	
+Nasopharyngitis 1	
+Nasopharyngitis 2	
+Otitis	
+Otitis Media	
+Otitis-Bathing	
+Pharyngitis	
+Regional Lymphadenitis	
+Respiratory Organs
+Rhinitis
+Sinusitis 1
+Sinusitis 2
+Throat Inflammation
+Tonsillitis 1
+Tonsillitis 2
+Tympanitis
+
+Pulmonology: programme :
+
+Secondary Bronchitis
+Bacterial Pleuritis
+Breathing
+Bronchopneumonia
+Chronic Bronchitis
+Cough
+Cough-Vaccine
+Dry Cough
+Emphysema
+General Pneumonia
+General Pneumonia V
+Lung Congestion
+Lungs
+Pleuritis
+Pneumonia
+Pulmonary Fibrosis
+Rough Breathing
+Secondary Bronchopneumonia
+Stimulation of Breathing
+
+Sympthoms and Syndromes: Programme :
+
+Chronic Fatigue
+Chronic Fatigue Syndrome
+Edema 1
+Edema 2
+Fatigue
+Fever Caused by Sun Stroke
+Food Poisoning
+General Fatigue
+High Fever
+Hypothermia
+Hypothermia of the Body
+Hypothermia-Influenza
+Itchy Feet
+Leg Swelling
+Liver Itching
+Nausea and Spasms
+Perinal Itch
+Physical Fatigue
+Sea Sickness 1
+Shivering
+Sneezing
+Spasms
+Sun Stroke
+
+
+General Energy, Vitalisation:Programme :
+
+Biological Exercise	
+Body Defenses Strengthening	
+Cachexy	
+Emotional Exhaustion	
+Energey Charging	
+Energy Flow	
+Energy Input	
+Energy Output	
+Energy-Delivering Effect	
+Excessive Sweating 2	
+General Exercise	
+Healing Centre 2	
+Heat and Cold 4	
+Low Temperature 	
+Metabolism	
+Muscle Strengthening	
+Nerve Strengthening	
+Postural Disorder	
+Senile Disorders	
+Slow Recovery Process 4	
+Strength of Earth	
+Stress 4	
+
+
+Ein unterordner mit acupuncture — programme:
+
+Blockage in Meridians due to Cicatrix
+Block of Acupuncture Points
+Recovery of Aura
+Resistance
+Sedation
+
+Pain—Programme:
+
+Headache due to Urogenital Disorder	
+Abdominal Pain	
+Acute Pain	
+Back Pain	
+Cancer Pain	
+Cholecystitis Pain	
+Chronic Low-Back Pain	
+Elbow Pain	
+General Pain	
+Headache	
+Headache due to Parasitic Infection	
+Headache due to Stomach Dysfunction	
+Headache due to Toxic Genesis	
+Headache of Unknown Origin	
+Headache-Integrated
+Headache-Migraine
+Hip Pain
+Intercoastal Muscles Pain
+Joint Pain
+Joint Pain
+Joint Pain-Basic
+Knee Pain
+Low-Back Pain
+Migraine
+Pain-Infection
+Pain-Paralysis
+Post-Surgery Pain
+Psychogenic Pain
+Spasm and Pain
+Vertebragenic Headache
+
+
+
+
+Set of programs —Unterordner :
+
+Allergy
+Arthritis /Arthrosis
+Arthritis Treatment
+Bronchial Asthma
+Bronchitis
+Colitis
+Cosmetology
+Cystitis
+Diabetes Mellitus
+Dysmenorrhea
+Electromagnetic Therapy Programmes
+Gallstone Disease
+Gastric Ulcer
+Gastritis
+Hypertension
+Insomnia
+Mammary Glands
+Menopause
+Myoma
+Obesity
+Otitis
+Post-Influenza Complications
+Prostatic Adenoma
+Prostatitis
+Pyelonephritis
+Sinusitis
+Spinal Disorders
+Tonsillitis
+Type 2 Diabetes Mellitus
+Urolithiasis	
+Varicose Veins	
+Vision Disorders	
+
+Allergy — Programme 
+
+Allergy 1
+Allergy 2
+Allergy 3
+Allergy 4
+Allergy 5
+Allergy 6
+Allergy 7
+Allergy 8
+
+Arthritis /Arthrosis — Programme :
+
+Arthritis 1
+Arthritis 2
+Arthritis 3
+Arthritis 4
+Arthritis 5
+Arthritis 6
+Arthritis 7
+
+Arthritis Treatment— Programme :
+
+Causative Agent
+Inflammation
+Pain
+
+Bronchial Asthma— Programme :
+
+Bronchial Asthma1
+Bronchial Asthma2
+Bronchial Asthma4
+Bronchial Asthma5
+Bronchial Asthmaб
+Bronchial Asthma7
+Bronchial Asthma8
+
+Colitis — Programme :
+
+Colitis 1
+Colitis 2
+Colitis 3
+Colitis 4
+Colitis 5
+
+Cosmetology— Programme :
+
+Cosmetology1
+Cosmetology2
+Cosmetology3
+Cosmetology4
+Cosmetology5
+
+Cystitis — Programme :
+
+Cystitis 1
+Cystitis 2
+Cystitis 3
+Cystitis 4
+Cystitis 5
+Cystitis 6
+
+Diabetes Mellitus — Programme :
+
+Candida Albicans 1
+Chlamydia Pneumoniae
+Circulation Loss 1
+CytomegaloVirus
+Diabetes Mellitus
+Eczema 2
+Helicobacter Pylori 2
+Herpes Zoster 1
+Joint Stiffness
+Nanobacteria
+
+Dysmenorrhea — Programme :
+
+Dysmenorrhea 1
+Dysmenorrhea 2
+Dysmenorrhea 3
+Dysmenorrhea 4
+Dysmenorrhea 5
+Dysmenorrhea 6
+
+Electromagnetic Therapy Programmes— Programme :
+
+Anti-Pain	
+Antistress	
+Back Fatigue	
+Blood Circulation 1	
+Cholesterol 2	
+Deep Cleansing	
+Disbacteriosis	
+Female Genitourinary System	
+GIT Regulation	
+Heart Regulation	
+Kidney Pattern	
+Male Genitourinary System	
+Proactive Defence
+
+Gallstone Disease — Programme :
+
+Gallstone1
+Gallstone2
+Gallstone3
+Gallstone4
+Gallstone5
+Gallstone6
+
+Gastric Ulcer —Programme :
+
+Ulcer Disease1
+Ulcer Disease2
+Ulcer Disease 4
+Ulcer Disease 5
+Ulcer Disease 6
+
+Gastritis — Programme :
+
+	
+Gastritis 1	
+Gastritis 2	
+Gastritis 3	
+Gastritis 4	
+Gastritis 5	
+Gastritis 6	
+
+
+Hypertension— Programme :
+
+Hypertension 1
+Hypertension 2
+Hypertension 3
+Hypertension 4
+Hypertension 5
+Hypertension 6
+
+Insomnia— Programme : 
+
+Insomnia 2
+Insomnia 3
+Insomnia 4
+Insomnia 4
+Insomnia 5
+Insomnia 6
+
+Mammary Glands— Programme :
+
+Mastopathy 1
+Mastopathy 2
+Mastopathy 3
+Mastopathy 4
+Mastopathy 5
+Mastopathy 6
+
+
+Menopause— Programme :
+
+Menopause 1
+Menopause 2
+Menopause 3
+Menopause 4
+Menopause 5
+Menopause 6
+
+Myoma — Programme:
+
+Myoma 1
+Myoma 2
+Myoma 3
+Myoma 4
+Myoma 5
+Myoma 6
+
+Obesity— Programme :
+
+Obesity 1
+Obesity 2
+Obesity 3
+Obesity 4
+Obesity 5
+
+Otitis— Programme :
+
+Otitis 1
+Otitis 2
+Otitis 3
+Otitis 4
+Otitis 5
+Otitis 6
+
+Post-Influenza Complications—Programme :
+
+Mycoplasma
+Streptococcus Pneumonia
+
+
+Prostatic Adenoma— Programme:
+
+Active protection
+Adenoma 1
+Adenoma 2
+Adenoma 4
+Adenoma 5
+Adenoma 6
+Adenoma 7
+
+Prostatitis— Programme:
+
+Prostatitis 1
+Prostatitis 2
+Prostatitis 3
+Prostatitis 4
+Prostatitis 5
+Prostatitis 6
+
+
+Pyelonephritis— Programme :
+
+Pyelonephritis1
+Pyelonephritis2
+Pyelonephritis3
+Pyelonephritis4
+Pyelonephritis5
+
+Sinusitis— Programme :
+
+Sinusitis 1
+Sinusitis 2
+Sinusitis 3
+Sinusitis 4
+Sinusitis 5
+Sinusitis 6
+
+Spinal Disorders— Programme :
+
+Spinal Column1
+Spinal Column2
+Spinal Column4
+Spinal Column5
+Spinal Column6
+
+Tonsillitis— Programme:
+
+Tonsillitis 1
+Tonsillitis 2
+Tonsillitis 3
+Tonsillitis 4
+Tonsillitis 5
+Tonsillitis 6
+
+
+Type 2 Diabetes Mellitus— Programme :
+
+Diabetes 1
+Diabetes 2
+Diabetes 3
+Diabetes 4
+Diabetes 5
+Diabetes 6
+
+Urolithiasis— Programme:
+
+Kidney Stones1
+Kidney Stones 2
+Kidney Stones3
+Kidney Stones4
+Kidney Stones5
+
+
+Varicose Veins— Programme :
+
+Varicosis 1
+Varicosis 2
+Varicosis 3
+Varicosis 4
+Varicosis 5
+Varicosis 6
+Varicosis 7
+
+Vision Disorders— Programme :
+
+Astigmatism
+Cataract
+Conjunctivitis
+Eye Fatigue
+Glaucoma
+Hyperopia
+Myopia
+Retina Recovery
+Squint
+Vision 1
+Vision 2
+Vision 3
+Vision 4

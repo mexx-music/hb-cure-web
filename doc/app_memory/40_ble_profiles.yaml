@@ -1,0 +1,14 @@
+# BLE device profiles (placeholders)
+
+curebase_v1:
+  id: curebase_v1
+  name: CureBase v1
+  manufacturer: Cure GmbH
+  notes: "UART-over-BLE, secp256k1 unlock"
+
+pyramide_v1:
+  id: pyramide_v1
+  name: Pyramide v1
+  manufacturer: Cure GmbH
+  notes: "experimental profile"
+

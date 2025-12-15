@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:hbcure/data/program_repository.dart';
+import 'package:hbcure/models/program_category.dart';
+import 'package:hbcure/ui/pages/categories_page.dart';
+import '../widgets/gradient_background.dart';
+import '../theme/app_colors.dart';
+
+class AvailableProgramsPage extends StatefulWidget {
+  const AvailableProgramsPage({super.key});
+
+  @override
+  State<AvailableProgramsPage> createState() => _AvailableProgramsPageState();
+}
+
+class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
+  final ProgramRepository _repo = ProgramRepository();
+  List<ProgramCategory> _categories = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final cats = await _repo.loadCategories();
+    setState(() {
+      _categories = cats;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GradientBackground(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // slightly smaller title and reduced top spacing
+                Text('Available Programs', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary, fontSize: 18)),
+                IconButton(icon: const Icon(Icons.search, color: AppColors.textPrimary), onPressed: () => debugPrint('Search pressed')),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (_loading) ...[
+              const SizedBox(height: 20),
+              const Center(child: CircularProgressIndicator()),
+            ] else ...[
+              for (final c in _categories)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6.0),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.borderSubtle),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(backgroundColor: AppColors.primaryMuted, child: Icon(Icons.apps, color: AppColors.textPrimary)),
+                        title: Text(c.title, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(category: c))),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
