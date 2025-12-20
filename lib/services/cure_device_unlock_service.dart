@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 
 import 'cure_ble_transport_native.dart';
 import 'cure_crypto.dart';
+import 'cure_program_compiler.dart';
+import 'package:hbcure/core/cure_protocol/cure_program_model.dart';
 
 enum CureUnlockStatus {
   connecting,
@@ -70,6 +72,7 @@ class CureDeviceUnlockService {
   // ---------------- progStatus polling ----------------
   Timer? _progStatusTimer;
   StreamController<CureProgStatus>? _progStatusCtrl;
+  bool _progStatusPollBusy = false;
 
   Stream<CureProgStatus> get progStatusStream =>
       _progStatusCtrl?.stream ?? const Stream.empty();
@@ -84,8 +87,16 @@ class CureDeviceUnlockService {
     if (kDebugMode) {
       debugPrint('[CureDeviceUnlockService] nativeConnect -> $deviceId');
     }
-    await _sharedTransport.connect(deviceId);
-    _sharedDeviceId = deviceId;
+    // remember previous shared device id so we can restore it on failure
+    final String? _prevSharedDeviceId = _sharedDeviceId;
+    try {
+      await _sharedTransport.connect(deviceId);
+      _sharedDeviceId = deviceId;
+    } catch (e) {
+      // restore previous value (avoid clearing an existing shared connection)
+      _sharedDeviceId = _prevSharedDeviceId;
+      rethrow;
+    }
   }
 
   Future<void> nativeDisconnect() async {
@@ -107,13 +118,36 @@ class CureDeviceUnlockService {
         void Function(CureUnlockStatus status)? onStatus,
         bool manageConnection = true,
       }) async {
-    final CureBleTransportNative transport =
-    manageConnection ? CureBleTransportNative() : _sharedTransport;
+    // Always use the shared native transport. If caller requested manageConnection,
+    // ensure _sharedDeviceId is set and keep the connection open (do not disconnect in finally).
+    final CureBleTransportNative transport = _sharedTransport;
+
+    // Guard: if caller asked NOT to manage connection, ensure the shared connection
+    // is already active and bound to the requested deviceId.
+    if (!manageConnection) {
+      if (_sharedDeviceId == null || _sharedDeviceId != deviceId) {
+        throw StateError(
+            'shared connection not active for deviceId=$deviceId (shared=$_sharedDeviceId)');
+      }
+    }
+
+    // remember previous shared id to allow rollback on failure
+    final String? _prevSharedDeviceId = _sharedDeviceId;
 
     try {
       if (manageConnection) {
         onStatus?.call(CureUnlockStatus.connecting);
-        await transport.connect(deviceId);
+        // Attempt to connect using the shared transport and only set the shared
+        // device id after the connect succeeded. If anything fails later, we
+        // will roll back to the previous value.
+        try {
+          await transport.connect(deviceId);
+          _sharedDeviceId = deviceId;
+        } catch (e) {
+          // ensure we don't leave a partially set sharedDeviceId
+          _sharedDeviceId = _prevSharedDeviceId;
+          rethrow;
+        }
       }
 
       onStatus?.call(CureUnlockStatus.challengeRequested);
@@ -197,14 +231,14 @@ class CureDeviceUnlockService {
 
       return const CureUnlockResult(success: true);
     } catch (e) {
+      // Rollback sharedDeviceId if we set it for this manageConnection attempt
+      if (manageConnection) {
+        _sharedDeviceId = _prevSharedDeviceId;
+      }
       return CureUnlockResult(success: false, errorMessage: e.toString());
     } finally {
-      if (manageConnection) {
-        try {
-          await transport.disconnect();
-        } catch (_) {}
-        transport.dispose();
-      }
+      // NOTE: Do not disconnect the shared transport here when manageConnection==true.
+      // The shared transport remains connected for subsequent operations (uploads etc.).
     }
   }
 
@@ -254,9 +288,19 @@ class CureDeviceUnlockService {
     stopProgStatusPolling();
     _progStatusCtrl = StreamController<CureProgStatus>.broadcast();
     _progStatusTimer = Timer.periodic(period, (_) async {
-      final st = await fetchProgStatus();
-      if (st != null && _progStatusCtrl != null && !_progStatusCtrl!.isClosed) {
-        _progStatusCtrl!.add(st);
+      if (_progStatusTimer == null) return;
+      if (_progStatusCtrl == null) return;
+      if (_progStatusCtrl!.isClosed) return;
+
+      if (_progStatusPollBusy) return; // guard to avoid overlapping calls
+      _progStatusPollBusy = true;
+      try {
+        final st = await fetchProgStatus();
+        if (st != null && _progStatusCtrl != null && !_progStatusCtrl!.isClosed) {
+          _progStatusCtrl!.add(st);
+        }
+      } finally {
+        _progStatusPollBusy = false;
       }
     });
   }
@@ -278,13 +322,10 @@ class CureDeviceUnlockService {
 
   Future<bool> progAppendHex(String hex) async {
     final cleaned = hex.replaceAll(RegExp(r'\s+'), '');
-    if (cleaned.isEmpty ||
-        cleaned.length.isOdd ||
-        !RegExp(r'^[0-9A-Fa-f]+$').hasMatch(cleaned)) {
+    if (cleaned.isEmpty || cleaned.length.isOdd || !RegExp(r'^[0-9A-Fa-f]+$').hasMatch(cleaned)) {
       return false;
     }
-    return _sendAndCheckOk('progAppend=$cleaned',
-        timeout: const Duration(seconds: 10));
+    return _sendAndCheckOk('progAppend=$cleaned', timeout: const Duration(seconds: 10));
   }
 
   Future<bool> uploadProgramBytes(Uint8List bytes,
@@ -305,6 +346,65 @@ class CureDeviceUnlockService {
       offset = end;
     }
     return true;
+  }
+
+  Future<bool> uploadProgramAndStart(CureProgram program) async {
+    if (_sharedDeviceId == null) {
+      debugPrint('[CureDeviceUnlockService] No native connection available.');
+      return false;
+    }
+
+    try {
+      // Compile program bytes
+      final compiler = CureProgramCompiler();
+      final programBytes = compiler.compile(program);
+
+      // Clear existing program
+      if (!await progClear()) {
+        debugPrint('[CureDeviceUnlockService] progClear failed.');
+        return false;
+      }
+
+      // Upload program in chunks
+      const chunkSize = 64; // reduced to 64 bytes for safety
+      int offset = 0;
+      while (offset < programBytes.length) {
+        final end = (offset + chunkSize).clamp(0, programBytes.length);
+        final chunk = programBytes.sublist(offset, end);
+        final hexChunk = chunk.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+        if (!await progAppendHex(hexChunk)) {
+          debugPrint('[CureDeviceUnlockService] progAppend failed at offset $offset.');
+          return false;
+        }
+
+        offset = end;
+        await Future.delayed(const Duration(milliseconds: 80));
+      }
+
+      // Start program
+      if (!await progStart()) {
+        debugPrint('[CureDeviceUnlockService] progStart failed.');
+        return false;
+      }
+
+      // Poll program status for 10 seconds
+      final endTime = DateTime.now().add(const Duration(seconds: 10));
+      while (DateTime.now().isBefore(endTime)) {
+        final status = await fetchProgStatus();
+        if (status != null && status.running) {
+          debugPrint('[CureDeviceUnlockService] Program is running.');
+          return true;
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      debugPrint('[CureDeviceUnlockService] Program did not start within the expected time.');
+      return false;
+    } catch (e) {
+      debugPrint('[CureDeviceUnlockService] uploadProgramAndStart failed: $e');
+      return false;
+    }
   }
 
   // ===================== HELPERS =====================
@@ -347,10 +447,23 @@ class CureDeviceUnlockService {
     void Function(String msg)? onLog,
     bool manageConnection = true,
   }) async {
-    final CureBleTransportNative transport =
-        manageConnection ? CureBleTransportNative() : _sharedTransport;
+    final CureBleTransportNative transport = _sharedTransport;
 
-    if (!manageConnection) {
+    // If caller wants the method to manage the connection, ensure we do not
+    // create a parallel shared connection for another device.
+    if (manageConnection) {
+      if (_sharedDeviceId != null && _sharedDeviceId != deviceId) {
+        throw StateError('shared connection already active for $_sharedDeviceId');
+      }
+      if (_sharedDeviceId == null) {
+        // open shared connection
+        await nativeConnect(deviceId);
+        onLog?.call('Connected to device $deviceId');
+      } else {
+        onLog?.call('Using existing native connection to $deviceId');
+      }
+    } else {
+      // manageConnection == false -> require shared connection active and matching
       if (_sharedDeviceId == null) {
         onLog?.call('No native connection; call nativeConnect(deviceId) first.');
         return;
@@ -362,13 +475,6 @@ class CureDeviceUnlockService {
     }
 
     try {
-      if (manageConnection) {
-        await transport.connect(deviceId);
-        onLog?.call('Connected to device $deviceId');
-      } else {
-        onLog?.call('Using existing native connection to $deviceId');
-      }
-
       final challengeLines = await transport.sendCommandAndWaitLines(
         'challenge',
         timeout: const Duration(seconds: 10),
@@ -397,13 +503,8 @@ class CureDeviceUnlockService {
 
       onLog?.call(isValid ? 'Device sign() verification: OK' : 'Device sign() verification: FAILED');
     } finally {
-      if (manageConnection) {
-        try {
-          await transport.disconnect();
-        } catch (_) {}
-        transport.dispose();
-        onLog?.call('Disconnected from device $deviceId');
-      }
+      // Do NOT disconnect the shared transport here; leave connection managed by caller.
+      onLog?.call('runSignRoundtripTest completed for $deviceId');
     }
   }
 
@@ -419,6 +520,7 @@ class CureDeviceUnlockService {
       throw StateError('sendSignTest: Connected device is $_sharedDeviceId, but requested $deviceId.');
     }
 
+    // Sanitize: allow only 0-9, A-F, a-f
     final cleaned = challengeHex.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
     if (cleaned.length != 64) {
       throw ArgumentError('challengeHex must be exactly 64 hex chars');

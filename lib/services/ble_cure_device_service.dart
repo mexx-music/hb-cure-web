@@ -52,6 +52,10 @@ class BleCureDeviceService {
   static final BleCureDeviceService instance = BleCureDeviceService._internal();
 
   final Map<String, CureProtocol> _protocolByDeviceId = {};
+  // Native unlock service helper (delegation target in native transport mode)
+  final CureDeviceUnlockService _native = CureDeviceUnlockService.instance;
+  // Optional: track currently connected device id for native transport usage
+  String? _connectedDeviceId;
   // Merkt sich das vom UI ausgewählte Gerät im native-Mode
   BluetoothDevice? _selectedDevice;
 
@@ -78,6 +82,7 @@ class BleCureDeviceService {
     'E40783F681A5BB852CAB1E106B6641EFB43C1923C1EBE25CA36865CDFAB06548',
 
     // Restliche Kandidaten Platzhalter (optional später mit echten Keys befüllen)
+    '0000000000000000000000000000000000000000000000000000000000000000',
     '0000000000000000000000000000000000000000000000000000000000000000',
     '0000000000000000000000000000000000000000000000000000000000000000',
     '0000000000000000000000000000000000000000000000000000000000000000',
@@ -195,6 +200,9 @@ class BleCureDeviceService {
     // Gerät immer merken – unabhängig vom Modus
     _selectedDevice = device;
 
+    // Merke die deviceId für native transport mode
+    _connectedDeviceId = device.remoteId.toString();
+
     // Scan immer stoppen, wenn wir ein Gerät "ausgewählt" haben
     try {
       await FlutterBluePlus.stopScan();
@@ -205,11 +213,11 @@ class BleCureDeviceService {
       if (kDebugMode) {
         debugPrint(
           'HBDBG connect(native): selected CureBase device ${device.id.id} – '
-          'NO FlutterBluePlus.connect/discoverServices/notify in this mode',
+          'delegating to native connect',
         );
       }
-      // KEIN FBP-GATT-connect, KEIN discoverServices, KEIN ensureNotify.
-      // GATT-Owner ist ausschließlich der Native-Stack (CureBleTransportNative).
+      // Delegiere an native Unlock-Service, damit _sharedDeviceId gesetzt wird
+      await _native.nativeConnect(_connectedDeviceId!);
       return;
     }
 
@@ -270,15 +278,19 @@ class BleCureDeviceService {
       } catch (_) {}
     }
 
-    // Native-Mode: kein FBP-GATT-disconnect, nur lokale Aufräumarbeiten
+    // Native-Mode: delegiere an native Unlock-Service und aufräumen
     if (kCureTransportMode == CureTransportMode.native) {
+      // Wenn das native transport die gleiche DeviceId verwaltet, trenne dort
+      try {
+        await _native.nativeDisconnect();
+      } catch (_) {}
+      _connectedDeviceId = null;
       if (_selectedDevice?.remoteId.toString() == deviceId) {
         _selectedDevice = null;
       }
       if (kDebugMode) {
         debugPrint(
-          'HBDBG disconnect(native): cleared selection for $deviceId '
-          '(no FlutterBluePlus.disconnect in this mode)',
+          'HBDBG disconnect(native): delegated to native disconnect for $deviceId',
         );
       }
       return;
@@ -754,6 +766,95 @@ class BleCureDeviceService {
     var hexStr =
     truncated.toRadixString(16).padLeft(length * 2, '0');
     return Uint8List.fromList(hex.decode(hexStr));
+  }
+
+  // --------- Program operations delegation for native transport -------------
+
+  /// Delegate progClear to native transport when running in native mode.
+  Future<bool> progClear() async {
+    if (kCureTransportMode == CureTransportMode.native) {
+      return await _native.progClear();
+    }
+    try {
+      await sendProgClearOnly();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Delegate progStart to native transport when running in native mode.
+  Future<bool> progStart() async {
+    if (kCureTransportMode == CureTransportMode.native) {
+      return await _native.progStart();
+    }
+    try {
+      await startProgram();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Upload raw bytes (delegates to native transport in native mode)
+  Future<bool> uploadProgramBytes(Uint8List bytes,
+      {int chunkSize = 64}) async {
+    if (kCureTransportMode == CureTransportMode.native) {
+      return await _native.uploadProgramBytes(bytes, chunkSize: chunkSize);
+    }
+
+    // Fallback: use existing FBP-based upload (requires CureProtocol)
+    final device = await _findConnectedCureDeviceOrThrow();
+    final cureProto = _protocolByDeviceId[device.remoteId.toString()];
+    if (cureProto == null) return false;
+    try {
+      final ok = await cureProto.uploadProgram(bytes);
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Fetch program status, delegate to native transport when configured.
+  Future<CureProgStatus?> fetchProgStatus({Duration timeout = const Duration(seconds: 5)}) async {
+    if (kCureTransportMode == CureTransportMode.native) {
+      return await _native.fetchProgStatus(timeout: timeout);
+    }
+
+    try {
+      final device = await _findConnectedCureDeviceOrThrow();
+      final chars = await _findCureCharacteristics(device);
+      final lines = await _sendCommandAndReadLinesUntilOk(
+        device,
+        chars.writeChar,
+        chars.notifyChar,
+        'progStatus',
+        timeout: timeout,
+      );
+      final payload = lines
+          .map((l) => l.trim())
+          .firstWhere((l) => l.isNotEmpty && l.toUpperCase() != 'OK',
+              orElse: () => '');
+      if (payload.isEmpty) return null;
+      final parts = payload.split(',');
+      if (parts.length < 7) return null;
+      final runningStr = parts[0].trim().toLowerCase();
+      final pausedStr = parts[1].trim().toLowerCase();
+      return CureProgStatus(
+        running: runningStr == 'running' ||
+            runningStr == '1' ||
+            runningStr == 'true',
+        paused: pausedStr == 'paused' || pausedStr == '1' || pausedStr == 'true',
+        elapsedSec: int.tryParse(parts[2].trim()) ?? 0,
+        totalSec: int.tryParse(parts[3].trim()) ?? 0,
+        programIdHex: parts[4].trim(),
+        pcHex: parts[5].trim(),
+        waitTimeSec: double.tryParse(parts[6].trim()) ?? 0,
+        rawLine: payload,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
 // ------------------------------- End -------------------------------------

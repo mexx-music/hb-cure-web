@@ -4,6 +4,7 @@ import 'package:hbcure/ui/pages/available_programs_page.dart';
 import 'package:hbcure/ui/pages/devices_page.dart';
 import 'package:hbcure/ui/pages/settings_page.dart';
 import 'package:hbcure/ui/theme/app_colors.dart';
+import 'package:hbcure/ui/widgets/program_lang_toggle.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -32,12 +33,15 @@ class _MainShellState extends State<MainShell> {
     ];
 
     return Scaffold(
-       appBar: PreferredSize(
-         preferredSize: const Size.fromHeight(kToolbarHeight),
-         child: AppBar(
-           title: Text(_titles[_currentIndex]),
-         ),
-       ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: Text(_titles[_currentIndex]),
+          actions: [
+            ProgramLangToggle(onChanged: () => setState(() {})),
+          ],
+        ),
+      ),
       // Pages themselves reserve bottom space for the bottom navigation where needed.
       body: IndexedStack(
         index: _currentIndex,

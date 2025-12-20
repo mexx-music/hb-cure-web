@@ -6,9 +6,12 @@ import '../../services/ble_cure_device_service.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 import 'package:hbcure/core/cure_protocol/cure_test_programs.dart';
-import '../../services/reactive_ble_cure_test.dart';
 import 'package:hbcure/services/native_unlock_test.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
+import 'package:hbcure/services/reactive_ble_cure_test.dart';
+import 'package:hbcure/core/cure_protocol/cure_program_compiler.dart';
+import 'package:hbcure/core/config/cure_transport_mode.dart';
+import 'package:hbcure/services/qt_remote_program_encoder.dart';
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -70,6 +73,22 @@ class _DevicesPageState extends State<DevicesPage> {
     super.dispose();
   }
 
+  // --- Minimal helpers for consistent native/shared wiring ---
+  Future<String> _getConnectedDeviceIdOrThrow() async {
+    final connected = await FlutterBluePlus.connectedDevices;
+    if (connected.isEmpty) {
+      throw Exception('No connected device');
+    }
+    return connected.first.remoteId.toString();
+  }
+
+  Future<void> _ensureNativeConnected(String deviceId) async {
+    final svc = CureDeviceUnlockService.instance;
+    if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId) return;
+    await svc.nativeConnect(deviceId);
+  }
+  // ----------------------------------------------------------
+
   Widget _buildDeviceRow(BluetoothDevice d) {
     return StreamBuilder<BluetoothConnectionState>(
       stream: _ble.deviceState(d),
@@ -94,9 +113,7 @@ class _DevicesPageState extends State<DevicesPage> {
                       final deviceName =
                       (d.platformName != null && d.platformName.isNotEmpty)
                           ? d.platformName
-                          : ((d.name != null && d.name.isNotEmpty)
-                          ? d.name
-                          : d.id.str);
+                          : d.remoteId.toString();
                       return Text(
                         deviceName,
                         style: TextStyle(
@@ -107,7 +124,7 @@ class _DevicesPageState extends State<DevicesPage> {
                     }),
                     const SizedBox(height: 6),
                     Text(
-                      'ID: ${d.id.str}',
+                      'ID: ${d.remoteId}',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
@@ -136,7 +153,7 @@ class _DevicesPageState extends State<DevicesPage> {
                       tooltip: 'Native Unlock Test',
                       icon: const Icon(Icons.bolt),
                       onPressed: () async {
-                        final deviceId = d.id.str;
+                        final deviceId = d.remoteId.toString();
                         try {
                           await NativeUnlockTester.instance
                               .testNativeUnlock(deviceId);
@@ -167,7 +184,7 @@ class _DevicesPageState extends State<DevicesPage> {
                       tooltip: 'Native Unlock Test',
                       icon: const Icon(Icons.bolt),
                       onPressed: () async {
-                        final deviceId = d.id.str;
+                        final deviceId = d.remoteId.toString();
                         try {
                           await NativeUnlockTester.instance
                               .testNativeUnlock(deviceId);
@@ -346,6 +363,10 @@ class _DevicesPageState extends State<DevicesPage> {
                   builder: (context, snap) {
                     final devices = snap.data ?? [];
 
+                    // Prepare a deviceId variable for downstream debug panels
+                    final String? deviceId =
+                    devices.isNotEmpty ? devices.first.remoteId.toString() : null;
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -413,7 +434,6 @@ class _DevicesPageState extends State<DevicesPage> {
 
                           const SizedBox(height: 16),
 
-                          // Optionales Debug-Panel nur, wenn ein Device existiert
                           Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -435,7 +455,7 @@ class _DevicesPageState extends State<DevicesPage> {
                                   const SizedBox(height: 8),
                                   NativeUnlockTester.buildTestUI(
                                     context,
-                                    devices.first.id.str,
+                                    deviceId!,
                                   ),
                                 ],
                               ),
@@ -451,10 +471,12 @@ class _DevicesPageState extends State<DevicesPage> {
                             color: AppColors.cardBackground,
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: _NativeDebugPanel(),
+                              child: _NativeDebugPanel(
+                                deviceId: deviceId!,
+                              ),
                             ),
                           ),
-                         ],
+                        ],
                       ],
                     );
                   },
@@ -473,39 +495,35 @@ class _DevicesPageState extends State<DevicesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Testprogramm hochladen
+                      // Testprogramm hochladen (NATIVE / shared)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                         ),
                         onPressed: () async {
                           try {
-                            final connected = FlutterBluePlus.connectedDevices;
-                            final has = connected.any((d) {
-                              final n = (d.name ?? '').toLowerCase();
-                              final id =
-                              (d.id.id ?? d.id.toString()).toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-                            if (!has) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                    Text('Keine CureBase verbunden'),
-                                  ),
-                                );
-                              }
-                              return;
+                            final svc = CureDeviceUnlockService.instance;
+
+                            // Resolve a connected device at runtime (avoid using local 'devices' here)
+                            final connected = await FlutterBluePlus.connectedDevices;
+                            if (connected.isEmpty) throw Exception('No connected device');
+                            final String deviceId = connected.first.remoteId.toString();
+
+                            // ensure native shared connection
+                            if (!(svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId)) {
+                              await svc.nativeConnect(deviceId);
                             }
-                            final program = buildSimpleTestProgram();
-                            await _ble.uploadProgram(program);
+
+                            // build and compile test program to bytes
+                            final programModel = buildSimpleTestProgram();
+                            final program = CureProgramCompiler().compile(programModel);
+                            final ok = await svc.uploadProgramBytes(program);
+
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Testprogramm übertragen (ohne Start)',
+                                    ok ? 'Testprogramm übertragen (ohne Start)' : 'Upload FAILED (kein OK)',
                                   ),
                                 ),
                               );
@@ -514,9 +532,7 @@ class _DevicesPageState extends State<DevicesPage> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    'Upload failed: ${e.toString()}',
-                                  ),
+                                  content: Text('Upload failed: ${e.toString()}'),
                                 ),
                               );
                             }
@@ -526,37 +542,25 @@ class _DevicesPageState extends State<DevicesPage> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Programm starten
+                      // Programm starten (NATIVE / shared)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                         ),
                         onPressed: () async {
                           try {
-                            final connected = FlutterBluePlus.connectedDevices;
-                            final has = connected.any((d) {
-                              final n = (d.name ?? '').toLowerCase();
-                              final id =
-                              (d.id.id ?? d.id.toString()).toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-                            if (!has) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                    Text('Keine CureBase verbunden'),
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            await _ble.startProgram();
+                            final deviceId = await _getConnectedDeviceIdOrThrow();
+                            await _ensureNativeConnected(deviceId);
+
+                            final svc = CureDeviceUnlockService.instance;
+                            final ok = await svc.progStart();
+
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Programm gestartet'),
+                                SnackBar(
+                                  content: Text(
+                                    ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)',
+                                  ),
                                 ),
                               );
                             }
@@ -576,37 +580,23 @@ class _DevicesPageState extends State<DevicesPage> {
                       ),
                       const SizedBox(height: 8),
 
-                      // progClear testen
+                      // progClear testen (NATIVE / shared)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                         ),
                         onPressed: () async {
                           try {
-                            final connected = FlutterBluePlus.connectedDevices;
-                            final has = connected.any((d) {
-                              final n = (d.name ?? '').toLowerCase();
-                              final id =
-                              (d.id.id ?? d.id.toString()).toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-                            if (!has) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                    Text('Keine CureBase verbunden'),
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            await _ble.sendProgClearOnly();
+                            final deviceId = await _getConnectedDeviceIdOrThrow();
+                            await _ensureNativeConnected(deviceId);
+
+                            final svc = CureDeviceUnlockService.instance;
+                            final ok = await svc.progClear();
+
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('progClear OK'),
+                                SnackBar(
+                                  content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
                                 ),
                               );
                             }
@@ -637,12 +627,12 @@ class _DevicesPageState extends State<DevicesPage> {
                           if (!mounted) return;
                           try {
                             final connected =
-                                FlutterBluePlus.connectedDevices;
+                            await FlutterBluePlus.connectedDevices;
                             final has = connected.any((d) {
                               final n =
-                              (d.name ?? '').toLowerCase();
-                              final id = (d.id.id ??
-                                  d.id.toString())
+                              (d.platformName ?? '').toLowerCase();
+                              final id = (d.remoteId.str ??
+                                  d.remoteId.toString())
                                   .toLowerCase();
                               return n.contains('curebase') ||
                                   id.contains('curebase');
@@ -652,8 +642,8 @@ class _DevicesPageState extends State<DevicesPage> {
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(
                                   const SnackBar(
-                                    content: Text(
-                                        'Keine CureBase verbunden'),
+                                    content:
+                                    Text('Keine CureBase verbunden'),
                                   ),
                                 );
                               }
@@ -661,9 +651,9 @@ class _DevicesPageState extends State<DevicesPage> {
                             }
                             final device = connected.firstWhere((d) {
                               final n =
-                              (d.name ?? '').toLowerCase();
-                              final id = (d.id.id ??
-                                  d.id.toString())
+                              (d.platformName ?? '').toLowerCase();
+                              final id = (d.remoteId.str ??
+                                  d.remoteId.toString())
                                   .toLowerCase();
                               return n.contains('curebase') ||
                                   id.contains('curebase');
@@ -680,7 +670,7 @@ class _DevicesPageState extends State<DevicesPage> {
                             final result =
                             await CureDeviceUnlockService.instance
                                 .unlockDevice(
-                              device.id.str,
+                              device.remoteId.toString(),
                               onStatus: (s) => debugPrint(
                                 'HBDBG ensureUnlocked status: $s',
                               ),
@@ -731,12 +721,12 @@ class _DevicesPageState extends State<DevicesPage> {
                         onPressed: () async {
                           try {
                             final connected =
-                                FlutterBluePlus.connectedDevices;
+                            await FlutterBluePlus.connectedDevices;
                             final has = connected.any((d) {
                               final n =
-                              (d.name ?? '').toLowerCase();
+                              (d.platformName ?? '').toLowerCase();
                               final id =
-                              (d.id.id ?? d.id.toString())
+                              (d.remoteId.str ?? d.remoteId.toString())
                                   .toLowerCase();
                               return n.contains('curebase') ||
                                   id.contains('curebase');
@@ -790,38 +780,29 @@ class _DevicesPageState extends State<DevicesPage> {
 }
 
 class _NativeDebugPanel extends StatelessWidget {
-  const _NativeDebugPanel({super.key});
+  const _NativeDebugPanel({
+    super.key,
+    required this.deviceId,
+  });
+
+  final String deviceId;
 
   @override
   Widget build(BuildContext context) {
-    final connected = FlutterBluePlus.connectedDevices;
-    final hasDevice = connected.isNotEmpty;
-
-    // Aktuell verbundenes Device (oder null)
-    BluetoothDevice? device;
-    if (hasDevice) {
-      for (final d in connected) {
-        final n = (d.name).toLowerCase();
-        final id = (d.remoteId.str).toLowerCase(); // FlutterBluePlus
-        if (n.contains('curebase') || id.contains('curebase')) {
-          device = d;
-          break;
-        }
-      }
-    }
+    final svc = CureDeviceUnlockService.instance;
 
     // Hardware- und Build-Informationen als Textzeilen
-    final infoLines = <String>[];
-    if (device != null) {
-      final svc = CureDeviceUnlockService.instance;
-      infoLines.add('Device ID: ${device.id}');
-      infoLines.add('Name: ${device.name}');
-      infoLines.add('Firmware: ${device.mtu}');
-      infoLines.add('Hardware: ${svc.hardwareInfo?.trim().isNotEmpty == true ? svc.hardwareInfo : "-"}');
-      infoLines.add('Build: ${svc.buildInfo?.trim().isNotEmpty == true ? svc.buildInfo : "-"}');
-      infoLines.add('Supports Remote Programs: ${svc.supportsRemotePrograms}');
-    } else {
-      infoLines.add('Kein CureBase-Gerät verbunden');
+    final infoLines = <String>[
+      'Device ID: $deviceId',
+      'Native connected: ${svc.isNativeConnected} (${svc.nativeConnectedDeviceId ?? "-"})',
+      'Hardware: ${svc.hardwareInfo?.trim().isNotEmpty == true ? svc.hardwareInfo : "-"}',
+      'Build: ${svc.buildInfo?.trim().isNotEmpty == true ? svc.buildInfo : "-"}',
+      'Supports Remote Programs: ${svc.supportsRemotePrograms}',
+    ];
+
+    Future<void> _ensureNativeConnected() async {
+      if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId) return;
+      await svc.nativeConnect(deviceId);
     }
 
     return Column(
@@ -847,81 +828,200 @@ class _NativeDebugPanel extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // progStatus Action-Buttons (nur sichtbar, wenn ein Device verbunden ist)
-        if (device != null) ...[
-          Text(
-            'Programmstatus Aktionen',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+        Text(
+          'Programmstatus Aktionen',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Button: progStart
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                ),
-                onPressed: () async {
-                  try {
-                    await BleCureDeviceService.instance.startProgram();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Programm gestartet'),
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Start failed: ${e.toString()}'),
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Start Program'),
-              ),
+        ),
+        const SizedBox(height: 8),
 
-              // Button: progStop
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                ),
-                onPressed: () async {
-                  try {
-                    // stopProgram is not implemented in BleCureDeviceService yet.
-                    if (kDebugMode) debugPrint('stopProgram not implemented in BleCureDeviceService yet');
-                     if (context.mounted) {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(
-                           content: Text('Programm gestoppt'),
-                         ),
-                       );
-                     }
-                   } catch (e) {
-                     if (context.mounted) {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(
-                           content: Text('Stop failed: ${e.toString()}'),
-                         ),
-                       );
-                     }
-                   }
-                 },
-                child: const Text('Stop Program'),
+        Wrap(
+          alignment: WrapAlignment.spaceEvenly,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            // Button: progStart (native/shared)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                minimumSize: const Size(140, 40),
               ),
-            ],
-          ),
-        ],
+              onPressed: () async {
+                try {
+                  await _ensureNativeConnected();
+                  final ok = await svc.progStart();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Start failed: ${e.toString()}'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Start Program'),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Button: progClear (native/shared)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                minimumSize: const Size(140, 40),
+              ),
+              onPressed: () async {
+                try {
+                  await _ensureNativeConnected();
+                  final ok = await svc.progClear();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('progClear failed: ${e.toString()}'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('progClear'),
+            ),
+
+
+            // Button: Prog Status
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                minimumSize: const Size(140, 40),
+              ),
+              onPressed: () async {
+                try {
+                  final svc = CureDeviceUnlockService.instance;
+                  final st = await svc.fetchProgStatus(timeout: const Duration(seconds: 5));
+                  final msg = (st == null) ? 'progStatus: (no data)' : 'progStatus: ${st.rawLine ?? st.toString()}';
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('progStatus failed: $e')));
+                  }
+                }
+              },
+              child: const Text('Prog Status'),
+            ),
+
+            // DEBUG: Minimal Program Start
+            ElevatedButton(
+              onPressed: () async {
+                final svc = CureDeviceUnlockService.instance;
+
+                if (kCureTransportMode == CureTransportMode.native) {
+                  try {
+                    await _ensureNativeConnected();
+
+                    // Example program
+                    final uuid16 = Uint8List.fromList(List.generate(16, (i) => i + 1));
+                    final name = "Test 1kHz 60s";
+                    final eIntensity = 5;
+                    final hIntensity = 3;
+                    final eWaveForm = 0x00; // sine
+                    final hWaveForm = 0x02; // rectangular
+                    final steps = [
+                      (freqHz: 1000.0, dwellSec: 60),
+                    ];
+
+                    final programBytes = encodeQtProgramBytes(
+                      uuid16: uuid16,
+                      name: name,
+                      eIntensity0to10: eIntensity,
+                      hIntensity0to10: hIntensity,
+                      eWaveForm: eWaveForm,
+                      hWaveForm: hWaveForm,
+                      steps: steps,
+                    );
+
+                    await svc.uploadProgramBytes(programBytes);
+                    await svc.progStart();
+
+                    // Optional: Poll progStatus
+                    for (int i = 0; i < 3; i++) {
+                      final status = await svc.fetchProgStatus();
+                      debugPrint('Prog Status: ${status?.rawLine ?? status.toString()}');
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Program uploaded and started successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}')),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Native mode not enabled')),
+                  );
+                }
+              },
+              child: const Text('DEBUG: Minimal Program Start'),
+            ),
+
+            // NEW: Upload+Start Testprogramm (1 kHz, 60s)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                minimumSize: const Size(140, 40),
+              ),
+              onPressed: () async {
+                try {
+                  await _ensureNativeConnected();
+
+                  final svc = CureDeviceUnlockService.instance;
+                  final program = buildSimpleTestProgram();
+                  final success = await svc.uploadProgramAndStart(program);
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Program uploaded and started successfully')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to upload and start program')),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              },
+              child: const Text('Upload+Start Test 1 kHz/60s'),
+            ),
+          ],
+        ),
       ],
     );
   }

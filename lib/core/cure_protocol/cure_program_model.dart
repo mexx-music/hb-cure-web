@@ -17,6 +17,9 @@ class CureFrequencyStep {
     required this.frequencyHz,
     required this.dwellSeconds,
   });
+
+  double get freqHz => frequencyHz;
+  int get dwellSec => dwellSeconds;
 }
 
 /// Intensitäten (E/H) als 0..15-Nibble (intern).
@@ -67,5 +70,10 @@ class CureProgram {
     required this.waveForms,
     required this.steps,
   });
-}
 
+  int get eIntensity0to10 => intensity.eNibble;
+  int get hIntensity0to10 => intensity.hNibble;
+  int get eWaveForm => waveForms.e.index;
+  int get hWaveForm => waveForms.h.index;
+  Uint8List get uuid16 => programUuid16;
+}

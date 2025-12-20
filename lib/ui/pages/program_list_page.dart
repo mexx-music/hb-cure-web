@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hbcure/models/program_item.dart';
 import 'package:hbcure/ui/pages/program_detail_page.dart' as detail;
 import '../../services/my_programs_service.dart';
+import '../../services/cure_device_unlock_service.dart';
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 
@@ -46,7 +47,7 @@ class ProgramListPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => detail.ProgramDetailPage(program: p)),
+                          MaterialPageRoute(builder: (_) => detail.ProgramDetailPage(program: p, deviceId: CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '')),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),

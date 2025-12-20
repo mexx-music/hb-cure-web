@@ -5,16 +5,19 @@ import 'package:flutter/rendering.dart';
 import '../../models/program_item.dart';
 import '../../services/cube_device_service.dart';
 import '../../services/my_programs_service.dart';
+import '../../services/cure_device_unlock_service.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/duration_wheel_picker.dart';
 import '../widgets/intensity_picker.dart';
 import '../theme/app_colors.dart';
 import 'dart:math' as math;
+import 'dart:async';
 
 class ProgramDetailPage extends StatefulWidget {
   final ProgramItem program;
+  final String deviceId;
 
-  const ProgramDetailPage({super.key, required this.program});
+  const ProgramDetailPage({super.key, required this.program, required this.deviceId});
 
   @override
   State<ProgramDetailPage> createState() => _ProgramDetailPageState();
@@ -30,6 +33,13 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   // waveform selections for electric and magnetic fields
   String _electricWaveform = 'sine';
   String _magneticWaveform = 'sine';
+
+  // --- Timer / runtime tracking for started program ---
+  Timer? _statusTimer;
+  DateTime? _startedAt;
+  Duration _elapsedLocal = Duration.zero;
+  String? _lastProgStatus;
+  // ----------------------------------------------------
 
   @override
   void initState() {
@@ -62,11 +72,130 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   void _startProgram() async {
     final minutes = _selectedMinutes ?? 15;
     final duration = Duration(minutes: minutes);
-    await CubeDeviceService().sendProgram(program: widget.program, duration: duration, powerMode: _powerMode);
-    // TODO: show feedback to user about send result
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Program sent (dummy)')));
-    debugPrint('Program ${widget.program.id} sent (dummy)');
+    final svc = CureDeviceUnlockService.instance;
+
+    // Use deviceId passed to the page, otherwise fall back to shared native connection
+    final pageDeviceId = widget.deviceId.trim();
+    final deviceId = pageDeviceId.isNotEmpty ? pageDeviceId : svc.nativeConnectedDeviceId;
+    if (deviceId == null || deviceId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No device connected. Please connect first.')),
+      );
+      return;
+    }
+
+    try {
+      // Ensure native/shared connection is active for the target device
+      if (!svc.isNativeConnected || svc.nativeConnectedDeviceId != deviceId) {
+        await svc.nativeConnect(deviceId);
+      }
+
+      await CubeDeviceService.instance.sendProgram(
+        program: widget.program,
+        duration: duration,
+        powerMode: _powerMode,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Program started')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Start failed: $e')));
+    }
+  }
+
+  // Final start flow: connect (if needed) -> send program using shared/native transport
+  Future<void> _startProgramFinal() async {
+    final svc = CureDeviceUnlockService.instance;
+
+    // DeviceId source: prefer page-provided deviceId, otherwise shared nativeConnectedDeviceId
+    final String? deviceId =
+    (widget is dynamic && (widget as dynamic).deviceId is String)
+        ? (widget as dynamic).deviceId as String
+        : svc.nativeConnectedDeviceId;
+
+    if (deviceId == null || deviceId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kein Cube verbunden. Bitte zuerst verbinden.')),
+      );
+      return;
+    }
+
+    // Ensure native/shared connection (shared transport) is active for that device
+    if (!svc.isNativeConnected || svc.nativeConnectedDeviceId != deviceId) {
+      try {
+        await svc.nativeConnect(deviceId);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Connect failed: $e')),
+        );
+        return;
+      }
+    }
+
+    final minutes = _selectedMinutes ?? 15;
+    final duration = Duration(minutes: minutes);
+
+    try {
+      await CubeDeviceService.instance.sendProgram(
+        program: widget.program,
+        duration: duration,
+        powerMode: _powerMode,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Programm gestartet')),
+      );
+
+      // Start local timer tracking
+      _statusTimer?.cancel();
+      _startedAt = DateTime.now();
+      _elapsedLocal = Duration.zero;
+      setState(() {});
+      _statusTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (!mounted) return;
+        final now = DateTime.now();
+        setState(() {
+          _elapsedLocal = now.difference(_startedAt ?? now);
+        });
+      });
+    } catch (e, st) {
+      debugPrint('StartProgram failed: $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Start fehlgeschlagen: $e')),
+      );
+    }
+  }
+
+  void _stopProgram() async {
+    try {
+      // Use native unlock service progClear as STOP
+      final ok = await CureDeviceUnlockService.instance.progClear();
+
+      // stop local timer and reset
+      _statusTimer?.cancel();
+      _statusTimer = null;
+      _startedAt = null;
+      _elapsedLocal = Duration.zero;
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? 'STOP OK (progClear)' : 'STOP fehlgeschlagen (kein OK)')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Stop failed: $e')));
+    }
+  }
+
+  @override
+  void dispose() {
+    _statusTimer?.cancel();
+    super.dispose();
   }
 
   void _showDurationPicker() {
@@ -110,14 +239,14 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
             children: [
               Padding(padding: const EdgeInsets.all(12), child: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold))),
               ...options.map((o) => ListTile(
-                    title: Text(o, style: const TextStyle(color: AppColors.textPrimary)),
-                    onTap: () {
-                      onSelected(o);
-                      Navigator.of(ctx).pop();
-                    },
-                    selected: o == current,
-                    selectedTileColor: AppColors.primary.withOpacity(0.12),
-                  )),
+                title: Text(o, style: const TextStyle(color: AppColors.textPrimary)),
+                onTap: () {
+                  onSelected(o);
+                  Navigator.of(ctx).pop();
+                },
+                selected: o == current,
+                selectedTileColor: AppColors.primary.withOpacity(0.12),
+              )),
               const SizedBox(height: 12),
             ],
           ),
@@ -259,14 +388,40 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _startProgram,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  ),
-                  child: const Text('Start program', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18), textScaleFactor: 1.0),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _startProgramFinal,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentGreen,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        ),
+                        child: const Text(
+                          'Start program',
+                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                          textScaleFactor: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _stopProgram,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        ),
+                        child: const Text(
+                          'STOP',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          textScaleFactor: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 TextButton(
@@ -277,6 +432,70 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                   ),
                   child: const Text('Help', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18), textScaleFactor: 1.0),
                 ),
+
+                const SizedBox(height: 16),
+                // --- Compact centered Timer display ---
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 120, maxWidth: 360),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Program Timer',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _startedAt == null
+                                  ? 'Timer: nicht gestartet'
+                                  : '${_elapsedLocal.inMinutes.toString().padLeft(2, '0')}:${(_elapsedLocal.inSeconds % 60).toString().padLeft(2, '0')} / ${_selectedMinutes ?? 0} min',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (_lastProgStatus != null) ...[
+                              const SizedBox(height: 6),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                                child: Text(
+                                  'Last progStatus: $_lastProgStatus',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                // ...existing closing widgets...
               ],
             ),
           ),

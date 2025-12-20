@@ -3,41 +3,37 @@
 import 'dart:convert';
 
 class ProgramItem {
-  final String id;
+  final String id; // slug
   final String name;
-  final String? code;
-  final int? variantIndex;
-  final String? notes;
+
+  final String? uuid; // ProgramUUID
+  final int? internalId; // internalID
 
   ProgramItem({
     required this.id,
     required this.name,
-    this.code,
-    this.variantIndex,
-    this.notes,
+    this.uuid,
+    this.internalId,
   });
 
   factory ProgramItem.fromJson(Map<String, dynamic> json) {
     return ProgramItem(
       id: json['id'] as String,
-      name: json['name'] as String,
-      code: json['code'] as String?,
-      variantIndex: json['variantIndex'] is int ? json['variantIndex'] as int : (json['variantIndex'] == null ? null : int.tryParse(json['variantIndex'].toString())),
-      notes: json['notes'] as String?,
+      name: (json['name'] as String?) ?? '',
+      uuid: json['uuid'] as String?,
+      internalId: json['internalId'] is int
+          ? json['internalId'] as int
+          : int.tryParse('${json['internalId']}'),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'code': code,
-      'variantIndex': variantIndex,
-      'notes': notes,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        if (uuid != null) 'uuid': uuid,
+        if (internalId != null) 'internalId': internalId,
+      };
 
   @override
   String toString() => jsonEncode(toJson());
 }
-

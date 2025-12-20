@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:hbcure/services/cure_device_unlock_service.dart';
 
 import '../../data/program_repository.dart';
 import '../../models/program_item.dart';
@@ -8,6 +9,7 @@ import '../../services/my_programs_service.dart';
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'program_detail_page.dart';
+import '../../services/program_catalog.dart';
 
 class MyProgramsPage extends StatefulWidget {
   const MyProgramsPage({super.key});
@@ -29,6 +31,8 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   // Existing loading indicator and data
   bool _loading = true;
   List<ProgramItem> _programs = [];
+  // name enrichment cache: programId -> display name (from asset catalog)
+  final Map<String, String> _displayNameById = {};
 
   @override
   void initState() {
@@ -75,6 +79,37 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
         final p = map[id];
         if (p != null) programs.add(p);
       }
+
+      // ---- name enrichment from Programs_decoded_full.json (optional) ----
+      try {
+        await ProgramCatalog.instance.ensureLoaded();
+        _displayNameById.clear();
+        for (final program in programs) {
+          final current = program.name.trim();
+          final isPlaceholder = current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
+          if (!isPlaceholder) {
+            _displayNameById[program.id] = program.name;
+            continue;
+          }
+          final byUuid = ProgramCatalog.instance.byUuid(program.id);
+          if (byUuid != null) {
+            _displayNameById[program.id] = ProgramCatalog.instance.name(byUuid, lang: 'DE');
+            continue;
+          }
+          final intId = int.tryParse(program.id);
+          if (intId != null) {
+            final byInt = ProgramCatalog.instance.byInternalId(intId);
+            if (byInt != null) {
+              _displayNameById[program.id] = ProgramCatalog.instance.name(byInt, lang: 'DE');
+              continue;
+            }
+          }
+          _displayNameById[program.id] = program.name;
+        }
+      } catch (_) {
+        // Non-fatal: if program catalog missing or parse fails, ignore enrichment
+      }
+      // -------------------------------------------------------------------
 
       if (!mounted) return;
       setState(() {
@@ -143,7 +178,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                       onTap: () async {
                         await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => ProgramDetailPage(program: program)),
+                          MaterialPageRoute(builder: (_) => ProgramDetailPage(program: program, deviceId: CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '')),
                         );
                         await _loadPrograms();
                       },
@@ -153,7 +188,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                           children: [
                             Icon(Icons.play_arrow, color: AppColors.primary),
                             const SizedBox(width: 10),
-                            Expanded(child: Text(program.name, style: TextStyle(color: AppColors.textPrimary))),
+                            Expanded(child: Text(_displayNameById[program.id] ?? program.name, style: TextStyle(color: AppColors.textPrimary))),
                             IconButton(
                               icon: Icon(Icons.delete, color: AppColors.textSecondary),
                               onPressed: () async => _remove(program.id),
