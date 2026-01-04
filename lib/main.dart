@@ -7,6 +7,7 @@ import 'ui/pages/start_page.dart';
 import 'ui/theme/app_colors.dart';
 import 'dart:async';
 import 'services/app_memory.dart';
+import 'i18n/program_name_localizer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,14 @@ Future<void> main() async {
   }
 
   await AppMemory.instance.init();
+
+  // Ensure program name CSV is loaded early so localized program names are available
+  // as soon as the UI is shown.
+  try {
+    await ProgramNameLocalizer.instance.ensureLoaded();
+  } catch (_) {
+    // non-fatal: proceed even if CSV load failed
+  }
 
   runApp(const MyApp());
 }

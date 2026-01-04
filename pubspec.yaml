@@ -21,6 +21,10 @@ dependencies:
   yaml: ^3.1.1
 
   cupertino_icons: ^1.0.8
+  # Localization packages required by gen_l10n
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -35,3 +39,4 @@ flutter:
     - assets/programs.json
     - assets/programs/Programs_decoded_full.json
     - doc/app_memory/40_ble_profiles.yaml
+    - assets/program_names_DE_EN.csv
