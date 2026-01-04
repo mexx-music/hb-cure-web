@@ -3094,6 +3094,27 @@
           "internalId": 22300
         }
       ]
+    },
+    {
+      "id": "detoxification",
+      "title": "Entgiftung Frequenzen",
+      "color": "yellow",
+      "programs": [],
+      "subcategories": []
+    },
+    {
+      "id": "post_operation",
+      "title": "Nach Operation Frequenzen",
+      "color": "yellow",
+      "programs": [],
+      "subcategories": []
+    },
+    {
+      "id": "therapeutic",
+      "title": "Therapeutische Frequenzen",
+      "color": "yellow",
+      "programs": [],
+      "subcategories": []
     }
   ]
 }

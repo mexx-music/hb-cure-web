@@ -67,19 +67,27 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.borderSubtle),
                       ),
-                      child: ListTile(
-                        leading: CircleAvatar(backgroundColor: AppColors.primaryMuted, child: Icon(Icons.apps, color: AppColors.textPrimary)),
-                        title: Text(
-                          ProgramNameLocalizer.instance.displayName(keyEn: c.title, langCode: langCode),
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                        onTap: () {
-                          // HBDBG: log category tap before navigation
-                          debugPrint('TAP category id=${c.id} title=${c.title} programs=${(c.programs?.length ?? 0)} subcats=${(c.subcategories?.length ?? 0)}');
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(category: c)));
-                        },
-                      ),
+                      child: Builder(builder: (ctx) {
+                        // compute a marker color based on the category color field
+                        final markerColor = (c.color != null && c.color!.trim().toLowerCase() == 'yellow')
+                            ? AppColors.yellow
+                            : AppColors.primaryMuted;
+                        // Debug: output the configured color/key so we can verify mappings
+                        debugPrint('CAT_COLOR id=${c.id} color=${c.color}');
+                        return ListTile(
+                          leading: CircleAvatar(backgroundColor: markerColor, child: Icon(Icons.apps, color: AppColors.textPrimary)),
+                          title: Text(
+                            ProgramNameLocalizer.instance.displayName(keyEn: c.title, langCode: langCode),
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                          onTap: () {
+                            // HBDBG: log category tap before navigation
+                            debugPrint('TAP category id=${c.id} title=${c.title} programs=${(c.programs?.length ?? 0)} subcats=${(c.subcategories?.length ?? 0)}');
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(category: c)));
+                          },
+                        );
+                      }),
                     ),
                   ),
                 ),

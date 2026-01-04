@@ -7,54 +7,78 @@ import 'package:hbcure/i18n/program_name_localizer.dart';
 import 'package:hbcure/services/program_language_controller.dart';
 
 class CategoriesPage extends StatelessWidget {
-  final ProgramCategory category;
+	final ProgramCategory category;
 
-  const CategoriesPage({super.key, required this.category});
+	const CategoriesPage({super.key, required this.category});
 
-  @override
-  Widget build(BuildContext context) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
-    if (category.subcategories.isEmpty) {
-      // No subcategories -> show programs directly
-      return ProgramListPage(title: category.title, programs: category.programs);
-    }
+	@override
+	Widget build(BuildContext context) {
+		final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+		// Robust color selection for category avatars: only treat exact 'yellow' (trim/case-insensitive)
+		// as yellow; otherwise keep existing muted primary color so nothing gets forced to green.
+		final bgColor = (category.color != null && category.color!.trim().toLowerCase() == 'yellow')
+			? AppColors.yellow
+			: AppColors.primaryMuted;
+		if (category.subcategories.isEmpty) {
+			// No subcategories -> show programs directly
+			return ProgramListPage(title: category.title, programs: category.programs);
+		}
 
-    return GradientBackground(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          children: [
-            Row(
-              children: [
-                IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
-                Expanded(child: Text(category.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary, fontSize: 18))),
-                IconButton(icon: const Icon(Icons.tune, color: AppColors.textPrimary), onPressed: () => debugPrint('Filter')),
-              ],
-            ),
-            const SizedBox(height: 6),
-            for (final sub in category.subcategories)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6.0),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderSubtle)),
-                    child: ListTile(
-                      leading: CircleAvatar(backgroundColor: AppColors.primaryMuted, child: const Icon(Icons.folder, color: AppColors.textPrimary)),
-                      title: Text(
-                        ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode),
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                      ),
-                      trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProgramListPage(title: sub.title, programs: sub.programs))),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+		// Highlight lists (both EN and DE variants) for the three special categories
+		final Set<String> highlightEn = {
+			'Therapeutic Frequencies',
+			'Detoxification Frequencies',
+			'After Operation Frequencies',
+		};
+		final Set<String> highlightDe = {
+			'Therapeutische Frequenzen',
+			'Entgiftung Frequenzen',
+			'Nach Operation Frequenzen',
+		};
+
+		return GradientBackground(
+			child: Padding(
+				padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+				child: ListView(
+					padding: const EdgeInsets.only(bottom: 12.0),
+					children: [
+						Row(
+							children: [
+								IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
+								Expanded(child: Text(category.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary, fontSize: 18))),
+								IconButton(icon: const Icon(Icons.tune, color: AppColors.textPrimary), onPressed: () => debugPrint('Filter')),
+							],
+						),
+						const SizedBox(height: 6),
+						for (final sub in category.subcategories)
+							Padding(
+								padding: const EdgeInsets.only(bottom: 6.0),
+								child: Material(
+									color: Colors.transparent,
+									child: Container(
+										decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderSubtle)),
+										child: Builder(builder: (ctx) {
+											// Compute localized title and determine if this subcategory should be highlighted
+											final subTitleEn = sub.title.trim();
+											final subTitleDe = ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode).trim();
+											final isHighlight = highlightEn.contains(subTitleEn) || highlightDe.contains(subTitleDe) || highlightEn.contains(subTitleDe) || highlightDe.contains(subTitleEn);
+											final subBgColor = isHighlight ? AppColors.yellow : bgColor;
+											return ListTile(
+												leading: CircleAvatar(backgroundColor: subBgColor, child: const Icon(Icons.folder, color: AppColors.textPrimary)),
+												title: Text(
+													ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode),
+													style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+												),
+												trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+												onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProgramListPage(title: sub.title, programs: sub.programs))),
+											);
+										}),
+								),
+								),
+						),
+					],
+				),
+			),
+		);
+	}
 }

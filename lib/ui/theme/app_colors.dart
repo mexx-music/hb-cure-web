@@ -23,6 +23,8 @@ class AppColors {
 
   // Other accents
   static const Color warmAccent = Color(0xFFF5B94C); // pyramid warm yellow
+  // Legacy alias used in some places
+  static const Color yellow = warmAccent;
   // Accent colors used for action buttons
   static const Color accentGreen = Color(0xFF00C48C);
   static const Color accentRed = Color(0xFFFF4C5B);
