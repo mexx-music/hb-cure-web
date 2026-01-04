@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:hbcure/ui/pages/start_page.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import '../theme/app_colors.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/services/app_memory.dart';
+import 'package:hbcure/core/program_mode.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -12,25 +15,29 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String _filter = 'Novice';
+  // ProgramMode-backed selection (replaces String _filter)
+  ProgramMode _mode = ProgramMode.beginner;
   bool _reconnect = true;
   bool _switchAfterAdd = true;
 
   @override
+  void initState() {
+    super.initState();
+    // initialize _mode from AppMemory.programMode
+    _mode = AppMemory.instance.programMode;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // AppLocalizations may be unavailable during early init; avoid force-unwrapping to prevent
+    // "Null check operator used on a null value" crashes. Use localizations only where needed.
+    final t = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Settings',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
 
           // ---- NEW: CureBase Debug/Info Card (minimal, no state mgmt) ----
           const _CureBaseInfoCard(),
@@ -38,14 +45,22 @@ class _SettingsPageState extends State<SettingsPage> {
           // -------------------------------------------------------------
 
           Text('Program Filter', style: TextStyle(color: AppColors.textPrimary)),
-          DropdownButton<String>(
-            value: _filter,
+          DropdownButton<ProgramMode>(
+            value: _mode,
             items: const [
-              DropdownMenuItem(value: 'Novice', child: Text('Novice')),
-              DropdownMenuItem(value: 'Standard', child: Text('Standard')),
-              DropdownMenuItem(value: 'Expert', child: Text('Expert')),
+              DropdownMenuItem(value: ProgramMode.beginner, child: Text('Novice')),
+              DropdownMenuItem(value: ProgramMode.advanced, child: Text('Standard')),
+              DropdownMenuItem(value: ProgramMode.expert, child: Text('Expert')),
             ],
-            onChanged: (v) => setState(() => _filter = v ?? 'Novice'),
+            onChanged: (v) {
+              final newMode = v ?? ProgramMode.beginner;
+              debugPrint('SETTINGS dropdown -> $newMode');
+              setState(() {
+                _mode = newMode;
+              });
+              // update shared AppMemory state
+              AppMemory.instance.programMode = newMode;
+            },
             style: TextStyle(color: AppColors.textPrimary),
             dropdownColor: AppColors.cardBackground,
           ),

@@ -5,6 +5,8 @@ import 'package:hbcure/ui/pages/devices_page.dart';
 import 'package:hbcure/ui/pages/settings_page.dart';
 import 'package:hbcure/ui/theme/app_colors.dart';
 import 'package:hbcure/ui/widgets/program_lang_toggle.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -26,23 +28,26 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const MyProgramsPage(),
-      const AvailableProgramsPage(),
-      const DevicesPage(),
-      const SettingsPage(),
+      MyProgramsPage(),
+      AvailableProgramsPage(),
+      DevicesPage(),
+      SettingsPage(),
     ];
+
+    final t = AppLocalizations.of(context);
+    // Bind bottom-nav labels to ProgramLangController (minimal, two-line German labels)
+    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
 
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AppBar(
-          title: Text(_titles[_currentIndex]),
+          title: Text(_appBarTitle(context)),
           actions: [
             ProgramLangToggle(onChanged: () => setState(() {})),
           ],
         ),
       ),
-      // Pages themselves reserve bottom space for the bottom navigation where needed.
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -56,25 +61,89 @@ class _MainShellState extends State<MainShell> {
             child: Material(
               color: AppColors.navBarBackground,
               elevation: 8,
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                selectedItemColor: AppColors.navBarActive,
-                unselectedItemColor: AppColors.navBarInactive,
-                selectedFontSize: 12,
-                unselectedFontSize: 12,
-                iconSize: 20,
-                onTap: (idx) => setState(() => _currentIndex = idx),
-                items: const [
-                  BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'My Programs'),
-                  BottomNavigationBarItem(icon: Icon(Icons.apps), label: 'Available'),
-                  BottomNavigationBarItem(icon: Icon(Icons.devices_other), label: 'Devices'),
-                  BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-                ],
+              child: SizedBox(
+                height: 72, // Pill-Höhe (wie vorher optisch), keine Schriftgröße geändert
+                child: Row(
+                  children: [
+                    _NavTextTab(
+                      label: isDe ? 'Meine\nProgramme' : 'My\nPrograms',
+                      selected: _currentIndex == 0,
+                      onTap: () => setState(() => _currentIndex = 0),
+                    ),
+                    _NavTextTab(
+                      label: isDe ? 'Verfügbare\nProgramme' : 'Available\nPrograms',
+                      selected: _currentIndex == 1,
+                      onTap: () => setState(() => _currentIndex = 1),
+                    ),
+                    _NavTextTab(
+                      label: isDe ? 'Geräte' : 'Devices',
+                      selected: _currentIndex == 2,
+                      onTap: () => setState(() => _currentIndex = 2),
+                    ),
+                    _NavTextTab(
+                      label: isDe ? 'Einstellungen' : 'Settings',
+                      selected: _currentIndex == 3,
+                      onTap: () => setState(() => _currentIndex = 3),
+                    ),
+                  ],
+                ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper to provide localized AppBar titles based on the current index
+  String _appBarTitle(BuildContext context) {
+    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+
+    switch (_currentIndex) {
+      case 0:
+        return isDe ? 'Meine Programme' : 'My Programs';
+      case 1:
+        return isDe ? 'Verfügbare Programme' : 'Available Programs';
+      case 2:
+        return isDe ? 'Geräte' : 'Devices';
+      case 3:
+        return isDe ? 'Einstellungen' : 'Settings';
+      default:
+        return '';
+    }
+  }
+}
+
+class _NavTextTab extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavTextTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Wichtig: Center + textAlign.center => 100% mittig, auch bei 2 Zeilen
+    final style = TextStyle(
+      fontSize: 12, // NICHT geändert
+      height: 1.15, // nur Zeilenblock "ruhiger"
+      color: selected ? AppColors.navBarActive : AppColors.navBarInactive,
+    );
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: style,
+            maxLines: 2,
+            overflow: TextOverflow.visible,
           ),
         ),
       ),

@@ -6,7 +6,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:yaml/yaml.dart' as yaml;
 import '../models/ble_device_profile.dart';
 
-class AppMemory {
+import '../core/program_mode.dart';
+
+class AppMemory extends ChangeNotifier {
   AppMemory._internal();
 
   static final AppMemory instance = AppMemory._internal();
@@ -16,6 +18,17 @@ class AppMemory {
   final Map<String, dynamic> deviceProfilesCache = {};
   String? lastConnectedDeviceId;
   final Map<String, bool> featureFlags = {};
+  // Program mode (beginner/advanced/expert) used by ProgramListPage
+  // Backed by a private field so we can notify listeners on change.
+  ProgramMode _programMode = ProgramMode.expert;
+
+  ProgramMode get programMode => _programMode;
+
+  set programMode(ProgramMode v) {
+    if (_programMode == v) return;
+    _programMode = v;
+    notifyListeners();
+  }
 
   bool _initialized = false;
 

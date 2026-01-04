@@ -4,6 +4,8 @@ import 'package:hbcure/models/program_category.dart';
 import 'package:hbcure/ui/pages/categories_page.dart';
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
+import 'package:hbcure/i18n/program_name_localizer.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 
 class AvailableProgramsPage extends StatefulWidget {
   const AvailableProgramsPage({super.key});
@@ -33,6 +35,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
     return GradientBackground(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
@@ -66,9 +69,16 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                       ),
                       child: ListTile(
                         leading: CircleAvatar(backgroundColor: AppColors.primaryMuted, child: Icon(Icons.apps, color: AppColors.textPrimary)),
-                        title: Text(c.title, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                        title: Text(
+                          ProgramNameLocalizer.instance.displayName(keyEn: c.title, langCode: langCode),
+                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                        ),
                         trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(category: c))),
+                        onTap: () {
+                          // HBDBG: log category tap before navigation
+                          debugPrint('TAP category id=${c.id} title=${c.title} programs=${(c.programs?.length ?? 0)} subcats=${(c.subcategories?.length ?? 0)}');
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(category: c)));
+                        },
                       ),
                     ),
                   ),

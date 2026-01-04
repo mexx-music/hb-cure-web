@@ -1,0 +1,3564 @@
+{
+  "rootTitle": "Available Programs",
+  "categories": [
+    {
+      "id": "animals",
+      "title": "Animals",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "animals_canine_parvo_virus_1",
+          "name": "Canine Parvo-Virus",
+          "uuid": "2bc00286-b814-5fb2-b04d-a9cbf4270257",
+          "internalId": 22389,
+          "level": 1
+        },
+        {
+          "id": "animals_canine_parvo_virus_b_1",
+          "name": "Canine Parvo-Virus B",
+          "uuid": "4262b0be-1341-57a8-820c-bd7ab96f0bad",
+          "internalId": 22386,
+          "level": 1
+        },
+        {
+          "id": "animals_canine_parvo_virus_m_1",
+          "name": "Canine Parvo-Virus M",
+          "uuid": "9751f6c1-0f6a-5904-b5af-c649b9c28bdd",
+          "internalId": 22387,
+          "level": 1
+        },
+        {
+          "id": "animals_feline_immunodeficiency_virus_fiv_1",
+          "name": "Feline ImmunoDeficiency Virus (FIV)",
+          "uuid": "a8a62f03-6ce8-59bf-bb94-bcf276a3f719",
+          "internalId": 22383,
+          "level": 1
+        },
+        {
+          "id": "animals_feline_leukemia_1",
+          "name": "Feline Leukemia",
+          "uuid": "9c06f4d2-3d0c-5314-9d7a-80daa81f462b",
+          "internalId": 22385,
+          "level": 1
+        },
+        {
+          "id": "animals_fleas_1",
+          "name": "Fleas",
+          "uuid": "6523cac8-c302-52ff-8799-54f3a2acd02a",
+          "internalId": 22382,
+          "level": 1
+        },
+        {
+          "id": "animals_heart_2_1",
+          "name": "Heart 2",
+          "uuid": "ce225a3b-db4c-5abe-8c9f-aaecde856cea",
+          "internalId": 22393,
+          "level": 1
+        },
+        {
+          "id": "animals_hemobartonella_felis_1",
+          "name": "Hemobartonella Felis",
+          "uuid": "51053a82-21da-5d77-82c9-c5e48caf99ae",
+          "internalId": 22384,
+          "level": 1
+        },
+        {
+          "id": "animals_new_canine_parvo_virus_1",
+          "name": "New Canine Parvo-Virus",
+          "uuid": "ab68f520-86c3-578d-825e-2441a63f9d6f",
+          "internalId": 22388,
+          "level": 1
+        },
+        {
+          "id": "animals_parvovirus_b19_1",
+          "name": "ParvoVirus B19",
+          "uuid": "9db3c9d9-b4e5-5ff1-b532-7dc9412d0492",
+          "internalId": 22390,
+          "level": 1
+        },
+        {
+          "id": "animals_pericarditis_1",
+          "name": "Pericarditis",
+          "uuid": "882fa50d-7493-595c-8b29-be515eb4986a",
+          "internalId": 22391,
+          "level": 1
+        },
+        {
+          "id": "animals_rhinopneumonia_1",
+          "name": "Rhinopneumonia",
+          "uuid": "70d77705-3ff9-52b6-bf41-08a4122f1f07",
+          "internalId": 22392,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "id": "antiparasitic",
+      "title": "Antiparasitic",
+      "subcategories": [
+        {
+          "id": "allergy",
+          "title": "Allergy",
+          "programs": [
+            {
+              "id": "antiparasitic_allergy_allergy_1",
+              "name": "Allergy",
+              "uuid": "deb46e8b-6e60-5495-b78a-c99849e23bfd",
+              "internalId": 22303,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_allergy_and_rhinitis_1",
+              "name": "Allergy and Rhinitis",
+              "uuid": "99f8b570-f9e2-5674-bd5d-bbd7b56a80b7",
+              "internalId": 22304,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_ant_stings_1",
+              "name": "Ant Stings",
+              "uuid": "de48a91b-b29b-53ef-b3a2-62793b24c275",
+              "internalId": 22317,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_asthma_1",
+              "name": "Asthma",
+              "uuid": "3aef2811-1252-5b4e-b6c6-74fb69c3cc1c",
+              "internalId": 22307,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_asthma_parasites_1",
+              "name": "Asthma Parasites",
+              "uuid": "6332da1b-a03c-5d0c-8558-0312f7551b09",
+              "internalId": 22306,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_asthma_caused_by_ascariasis_1",
+              "name": "Asthma caused by Ascariasis",
+              "uuid": "7371c402-1c98-5ddc-a3fd-a1208800fa60",
+              "internalId": 22305,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_asthmatic_bronchitis_1",
+              "name": "Asthmatic Bronchitis",
+              "uuid": "29241502-5396-5abe-b923-e652d3986f32",
+              "internalId": 22310,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_asthmatic_seizure_1",
+              "name": "Asthmatic Seizure",
+              "uuid": "40af475d-cfa2-5d8c-a050-c2e6afb88c62",
+              "internalId": 22309,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_common_asthma_1",
+              "name": "Common Asthma",
+              "uuid": "ecc88f0d-0965-53a7-8ce7-46b32ddf3f89",
+              "internalId": 22308,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_immune_system_stabilization_1",
+              "name": "Immune System Stabilization",
+              "uuid": "e78a75d7-fbac-5efa-8f6e-fcddf0d8db4d",
+              "internalId": 22315,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_insect_stings_1",
+              "name": "Insect Stings",
+              "uuid": "0ddb171c-e0f4-5c47-bf02-98dba6da167f",
+              "internalId": 22316,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_laryngeal_edema_1",
+              "name": "Laryngeal Edema",
+              "uuid": "4f52bcad-1977-5333-b546-e8754bd2eb23",
+              "internalId": 22313,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_mucosal_hypersensitivity_1",
+              "name": "Mucosal Hypersensitivity",
+              "uuid": "75696808-4656-595d-b25c-34bdee3b9a41",
+              "internalId": 22311,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_pollinosis_1",
+              "name": "Pollinosis",
+              "uuid": "0f8b69c9-a63e-5fc7-8dd9-4eeccbc63382",
+              "internalId": 22314,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_respiratory_allergy_1",
+              "name": "Respiratory Allergy",
+              "uuid": "c5386924-d35a-5196-a722-cc34cc6ba88d",
+              "internalId": 22302,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_allergy_sun_allergy_1",
+              "name": "Sun Allergy",
+              "uuid": "404b68dc-1511-5f23-ac49-40773b92bed1",
+              "internalId": 22301,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "arthrology",
+          "title": "Arthrology",
+          "programs": [
+            {
+              "id": "antiparasitic_arthrology_arthritis_1",
+              "name": "Arthritis",
+              "uuid": "63aebb39-3731-5b21-b624-89f68c817600",
+              "internalId": 22323,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_arthritis_2",
+              "name": "Arthritis",
+              "uuid": "63aebb39-3731-5b21-b624-89f68c817600",
+              "internalId": 22323,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_arthritis_basic_1",
+              "name": "Arthritis-Basic",
+              "uuid": "3314813b-1a62-5081-a17c-8ed0f9f6a820",
+              "internalId": 22318,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_arthrosis_1",
+              "name": "Arthrosis",
+              "uuid": "41b407c2-bb57-5cdd-a21e-f4983b6e2cd8",
+              "internalId": 22321,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_bursitis_pain_1",
+              "name": "Bursitis Pain",
+              "uuid": "14a5d884-c6e9-5f47-b38a-81b2084d6e97",
+              "internalId": 22322,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_frozen_shoulder_1",
+              "name": "Frozen Shoulder",
+              "uuid": "3c9eecb5-6b4a-5281-a97b-7c7d023a13dd",
+              "internalId": 22330,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_gout_1",
+              "name": "Gout",
+              "uuid": "2ee71b08-9659-5b4c-bf67-470ee4d65e24",
+              "internalId": 22329,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_octeoarthritis_1",
+              "name": "OcteoArthritis",
+              "uuid": "214ed1a5-6cdc-54ab-9fde-f968fcec9f42",
+              "internalId": 22328,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_octeoarthritis_pain_1",
+              "name": "OcteoArthritis Pain",
+              "uuid": "6580ce3c-ca43-55f6-acd5-ae4784bcf205",
+              "internalId": 22327,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_secondary_arthritis_1",
+              "name": "Secondary Arthritis",
+              "uuid": "038f08a7-4a04-59d7-a981-70e8465c03b0",
+              "internalId": 22319,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_tendinitis_1",
+              "name": "Tendinitis",
+              "uuid": "aac05d52-6785-5dbf-983e-9a66db2b43f2",
+              "internalId": 22324,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_arthrology_tennis_elbow_1",
+              "name": "Tennis Elbow",
+              "uuid": "27e23584-35bc-5685-a9dd-d539d085d83d",
+              "internalId": 22326,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "dentistry",
+          "title": "Dentistry",
+          "programs": [
+            {
+              "id": "antiparasitic_dentistry_alveolitis_1",
+              "name": "Alveolitis",
+              "uuid": "10837a6e-394d-5797-9c5c-4a038f1c7a1c",
+              "internalId": 22884,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_aphthous_stomatitis_1",
+              "name": "Aphthous Stomatitis",
+              "uuid": "42228172-c842-5e3d-9340-083c9d752345",
+              "internalId": 22886,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_caries_1",
+              "name": "Caries",
+              "uuid": "e2be216f-1e15-5706-ab5f-0c3786ad38c5",
+              "internalId": 22898,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_dental_frequencies_1",
+              "name": "Dental Frequencies",
+              "uuid": "5e4bcbb5-270f-5b40-8229-bd9daa10f5c0",
+              "internalId": 22900,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_fistula_1",
+              "name": "Fistula",
+              "uuid": "e35e1a6a-7c93-51d5-8497-78ebd6f1403b",
+              "internalId": 22906,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_gingivitis_1",
+              "name": "Gingivitis",
+              "uuid": "4286f0b5-ad32-5cb7-bd30-a013fbc571de",
+              "internalId": 22891,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_gingivitis_2",
+              "name": "Gingivitis",
+              "uuid": "4286f0b5-ad32-5cb7-bd30-a013fbc571de",
+              "internalId": 22891,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_gingivitis_stomatitis_v_1",
+              "name": "Gingivitis-Stomatitis v",
+              "uuid": "ba14dc18-c8dd-597a-9e75-42e3f3aebb10",
+              "internalId": 22889,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_gnathitis_1",
+              "name": "Gnathitis",
+              "uuid": "1f6ac2f4-9a1d-5097-ab3c-03f652965601",
+              "internalId": 22888,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_granulomatous_periodontitis_1",
+              "name": "Granulomatous Periodontitis",
+              "uuid": "aa69ef23-8904-5dcb-bd07-0306921c2b21",
+              "internalId": 22892,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_halitosis_1",
+              "name": "Halitosis",
+              "uuid": "7d5ea911-a628-51db-a6b6-b704510737a1",
+              "internalId": 22910,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_infections_of_oral_cavity_1",
+              "name": "Infections of Oral Cavity",
+              "uuid": "b26b0a61-022f-59e5-9432-4e5bf0004968",
+              "internalId": 22897,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_mucosal_disorder_1",
+              "name": "Mucosal Disorder",
+              "uuid": "20708093-8d39-5ec6-aa53-53696920524b",
+              "internalId": 22904,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_oral_fissure_1",
+              "name": "Oral Fissure",
+              "uuid": "30b30a45-f6f9-5625-8f76-b57615fce1af",
+              "internalId": 22909,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_parodontosen_1",
+              "name": "Parodontosen"
+            },
+            {
+              "id": "antiparasitic_dentistry_periodontitis_1",
+              "name": "Periodontitis",
+              "uuid": "f1afbff7-27e9-5a26-90d5-c02c5f720ee5",
+              "internalId": 22901,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_periostitis_1",
+              "name": "Periostitis",
+              "uuid": "9d5902bd-8bb6-5272-a42c-2497445af12e",
+              "internalId": 22893,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_pulpitis_1",
+              "name": "Pulpitis",
+              "uuid": "e017813d-9abc-5628-940a-e6150030e447",
+              "internalId": 22905,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_pyorrhea_1",
+              "name": "Pyorrhea",
+              "uuid": "a73bd4ce-5fbb-5c8f-b086-ea9159de9ebf",
+              "internalId": 22903,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_stomatitis_1",
+              "name": "Stomatitis",
+              "uuid": "c991b406-4843-5210-8c9f-e2afb3255303",
+              "internalId": 22907,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_tongue_ulcer_1",
+              "name": "Tongue Ulcer",
+              "uuid": "8d18a8fd-832f-56b7-84a0-cccca951ee2c",
+              "internalId": 22911,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_tooth_ache_1",
+              "name": "Tooth Ache",
+              "uuid": "084f976a-0faf-55c6-9460-386c155bce63",
+              "internalId": 22894,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dentistry_tooth_infections_and_ears_1",
+              "name": "Tooth Infections and Ears",
+              "uuid": "e5a1ac6a-d902-5700-8349-5b072d9d91f0",
+              "internalId": 22896,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "dermatology",
+          "title": "Dermatology",
+          "programs": [
+            {
+              "id": "antiparasitic_dermatology_foot_callus_1",
+              "name": "Foot Callus",
+              "uuid": "d0901676-de2e-5e09-8899-1f854403c549",
+              "internalId": 22554,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_acne_1",
+              "name": "Acne",
+              "uuid": "615bee57-e9e2-5a19-8e05-13c617c9a231",
+              "internalId": 22542,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_acne_secondary_1",
+              "name": "Acne-Secondary",
+              "uuid": "4e4c4167-ded6-51af-8208-fdbae8501c84",
+              "internalId": 22543,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_acneiform_rash_1",
+              "name": "Acneiform Rash",
+              "uuid": "344c422a-ce30-5635-a084-6c36b0e60e68",
+              "internalId": 22544,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_alopecia_1",
+              "name": "Alopecia",
+              "uuid": "12a1fe4e-9dc9-5d48-94fa-d84061e252bb",
+              "internalId": 22556,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_atopic_dermatitis_1",
+              "name": "Atopic Dermatitis",
+              "uuid": "9956ad1c-5022-581b-ac83-21ea62a4ac0d",
+              "internalId": 22545,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_bacterial_eczema_1",
+              "name": "Bacterial Eczema",
+              "uuid": "e413dce8-0f43-5339-a4e7-6e7d5b1b24eb",
+              "internalId": 22587,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_callus_1",
+              "name": "Callus",
+              "uuid": "28423327-1966-52a1-be15-2536e22f4d85",
+              "internalId": 22555,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_contagious_dermatitis_1",
+              "name": "Contagious Dermatitis",
+              "uuid": "2071a220-4759-50a6-94dc-b658ae63482a",
+              "internalId": 22551,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_dermatophytosis_1",
+              "name": "Dermatophytosis",
+              "uuid": "71bbfe43-c60b-5b28-8148-d32f47fdec4d",
+              "internalId": 22572,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_eczema_3_1",
+              "name": "Eczema 3",
+              "uuid": "37d1c153-416b-57a0-8392-ef29b696cd6a",
+              "internalId": 22586,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_eczema_herpes_1",
+              "name": "Eczema-Herpes",
+              "uuid": "afba3273-4b24-58bf-887d-bb095dcf5f05",
+              "internalId": 22583,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_erysipelas_1",
+              "name": "Erysipelas",
+              "uuid": "edab5df5-98a2-5305-a194-25b1f872062b",
+              "internalId": 22569,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_erysipelas_2",
+              "name": "Erysipelas",
+              "uuid": "edab5df5-98a2-5305-a194-25b1f872062b",
+              "internalId": 22569,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_erythema_1",
+              "name": "Erythema",
+              "uuid": "395d9503-3b80-52e9-b10a-b39ae291399d",
+              "internalId": 22588,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_furunculosis_herpetiformis_1",
+              "name": "Furunculosis Herpetiformis",
+              "uuid": "d37bf69a-1e34-5407-90ba-62edb2662ef1",
+              "internalId": 22578,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_fussures_1",
+              "name": "Fussures",
+              "uuid": "11ad594e-2be5-5b15-8402-fda99230a5df",
+              "internalId": 22575,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_hair_growth_stimulation_1",
+              "name": "Hair Growth Stimulation",
+              "uuid": "834816c5-2713-50f0-8bc9-5a3b8ec601b3",
+              "internalId": 22571,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_hair_regeneration_1",
+              "name": "Hair Regeneration",
+              "uuid": "0ecda8f8-acac-56f2-8008-8d376a04963e",
+              "internalId": 22566,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_nevus_1",
+              "name": "Nevus",
+              "uuid": "b1520a3e-c4b6-5152-a97f-a0f8f95505ad",
+              "internalId": 22567,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_non_herpetic_eczema_1",
+              "name": "Non Herpetic Eczema",
+              "uuid": "f446a4fc-99ca-5ea8-b668-6f465004985c",
+              "internalId": 22584,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_pemphigus_1",
+              "name": "Pemphigus",
+              "uuid": "ade6a06f-2dcd-5023-af1a-9aab55a49608",
+              "internalId": 22564,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_plantar_warts_1",
+              "name": "Plantar Warts",
+              "uuid": "bc6560e2-b91f-5bcd-ab99-8117165881c7",
+              "internalId": 22560,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_psoriasis_1",
+              "name": "Psoriasis",
+              "uuid": "c13297ce-60e6-5f7f-832f-68f30f26f6e7",
+              "internalId": 22561,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_psoriasis_secondary_1",
+              "name": "Psoriasis-Secondary",
+              "uuid": "a7d2a9f9-c855-5132-98aa-da542932057f",
+              "internalId": 22562,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_psoriatic_eruption_1",
+              "name": "Psoriatic Eruption",
+              "uuid": "baa2d3e1-17c3-5328-9b32-c2ed9100c573",
+              "internalId": 22563,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_pyoderma_1",
+              "name": "Pyoderma",
+              "uuid": "fce8d583-9dbb-5fd1-9e30-42602635895a",
+              "internalId": 22559,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_rhytide_effacement_1",
+              "name": "Rhytide Effacement",
+              "uuid": "e5dc6f9b-ba47-5e16-9527-dc83240a8c07",
+              "internalId": 22565,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_scabies_1",
+              "name": "Scabies",
+              "uuid": "1f8c7814-6d47-505c-9299-9b0846143e52",
+              "internalId": 22580,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_scabious_pruritus_1",
+              "name": "Scabious Pruritus",
+              "uuid": "5cc75483-05c1-5bad-932e-c15f7cab014d",
+              "internalId": 22581,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_seborrhea_1",
+              "name": "Seborrhea",
+              "uuid": "1b73c585-73dd-5856-8a6e-b86aef09f70a",
+              "internalId": 22558,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_seborrhea_furfuracea_1",
+              "name": "Seborrhea Furfuracea",
+              "uuid": "a7ed8d63-8043-557d-b3e2-8f4fc7d7022f",
+              "internalId": 22557,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_sensitive_skin_1",
+              "name": "Sensitive Skin",
+              "uuid": "2d383afe-2ded-58d7-96ad-824250d74d2d",
+              "internalId": 22582,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_skin_problems_1",
+              "name": "Skin Problems",
+              "uuid": "4b4ffbca-626a-55e5-91ba-8dbae7adc60d",
+              "internalId": 22550,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_skin_rash_1_1",
+              "name": "Skin Rash 1",
+              "uuid": "fe021cac-793b-5b80-97aa-7973ced258ac",
+              "internalId": 22549,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_skin_tonus_1",
+              "name": "Skin Tonus",
+              "uuid": "4935a6c9-5e7b-501f-854d-dd1e58139358",
+              "internalId": 22574,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_syphilis_sore_1",
+              "name": "Syphilis Sore",
+              "uuid": "b91570c1-5b51-540b-9858-48fd08bd8d82",
+              "internalId": 22570,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_tinea_1",
+              "name": "Tinea",
+              "uuid": "de8bd750-820f-5453-a208-31badad8eecc",
+              "internalId": 22552,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_varicos_eczema_1",
+              "name": "Varicos Eczema",
+              "uuid": "b215883c-4101-5dd2-9bc8-865459f3b015",
+              "internalId": 22585,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_vitiligo_1",
+              "name": "Vitiligo",
+              "uuid": "f6f97967-dd49-5850-a60f-137c19a5e6f8",
+              "internalId": 22548,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_warts_1",
+              "name": "Warts",
+              "uuid": "98dc611e-c696-5f3f-9034-f1c0dc0ed461",
+              "internalId": 22547,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_dermatology_warts_basic_1",
+              "name": "Warts-Basic"
+            }
+          ]
+        },
+        {
+          "id": "effects",
+          "title": "Effects",
+          "programs": [
+            {
+              "id": "antiparasitic_effects_acidosis_1",
+              "name": "Acidosis",
+              "uuid": "51ccf6e1-d608-5fc4-8e17-4295eaa24944",
+              "internalId": 23062,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_calcipexy_1",
+              "name": "Calcipexy",
+              "uuid": "da3bf28c-e2ba-5a4d-be06-5a272fd97739",
+              "internalId": 23069,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_candida_1",
+              "name": "Candida",
+              "uuid": "8db83731-3f11-5cf5-9f9c-10bc0b6becf7",
+              "internalId": 23078,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_catarrh_1",
+              "name": "Catarrh",
+              "uuid": "d3804b13-2088-58c1-95e1-469164428712",
+              "internalId": 23067,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_dna_restoration_1",
+              "name": "DNA Restoration",
+              "uuid": "e86ed084-5966-5e36-b8bf-659c191b0d07",
+              "internalId": 23064,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_drainage_1_1",
+              "name": "Drainage 1",
+              "uuid": "dd17bd8b-e274-5ee2-8f1b-824239bec479",
+              "internalId": 23075,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_helminth_1",
+              "name": "Helminth",
+              "uuid": "938f04db-b188-5ab4-ae69-b319ab867bc4",
+              "internalId": 23076,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_hyperlipidemia_1",
+              "name": "Hyperlipidemia",
+              "uuid": "5e965850-2888-515d-a890-a4ef6b9bf9f1",
+              "internalId": 23066,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_increase_of_appetite_1",
+              "name": "Increase of Appetite",
+              "uuid": "2ac32c20-f1bb-594c-a032-491b5e8f1d4a",
+              "internalId": 23060,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_l_lysin_stimulation_1",
+              "name": "L-Lysin Stimulation",
+              "uuid": "6f8f1559-12e7-58cb-ae59-bd65d9f836aa",
+              "internalId": 23071,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_loss_of_appetite_1",
+              "name": "Loss of Appetite",
+              "uuid": "b64eae54-72f8-5eb6-b50f-1c96c2400ee0",
+              "internalId": 23061,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_potassium_sodium_1",
+              "name": "Potassium-Sodium",
+              "uuid": "70bbbf6f-0dd2-5d22-a799-771c893cea63",
+              "internalId": 23063,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_protozoa_1_1",
+              "name": "Protozoa 1",
+              "uuid": "52b9784c-865c-5d0d-89c5-50776a2de284",
+              "internalId": 23077,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_recovering_from_sickness_1",
+              "name": "Recovering from Sickness",
+              "uuid": "acf8033f-2706-5f0a-af9c-04c015024143",
+              "internalId": 23065,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_recovery_1",
+              "name": "Recovery",
+              "uuid": "58face18-0f5d-5dd4-ab14-85ca358a2753",
+              "internalId": 23068,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_recovery_acceleration_1",
+              "name": "Recovery Acceleration",
+              "uuid": "7ca7dff1-0e50-54e3-9cf8-0e2289d62c9d",
+              "internalId": 23073,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_regeneration_1",
+              "name": "Regeneration",
+              "uuid": "32027f6c-c357-5e01-9403-eb20206e8e38",
+              "internalId": 23070,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_effects_vitalisation_1",
+              "name": "Vitalisation",
+              "uuid": "187188b4-3d44-5dff-8f04-16f3280b98ad",
+              "internalId": 23074,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "ophthalmology",
+          "title": "Ophthalmology",
+          "programs": [
+            {
+              "id": "antiparasitic_ophthalmology_astigmatism_1_1",
+              "name": "Astigmatism 1",
+              "uuid": "554846b5-53f9-597f-95bb-2c819df019bb",
+              "internalId": 22800,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_atherosclerosis_1",
+              "name": "AtheroSclerosis",
+              "uuid": "19996c12-ee96-5be1-bc2f-3850a9a96534",
+              "internalId": 22801,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_bifocal_vision_1",
+              "name": "Bifocal Vision",
+              "uuid": "7efb3516-a1a0-545d-86f6-de063cdb1f89",
+              "internalId": 22802,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_blepharitis_1",
+              "name": "Blepharitis",
+              "uuid": "076bdab4-ab6e-5518-b9c5-202cdc7b7e1a",
+              "internalId": 22803,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_blepharospasm_1",
+              "name": "BlepharoSpasm",
+              "uuid": "1bb3ddb5-22ba-5f7e-a838-2cf74eed0bcc",
+              "internalId": 22804,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_conjunctivitus_1_1",
+              "name": "Conjunctivitus 1",
+              "uuid": "63b8b4ec-f345-5610-9ee8-acc3370368fa",
+              "internalId": 22812,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_glaucoma_1_1",
+              "name": "Glaucoma 1",
+              "uuid": "3efb8457-f467-57b4-b5fc-5b68748652ba",
+              "internalId": 22806,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_hyperopia_1",
+              "name": "Hyperopia",
+              "uuid": "f7cd589d-e398-5b7a-ba36-083c2d44b717",
+              "internalId": 22807,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_myopia_1_1",
+              "name": "Myopia 1",
+              "uuid": "cae072fa-700a-5a78-841a-6315e89f0e10",
+              "internalId": 22805,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_ocular_hemorrage_1",
+              "name": "Ocular Hemorrage",
+              "uuid": "2a2e40c9-9154-53b9-bc7e-f3f54bfda402",
+              "internalId": 22813,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_stye_1",
+              "name": "Stye",
+              "uuid": "36ca0d7f-c02f-578f-9b31-ea9e2f16e56d",
+              "internalId": 22815,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_vision_1",
+              "name": "Vision",
+              "uuid": "a5cec413-53b5-5489-b621-5aa9c474ee5c",
+              "internalId": 22814,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_ophthalmology_visual_fatigue_1",
+              "name": "Visual Fatigue",
+              "uuid": "39d5778b-03b0-5b3c-94fb-0aa74f1f133b",
+              "internalId": 22808,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "otolaryngologist",
+          "title": "Otolaryngologist",
+          "programs": [
+            {
+              "id": "antiparasitic_otolaryngologist_acute_laryngitis_1",
+              "name": "Acute Laryngitis",
+              "uuid": "3ee72b60-2662-5d78-9f12-604c7b048ca7",
+              "internalId": 22685,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_adenoiditis_1",
+              "name": "Adenoiditis",
+              "uuid": "20a167b1-1b20-5b52-9e10-6faa16e0c98d",
+              "internalId": 22666,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_adenoids_1",
+              "name": "Adenoids",
+              "uuid": "56200406-693b-5ede-aa19-4c90c3fcad24",
+              "internalId": 22667,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_cholesteatoma_1",
+              "name": "Cholesteatoma",
+              "uuid": "10f1532d-7820-5d58-a601-358b7187a35a",
+              "internalId": 22704,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_chronic_sinusitis_1",
+              "name": "Chronic Sinusitis",
+              "uuid": "20df0f52-29a2-5387-9f13-7ed8be83aa4d",
+              "internalId": 22705,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_chronic_throat_inflammation_1",
+              "name": "Chronic Throat Inflammation",
+              "uuid": "a5eb4399-468b-53b4-976e-06561b68d112",
+              "internalId": 22706,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_common_ear_problems_1",
+              "name": "Common Ear Problems",
+              "uuid": "bf31e717-ef2d-5392-b44b-17aaca123672",
+              "internalId": 22699,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_ear_mycosis_1",
+              "name": "Ear Mycosis",
+              "uuid": "7286b4ca-1767-5dbf-8d94-ef77f5d54973",
+              "internalId": 22679,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_ear_pain_1",
+              "name": "Ear Pain",
+              "uuid": "dbfd4147-50b9-5cb8-9915-b077cbcdbe08",
+              "internalId": 22701,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_ears_basic_programme_1",
+              "name": "Ears-Basic Programme",
+              "uuid": "bbb0c85b-d905-5b95-9eb5-9ddec7c573fd",
+              "internalId": 22700,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_eustachitis_1",
+              "name": "Eustachitis",
+              "uuid": "9c65a8ae-6f8a-5dff-8b93-7bae352a30c8",
+              "internalId": 22676,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_external_otitis_1",
+              "name": "External Otitis",
+              "uuid": "f91dec57-02b9-599b-9bc8-f6acce49c4c6",
+              "internalId": 22682,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_frontal_sinusitis_1",
+              "name": "Frontal Sinusitis",
+              "uuid": "f537fb10-2ae3-5a77-b8ca-eebd16722a30",
+              "internalId": 22703,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_hearing_disorder_1",
+              "name": "Hearing Disorder",
+              "uuid": "d8b16bb8-62aa-54bc-a5e3-222cfc7493fe",
+              "internalId": 22683,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_hearing_loss_3_1",
+              "name": "Hearing Loss 3",
+              "uuid": "1a0b0cc5-f6bf-57c4-bceb-3c9a6a816741",
+              "internalId": 22698,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_larynx_1",
+              "name": "Larynx",
+              "uuid": "58a5e1b3-7e09-5c05-ab39-db00bfa07c10",
+              "internalId": 22675,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_laryngeal_polyp_1",
+              "name": "Laryngeal Polyp",
+              "uuid": "414c4d9a-a650-556f-b21d-11b718b90395",
+              "internalId": 22688,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_laryngitis_1",
+              "name": "Laryngitis",
+              "uuid": "254f9e63-e154-5ff8-9188-9e2520e251b8",
+              "internalId": 22677,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_lymph_nodes_hypertrophy_1",
+              "name": "Lymph Nodes Hypertrophy",
+              "uuid": "1b8c40cd-b378-5d6c-baa9-2ac2f3616f8e",
+              "internalId": 22672,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_nasal_polyp_1",
+              "name": "Nasal Polyp",
+              "uuid": "d7aa4cec-602b-5f7f-94a4-c5ab79eea490",
+              "internalId": 22689,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_nasopharyngitis_1_1",
+              "name": "Nasopharyngitis 1",
+              "uuid": "af466ba5-63da-5cb0-b42c-c7bd8779b525",
+              "internalId": 22680,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_nasopharyngitis_2_1",
+              "name": "Nasopharyngitis 2",
+              "uuid": "5212b9f6-13e6-517e-ad59-040b0529f3c3",
+              "internalId": 22681,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_otitis_1",
+              "name": "Otitis",
+              "uuid": "e21709e0-fd93-53e8-b168-5dbb974760ed",
+              "internalId": 22687,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_otitis_media_1",
+              "name": "Otitis Media",
+              "uuid": "ab69e3b0-780e-5919-aff7-fee27f019689",
+              "internalId": 22695,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_otitis_bathing_1",
+              "name": "Otitis-Bathing",
+              "uuid": "39bfa4bf-017e-57f5-8893-6503d6039113",
+              "internalId": 22686,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_pharyngitis_1",
+              "name": "Pharyngitis",
+              "uuid": "07485ae4-d6c2-5119-9e4b-641eec8c3764",
+              "internalId": 22702,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_regional_lymphadenitis_1",
+              "name": "Regional Lymphadenitis",
+              "uuid": "94588286-52b8-5fd7-8ccf-ac97692f3929",
+              "internalId": 22690,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_respiratory_organs_1",
+              "name": "Respiratory Organs",
+              "uuid": "94068458-cc51-5a6c-a7ee-6a553626fe3b",
+              "internalId": 20127,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_rhinitis_1",
+              "name": "Rhinitis",
+              "uuid": "8812e85c-b06a-5f55-a927-56ddf5b683f0",
+              "internalId": 22692,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_sinusitis_1_1",
+              "name": "Sinusitis 1",
+              "uuid": "28b7522f-7001-5b20-8e39-e2f03771ce03",
+              "internalId": 22671,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_sinusitis_2_1",
+              "name": "Sinusitis 2",
+              "uuid": "cb854ce3-f1eb-59ac-b2f9-850ffa1b462a",
+              "internalId": 22694,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_throat_inflammation_1",
+              "name": "Throat Inflammation",
+              "uuid": "a59e677c-c359-5730-b860-8d4d45fe40cf",
+              "internalId": 22670,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_tonsillitis_1_1",
+              "name": "Tonsillitis 1",
+              "uuid": "ab2e5620-327d-5c2a-8550-899894205fff",
+              "internalId": 22668,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_tonsillitis_2_1",
+              "name": "Tonsillitis 2",
+              "uuid": "384d7df6-a33a-55b9-8272-8c87b6ab2042",
+              "internalId": 22697,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_otolaryngologist_tympanitis_1",
+              "name": "Tympanitis",
+              "uuid": "bd373aa2-1d78-5030-bd22-f48d085d7084",
+              "internalId": 22696,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "pulmonology",
+          "title": "Pulmonology",
+          "programs": [
+            {
+              "id": "antiparasitic_pulmonology_secondary_bronchitis_1",
+              "name": "Secondary Bronchitis",
+              "uuid": "3d58667f-49b4-5bf7-9633-c78f64a57808",
+              "internalId": 22846,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_bacterial_pleuritis_1",
+              "name": "Bacterial Pleuritis",
+              "uuid": "886e55f0-6fa7-55b4-b43f-beb62730ce59",
+              "internalId": 22845,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_breathing_1",
+              "name": "Breathing",
+              "uuid": "2fc463a6-1612-5bf3-a332-9e92318bf2c0",
+              "internalId": 22850,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_bronchopneumonia_1",
+              "name": "Bronchopneumonia",
+              "uuid": "8a9d0039-5726-55b3-9270-d48e9b31043b",
+              "internalId": 22847,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_chronic_bronchitis_1",
+              "name": "Chronic Bronchitis",
+              "uuid": "d86736d0-aa12-5a63-a164-c9075fca2ba1",
+              "internalId": 22863,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_cough_1",
+              "name": "Cough",
+              "uuid": "066dbae7-e541-5e96-abac-f1115830fa8e",
+              "internalId": 22854,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_cough_vaccine_1",
+              "name": "Cough-Vaccine",
+              "uuid": "fcef6051-d890-551e-b5cc-0d639c52d588",
+              "internalId": 22853,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_dry_cough_1",
+              "name": "Dry Cough",
+              "uuid": "2ba616e5-8a34-5223-804f-a4532347ecd8",
+              "internalId": 22861,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_emphysema_1",
+              "name": "Emphysema",
+              "uuid": "484fd5b2-8abe-566d-9dfe-bae1338b5402",
+              "internalId": 22866,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_general_pneumonia_1",
+              "name": "General Pneumonia",
+              "uuid": "b2745166-beb6-5d58-abef-642048dd95cf",
+              "internalId": 22858,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_general_pneumonia_v_1",
+              "name": "General Pneumonia V",
+              "uuid": "6fe69702-b537-5bdf-9b82-285ba3d1119d",
+              "internalId": 22857,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_lung_congestion_1",
+              "name": "Lung Congestion",
+              "uuid": "04c41be2-9f77-5d47-91bf-09360f393a72",
+              "internalId": 22851,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_lungs_1",
+              "name": "Lungs",
+              "uuid": "24cf52c4-b1ab-5bac-8cd8-ed871185ce19",
+              "internalId": 22855,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_pleuritis_1",
+              "name": "Pleuritis",
+              "uuid": "384c8ffd-53d0-5e1e-8ac9-48b67a0c6fa4",
+              "internalId": 22856,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_pneumonia_1",
+              "name": "Pneumonia",
+              "uuid": "b39ac6db-9c5a-524c-9826-4a4837343527",
+              "internalId": 22859,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_pulmonary_fibrosis_1",
+              "name": "Pulmonary Fibrosis",
+              "uuid": "73dfa4e2-d13a-52d6-88c7-9f9c1948fdb0",
+              "internalId": 22862,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_rough_breathing_1",
+              "name": "Rough Breathing",
+              "uuid": "ab8aee00-93d4-531b-a9a1-90cb26e1f46e",
+              "internalId": 22852,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_secondary_bronchopneumonia_1",
+              "name": "Secondary Bronchopneumonia",
+              "uuid": "cba03d79-0f38-502f-90ba-ec757a0b166d",
+              "internalId": 22849,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_pulmonology_stimulation_of_breathing_1",
+              "name": "Stimulation of Breathing",
+              "uuid": "f097216a-1d34-5c5f-aa90-24c834a4cf21",
+              "internalId": 22860,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "sympthoms_and_syndromes",
+          "title": "Sympthoms and Syndromes",
+          "programs": [
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_chronic_fatigue_1",
+              "name": "Chronic Fatigue",
+              "uuid": "23e00464-7bf9-5c77-9b43-5698727ca651",
+              "internalId": 22934,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_chronic_fatigue_syndrome_1",
+              "name": "Chronic Fatigue Syndrome",
+              "uuid": "51ebeb20-e0d2-5ffa-9114-7fa5964d22a8",
+              "internalId": 22923,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_edema_1_1",
+              "name": "Edema 1",
+              "uuid": "fcd01ca6-2945-543e-af60-daa461f72279",
+              "internalId": 22916,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_edema_2_1",
+              "name": "Edema 2",
+              "uuid": "aabe0707-0e9a-5e36-9205-17f035439a3d",
+              "internalId": 22936,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_fatigue_1",
+              "name": "Fatigue",
+              "uuid": "e961509b-dadd-57f3-8d0e-a9500250b113",
+              "internalId": 22931,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_fever_caused_by_sun_stroke_1",
+              "name": "Fever Caused by Sun Stroke",
+              "uuid": "3f74145b-2e63-5a95-bd58-c59fc2ec45b5",
+              "internalId": 22927,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_food_poisoning_1",
+              "name": "Food Poisoning",
+              "uuid": "7b3aab19-9ee7-5dd7-9050-d89fa3a5b3ba",
+              "internalId": 22921,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_general_fatigue_1",
+              "name": "General Fatigue",
+              "uuid": "07c6fd08-a5ed-528c-b89c-89b4bcf88566",
+              "internalId": 22932,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_high_fever_1",
+              "name": "High Fever",
+              "uuid": "3692231b-5e96-5873-a774-ec2ae61a2d82",
+              "internalId": 22922,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_1",
+              "name": "Hypothermia",
+              "uuid": "8fafc5f1-4e77-5b76-8929-8550da8124e9",
+              "internalId": 22920,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_of_the_body_1",
+              "name": "Hypothermia of the Body",
+              "uuid": "953c94c8-7703-5b70-8266-9927a4519600",
+              "internalId": 22918,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_hypothermia_influenza_1",
+              "name": "Hypothermia-Influenza",
+              "uuid": "8e095b17-37f7-53b0-b9fb-831e5962c93d",
+              "internalId": 22919,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_itchy_feet_1",
+              "name": "Itchy Feet",
+              "uuid": "f41d01b2-6c07-5969-9da2-07a707f3e4e7",
+              "internalId": 22914,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_leg_swelling_1",
+              "name": "Leg Swelling",
+              "uuid": "91445276-c564-56b4-87eb-aa689a30d9bb",
+              "internalId": 22917,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_liver_itching_1",
+              "name": "Liver Itching",
+              "uuid": "2f2656b2-0e46-579b-9e15-2cf91e28f1f9",
+              "internalId": 22913,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_nausea_and_spasms_1",
+              "name": "Nausea and Spasms",
+              "uuid": "0bed3501-550c-581d-9fb5-77e9d457afed",
+              "internalId": 22930,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_perinal_itch_1",
+              "name": "Perinal Itch",
+              "uuid": "b9ab0fe1-c4dc-5f44-be18-34409eab6bad",
+              "internalId": 22912,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_physical_fatigue_1",
+              "name": "Physical Fatigue",
+              "uuid": "33371e97-c4a2-53aa-b83c-6b179b26fe42",
+              "internalId": 22933,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sea_sickness_1_1",
+              "name": "Sea Sickness 1",
+              "uuid": "f356062c-7944-543d-b3bf-093484d98328",
+              "internalId": 22925,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_shivering_1",
+              "name": "Shivering",
+              "uuid": "4f8f1b16-836d-5aa8-a193-7e9e8907ae32",
+              "internalId": 22915,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sneezing_1",
+              "name": "Sneezing",
+              "uuid": "ec9a2de1-a3a5-5bd4-800d-f5e7584875c8",
+              "internalId": 22935,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_spasms_1",
+              "name": "Spasms",
+              "uuid": "4b8557ff-9fe9-5624-bfce-a9ef7e386800",
+              "internalId": 22926,
+              "level": 1
+            },
+            {
+              "id": "antiparasitic_sympthoms_and_syndromes_sun_stroke_1",
+              "name": "Sun Stroke",
+              "uuid": "95ae74c3-a2b8-5fe2-9168-606038c3bef7",
+              "internalId": 22924,
+              "level": 1
+            }
+          ]
+        }
+      ],
+      "programs": []
+    },
+    {
+      "id": "general_energy_vitalisation",
+      "title": "General Energy, Vitalisation",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "general_energy_vitalisation_biological_exercise_1",
+          "name": "Biological Exercise",
+          "uuid": "ae730907-34d0-56de-a0d6-e8079ba9c43f",
+          "internalId": 20961,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_body_defenses_strengthening_1",
+          "name": "Body Defenses Strengthening",
+          "uuid": "0ce8fcd5-6c19-503b-b28d-f429b015aa0f",
+          "internalId": 20975,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_cachexy_1",
+          "name": "Cachexy",
+          "uuid": "9e96e3f7-93fc-5652-8f99-05ebf28ae5c5",
+          "internalId": 20964,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_emotional_exhaustion_1",
+          "name": "Emotional Exhaustion",
+          "uuid": "4023ee6c-d4d7-573d-9b9b-6096f6ead8cb",
+          "internalId": 21083,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_energey_charging_1",
+          "name": "Energey Charging",
+          "uuid": "2341a772-ed15-54b4-84f5-c8dbb950bebd",
+          "internalId": 20963,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_energy_flow_1",
+          "name": "Energy Flow",
+          "uuid": "a800d575-6368-56d2-998f-217175e3e679",
+          "internalId": 20982,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_energy_input_1",
+          "name": "Energy Input",
+          "uuid": "6a8d5e7c-c570-5f93-84ab-9a35073c683f",
+          "internalId": 20980,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_energy_output_1",
+          "name": "Energy Output",
+          "uuid": "e1363667-9c83-57f4-99eb-ba25562d056f",
+          "internalId": 20981,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_energy_delivering_effect_1",
+          "name": "Energy-Delivering Effect",
+          "uuid": "3239c45d-2fbe-57de-955a-68667ea83dd3",
+          "internalId": 20984,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_excessive_sweating_2_1",
+          "name": "Excessive Sweating 2",
+          "uuid": "22429cdd-ee5f-591b-bfbb-5cc14bd4988a",
+          "internalId": 20969,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_general_exercise_1",
+          "name": "General Exercise",
+          "uuid": "6054836d-d853-52c7-9914-16fb6d55e31f",
+          "internalId": 20962,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_healing_centre_2_1",
+          "name": "Healing Centre 2",
+          "uuid": "cfb2748f-9c9b-514a-a588-8b928f273376",
+          "internalId": 20978,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_heat_and_cold_4_1",
+          "name": "Heat and Cold 4",
+          "uuid": "0a39a17c-decb-523e-aa9d-54e5edb4fb8b",
+          "internalId": 20979,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_low_temperature_1",
+          "name": "Low Temperature",
+          "uuid": "68751b93-6be5-5d29-afd8-b0e0d06088bc",
+          "internalId": 21463,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_metabolism_1",
+          "name": "Metabolism",
+          "uuid": "a5fcf3c5-4a55-5efe-9d55-a3e0c5ac2f3c",
+          "internalId": 20966,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_muscle_strengthening_1",
+          "name": "Muscle Strengthening",
+          "uuid": "b724eb80-887e-5269-8266-3abb29c8aef1",
+          "internalId": 21660,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_nerve_strengthening_1",
+          "name": "Nerve Strengthening",
+          "uuid": "0ff00d6d-c8db-5b8e-9498-9d62b2833365",
+          "internalId": 21661,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_postural_disorder_1",
+          "name": "Postural Disorder",
+          "uuid": "a7a3a9b3-1e5a-557b-9f47-6ab34069fe03",
+          "internalId": 20967,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_senile_disorders_1",
+          "name": "Senile Disorders",
+          "uuid": "9b097004-c3a4-5271-89c0-cc654442e11e",
+          "internalId": 20971,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_slow_recovery_process_4_1",
+          "name": "Slow Recovery Process 4",
+          "uuid": "0eb7b491-a0a9-5879-bcf7-b5d3814ccb93",
+          "internalId": 20968,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_strength_of_earth_1",
+          "name": "Strength of Earth",
+          "uuid": "f0b237fa-9d52-589e-aa86-8c6bb6f1b35d",
+          "internalId": 20970,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_stress_4_1",
+          "name": "Stress 4",
+          "uuid": "c305ef2c-5cba-5dd5-9b80-ec1d21c20f81",
+          "internalId": 20972,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_vital_energey_2_1",
+          "name": "Vital Energey 2",
+          "uuid": "9c87c8cb-7a43-5ff5-a8cb-e0be73e01523",
+          "internalId": 20983,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_vitalisation_1_1",
+          "name": "Vitalisation 1",
+          "uuid": "cf0763a7-a77c-5afc-96bb-b288cc24bbe5",
+          "internalId": 20959,
+          "level": 1
+        },
+        {
+          "id": "general_energy_vitalisation_vitalisation_2_1",
+          "name": "Vitalisation 2",
+          "uuid": "28680c85-4101-5759-a1d0-e57f92cf34a2",
+          "internalId": 20960,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "id": "pain",
+      "title": "Pain",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "pain_headache_due_to_urogenital_disorder_1",
+          "name": "Headache due to Urogenital Disorder",
+          "uuid": "1d2f80e3-d864-5978-bd1e-72d5f07cec4c",
+          "internalId": 22352,
+          "level": 1
+        },
+        {
+          "id": "pain_abdominal_pain_1",
+          "name": "Abdominal Pain",
+          "uuid": "fe6fa90d-90d6-5a06-9b41-89d4b89ce019",
+          "internalId": 22332,
+          "level": 1
+        },
+        {
+          "id": "pain_acute_pain_1",
+          "name": "Acute Pain",
+          "uuid": "6aba291e-a8a5-5ca6-a10a-1155408e1b2b",
+          "internalId": 22354,
+          "level": 1
+        },
+        {
+          "id": "pain_back_pain_1",
+          "name": "Back Pain",
+          "uuid": "b0e358f0-43b2-576e-8bd1-a2b2aa00e30d",
+          "internalId": 22337,
+          "level": 1
+        },
+        {
+          "id": "pain_cancer_pain_1",
+          "name": "Cancer Pain",
+          "uuid": "1abbeee4-3359-5fb7-869f-b16289d729a4",
+          "internalId": 22342,
+          "level": 1
+        },
+        {
+          "id": "pain_cholecystitis_pain_1",
+          "name": "Cholecystitis Pain",
+          "uuid": "39bafb87-09c5-5320-bc25-7608dfc7d665",
+          "internalId": 22457,
+          "level": 1
+        },
+        {
+          "id": "pain_chronic_low_back_pain_1",
+          "name": "Chronic Low-Back Pain",
+          "uuid": "99ea5fba-a85d-5abb-bd5e-ff03f57a5dc3",
+          "internalId": 22360,
+          "level": 1
+        },
+        {
+          "id": "pain_elbow_pain_1",
+          "name": "Elbow Pain",
+          "uuid": "64ddc08b-bdfe-5dd1-9e3e-613d02207571",
+          "internalId": 22335,
+          "level": 1
+        },
+        {
+          "id": "pain_general_pain_1",
+          "name": "General Pain",
+          "uuid": "bbac7e3c-7265-5fb5-ba03-f28122b696c9",
+          "internalId": 22339,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_1",
+          "name": "Headache",
+          "uuid": "c9329271-ea18-5384-9cd2-25ebe7bb23b0",
+          "internalId": 22348,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_due_to_parasitic_infection_1",
+          "name": "Headache due to Parasitic Infection",
+          "uuid": "b1316cc1-53e8-5d24-ba44-3d367b46e124",
+          "internalId": 22349,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_due_to_stomach_dysfunction_1",
+          "name": "Headache due to Stomach Dysfunction",
+          "uuid": "a2d8dd21-6b9f-5bd6-808e-6c08fec1cd38",
+          "internalId": 22344,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_due_to_toxic_genesis_1",
+          "name": "Headache due to Toxic Genesis",
+          "uuid": "cf8603b3-4ee0-5c22-a3e2-ceef72d6e1e5",
+          "internalId": 22350,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_of_unknown_origin_1",
+          "name": "Headache of Unknown Origin",
+          "uuid": "9c0e35a9-b588-52b2-94b7-31ee39285866",
+          "internalId": 22347,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_integrated_1",
+          "name": "Headache-Integrated",
+          "uuid": "a9212fda-00a1-524c-aa3f-a87ba44c7d47",
+          "internalId": 22345,
+          "level": 1
+        },
+        {
+          "id": "pain_headache_migraine_1",
+          "name": "Headache-Migraine",
+          "uuid": "750f38e3-fb28-5be5-ae8a-d18ce1b4a62a",
+          "internalId": 22346,
+          "level": 1
+        },
+        {
+          "id": "pain_hip_pain_1",
+          "name": "Hip Pain",
+          "uuid": "581097ae-8c7b-5ce9-812b-2477decaf240",
+          "internalId": 22331,
+          "level": 1
+        },
+        {
+          "id": "pain_intercoastal_muscles_pain_1",
+          "name": "Intercoastal Muscles Pain",
+          "uuid": "f7d0dc6a-d4de-5164-b992-dda6bdc5ad92",
+          "internalId": 22338,
+          "level": 1
+        },
+        {
+          "id": "pain_joint_pain_1",
+          "name": "Joint Pain",
+          "uuid": "a46165ef-9009-5c0c-9a27-6ad3d0aa2af9",
+          "internalId": 22357,
+          "level": 1
+        },
+        {
+          "id": "pain_joint_pain_2",
+          "name": "Joint Pain",
+          "uuid": "a46165ef-9009-5c0c-9a27-6ad3d0aa2af9",
+          "internalId": 22357,
+          "level": 1
+        },
+        {
+          "id": "pain_joint_pain_basic_1",
+          "name": "Joint Pain-Basic",
+          "uuid": "a0bdaa94-ae61-5a74-bda4-cdc6391a7e8b",
+          "internalId": 22358,
+          "level": 1
+        },
+        {
+          "id": "pain_knee_pain_1",
+          "name": "Knee Pain",
+          "uuid": "8d187a4e-576d-5750-989d-4a07ed8b7bfd",
+          "internalId": 22333,
+          "level": 1
+        },
+        {
+          "id": "pain_low_back_pain_1",
+          "name": "Low-Back Pain",
+          "uuid": "5a5152f9-f462-596d-b10a-4714cab289c2",
+          "internalId": 22336,
+          "level": 1
+        },
+        {
+          "id": "pain_migraine_1",
+          "name": "Migraine",
+          "uuid": "89db2d5c-6c9b-5980-90b1-0d9654474bbd",
+          "internalId": 22353,
+          "level": 1
+        },
+        {
+          "id": "pain_pain_infection_1",
+          "name": "Pain-Infection",
+          "uuid": "6546ad39-da61-58ae-9841-d18421bc8437",
+          "internalId": 22340,
+          "level": 1
+        },
+        {
+          "id": "pain_pain_paralysis_1",
+          "name": "Pain-Paralysis",
+          "uuid": "6fc18dd6-2645-5951-afc8-2301f7c259de",
+          "internalId": 22341,
+          "level": 1
+        },
+        {
+          "id": "pain_post_surgery_pain_1",
+          "name": "Post-Surgery Pain",
+          "uuid": "997620ed-e663-5a5a-a4d9-c56fb6e00259",
+          "internalId": 22359,
+          "level": 1
+        },
+        {
+          "id": "pain_psychogenic_pain_1",
+          "name": "Psychogenic Pain",
+          "uuid": "56b3ed3e-7a65-5b26-bbc6-284c3e45e50c",
+          "internalId": 22355,
+          "level": 1
+        },
+        {
+          "id": "pain_spasm_and_pain_1",
+          "name": "Spasm and Pain",
+          "uuid": "ddad7d31-01e9-57c9-856b-8682c134c9fd",
+          "internalId": 22356,
+          "level": 1
+        },
+        {
+          "id": "pain_vertebragenic_headache_1",
+          "name": "Vertebragenic Headache",
+          "uuid": "990612d4-c8cf-5448-9e5e-bd2edf07ede8",
+          "internalId": 22351,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "id": "set_of_programs",
+      "title": "Set of Programs",
+      "subcategories": [
+        {
+          "id": "allergy",
+          "title": "Allergy",
+          "programs": [
+            {
+              "id": "set_of_programs_allergy_allergy_1_1",
+              "name": "Allergy 1",
+              "uuid": "7be6f193-cf43-5242-a595-8da4c7e8285a",
+              "internalId": 21674,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_2_1",
+              "name": "Allergy 2",
+              "uuid": "e7818002-043e-56ea-9246-ccd8e0cb13bb",
+              "internalId": 21675,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_3_1",
+              "name": "Allergy 3",
+              "uuid": "eb4eb033-4632-5076-a9ee-5b45722fed8f",
+              "internalId": 21676,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_4_1",
+              "name": "Allergy 4",
+              "uuid": "1ad38a90-5aa8-5291-b13c-60ce9018624f",
+              "internalId": 21677,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_5_1",
+              "name": "Allergy 5",
+              "uuid": "9ccde5c7-e105-5bb3-8228-67c31ad5cba1",
+              "internalId": 21678,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_6_1",
+              "name": "Allergy 6",
+              "uuid": "44bc6b57-3244-5c3a-bca0-c3f9458ecfff",
+              "internalId": 21679,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_7_1",
+              "name": "Allergy 7",
+              "uuid": "264be7bd-dd5d-52ac-9abf-bc95c3d28369",
+              "internalId": 21680,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_allergy_allergy_8_1",
+              "name": "Allergy 8",
+              "uuid": "6a025ae2-a60a-5d89-90e6-96e4a2729966",
+              "internalId": 21681,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "arthritis_arthrosis",
+          "title": "Arthritis /Arthrosis",
+          "programs": [
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_1_1",
+              "name": "Arthritis 1",
+              "uuid": "2b5523d7-0e02-5158-a3d2-09a7fba22c4c",
+              "internalId": 21688,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_2_1",
+              "name": "Arthritis 2",
+              "uuid": "a7d48945-76cc-5f9c-b395-1bbf0ad82fb7",
+              "internalId": 21689,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_3_1",
+              "name": "Arthritis 3",
+              "uuid": "a30a446f-a679-5ef6-b2a7-6ab04d4947e8",
+              "internalId": 21690,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_4_1",
+              "name": "Arthritis 4",
+              "uuid": "ed36819e-378b-5fb7-8e74-2fd1bd3da01b",
+              "internalId": 21691,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_5_1",
+              "name": "Arthritis 5",
+              "uuid": "85407538-66df-5613-b290-c4549ba69fa7",
+              "internalId": 21692,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_6_1",
+              "name": "Arthritis 6",
+              "uuid": "c250d53c-d027-55da-9cc8-3488e40eb2e5",
+              "internalId": 21693,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_arthrosis_arthritis_7_1",
+              "name": "Arthritis 7",
+              "uuid": "35203f0c-86ce-520a-8a05-a79a131dbc96",
+              "internalId": 21694,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "arthritis_treatment",
+          "title": "Arthritis Treatment",
+          "programs": [
+            {
+              "id": "set_of_programs_arthritis_treatment_causative_agent_1",
+              "name": "Causative Agent",
+              "uuid": "25355ada-20bc-50a9-83ff-3bf02a3a3bde",
+              "internalId": 21888,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_treatment_inflammation_1",
+              "name": "Inflammation",
+              "uuid": "aae1feed-e9dc-5103-ba23-9d5152ac8966",
+              "internalId": 21887,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_arthritis_treatment_pain_1",
+              "name": "Pain",
+              "uuid": "d6735b31-03e8-5b0e-bc2e-d3b20f699be2",
+              "internalId": 21886,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "bronchial_asthma",
+          "title": "Bronchial Asthma",
+          "programs": [
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma1_1",
+              "name": "Bronchial Asthma1",
+              "uuid": "067f17aa-931a-5e6c-969a-dc5c9a5f7107",
+              "internalId": 21701,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma2_1",
+              "name": "Bronchial Asthma2",
+              "uuid": "0b75b1b1-b300-5633-b1eb-538edc9c647a",
+              "internalId": 21702,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma4_1",
+              "name": "Bronchial Asthma4",
+              "uuid": "08c0cb9f-b88f-50a2-bac7-771ac2c755b4",
+              "internalId": 21703,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma5_1",
+              "name": "Bronchial Asthma5",
+              "uuid": "6d25a970-4c0e-5584-be8d-b79d926bbf7a",
+              "internalId": 21704,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthmab_1",
+              "name": "Bronchial Asthmaб"
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma7_1",
+              "name": "Bronchial Asthma7",
+              "uuid": "390c1bc8-23d9-5b2e-8a01-3861c602d293",
+              "internalId": 21706,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_bronchial_asthma_bronchial_asthma8_1",
+              "name": "Bronchial Asthma8",
+              "uuid": "a4c20548-0d08-5408-b5c8-1229dda731c6",
+              "internalId": 21707,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "colitis",
+          "title": "Colitis",
+          "programs": [
+            {
+              "id": "set_of_programs_colitis_colitis_1_1",
+              "name": "Colitis 1",
+              "uuid": "f8b34917-b9b3-5650-9e09-f6b3eeb79272",
+              "internalId": 21752,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_colitis_colitis_2_1",
+              "name": "Colitis 2",
+              "uuid": "aad2f4dc-85ff-5c40-96c4-25ea977079a6",
+              "internalId": 21903,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_colitis_colitis_3_1",
+              "name": "Colitis 3",
+              "uuid": "d5200e8e-bdbb-5e0b-b58c-9127a1260580",
+              "internalId": 21754,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_colitis_colitis_4_1",
+              "name": "Colitis 4",
+              "uuid": "5687af94-915e-56dd-b222-7ee44d090a07",
+              "internalId": 21755,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_colitis_colitis_5_1",
+              "name": "Colitis 5",
+              "uuid": "8f3fc56b-d3e0-5b89-97fb-50b019fa19c1",
+              "internalId": 21756,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "cosmetology",
+          "title": "Cosmetology",
+          "programs": [
+            {
+              "id": "set_of_programs_cosmetology_cosmetology1_1",
+              "name": "Cosmetology1",
+              "uuid": "b25cea8b-e306-56f6-b6b2-9b347767b6ca",
+              "internalId": 21766,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cosmetology_cosmetology2_1",
+              "name": "Cosmetology2",
+              "uuid": "fec0a3b8-2cdd-5c94-9c63-722c4983532c",
+              "internalId": 21767,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cosmetology_cosmetology3_1",
+              "name": "Cosmetology3",
+              "uuid": "4033cc14-aa52-5a1a-ac6a-791da6267746",
+              "internalId": 21768,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cosmetology_cosmetology4_1",
+              "name": "Cosmetology4",
+              "uuid": "2bf28360-fcd9-59cb-af2d-9d4e1ab0845c",
+              "internalId": 21769,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cosmetology_cosmetology5_1",
+              "name": "Cosmetology5",
+              "uuid": "d575e887-53d8-54c2-b190-562fd1732440",
+              "internalId": 21770,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "cystitis",
+          "title": "Cystitis",
+          "programs": [
+            {
+              "id": "set_of_programs_cystitis_cystitis_1_1",
+              "name": "Cystitis 1",
+              "uuid": "feadca52-97ff-51eb-8a76-397b705cc0f3",
+              "internalId": 21849,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cystitis_cystitis_2_1",
+              "name": "Cystitis 2",
+              "uuid": "1915da9c-8577-5df2-907d-d89021f93fa0",
+              "internalId": 22972,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cystitis_cystitis_3_1",
+              "name": "Cystitis 3",
+              "uuid": "5fc37a7b-4d18-5b9b-810d-45808df4cf1e",
+              "internalId": 21851,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cystitis_cystitis_4_1",
+              "name": "Cystitis 4",
+              "uuid": "7b507efd-bb8f-5d12-b3d2-80a96e1cffb7",
+              "internalId": 21852,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cystitis_cystitis_5_1",
+              "name": "Cystitis 5",
+              "uuid": "3a21661b-78e7-576b-a560-9d547f962b75",
+              "internalId": 21853,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_cystitis_cystitis_6_1",
+              "name": "Cystitis 6",
+              "uuid": "14b1bae4-80ce-5b98-b66f-48e8643ca634",
+              "internalId": 21854,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "diabetes_mellitus",
+          "title": "Diabetes Mellitus",
+          "programs": [
+            {
+              "id": "set_of_programs_diabetes_mellitus_candida_albicans_1_1",
+              "name": "Candida Albicans 1",
+              "uuid": "f7a6af9b-5571-539f-b773-dd6e87b94351",
+              "internalId": 21882,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_chlamydia_pneumoniae_1",
+              "name": "Chlamydia Pneumoniae",
+              "uuid": "b01311e0-2bf6-5ad5-a2f0-4352a91414fb",
+              "internalId": 22086,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_circulation_loss_1_1",
+              "name": "Circulation Loss 1",
+              "uuid": "35c0cf91-1433-56d4-9042-c27db6a9ddee",
+              "internalId": 21874,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_cytomegalovirus_1",
+              "name": "CytomegaloVirus",
+              "uuid": "434d0bb2-1250-54fd-8a3d-1f70334afc54",
+              "internalId": 21878,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_diabetes_mellitus_1",
+              "name": "Diabetes Mellitus",
+              "uuid": "b60d69fb-8a79-56a3-9240-5ddf8f23d7fe",
+              "internalId": 21873,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_eczema_2_1",
+              "name": "Eczema 2",
+              "uuid": "6cd33ef4-d05c-59fa-a182-2f5375f47721",
+              "internalId": 21881,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_helicobacter_pylori_2_1",
+              "name": "Helicobacter Pylori 2",
+              "uuid": "0201a3d8-26f7-5ef5-be62-7e281d5d375c",
+              "internalId": 21877,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_herpes_zoster_1_1",
+              "name": "Herpes Zoster 1",
+              "uuid": "868d609a-8e25-5aa2-ae8b-f802328e80f6",
+              "internalId": 21875,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_joint_stiffness_1",
+              "name": "Joint Stiffness",
+              "uuid": "d2ecafc2-7338-58c8-938b-da986f494d68",
+              "internalId": 21880,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_diabetes_mellitus_nanobacteria_1",
+              "name": "Nanobacteria",
+              "uuid": "50e86962-b708-5f79-8944-72d4e96e2481",
+              "internalId": 21879,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "dysmenorrhea",
+          "title": "Dysmenorrhea",
+          "programs": [
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_1_1",
+              "name": "Dysmenorrhea 1",
+              "uuid": "7a3029b6-1d3d-508b-9872-08acac6c7a7e",
+              "internalId": 21734,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_2_1",
+              "name": "Dysmenorrhea 2",
+              "uuid": "6f1e022b-527d-5ea4-b235-0e7327da5882",
+              "internalId": 21735,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_3_1",
+              "name": "Dysmenorrhea 3",
+              "uuid": "daae2ca8-89c3-53fc-9998-253c74404c51",
+              "internalId": 21736,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_4_1",
+              "name": "Dysmenorrhea 4",
+              "uuid": "21ccb6be-9b76-5bb6-b580-58ca469c8fbf",
+              "internalId": 21737,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_5_1",
+              "name": "Dysmenorrhea 5",
+              "uuid": "c7fa6ac9-4a90-5b82-bb2e-237798cfb319",
+              "internalId": 21738,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_dysmenorrhea_dysmenorrhea_6_1",
+              "name": "Dysmenorrhea 6",
+              "uuid": "d5f8b833-df6f-54dc-afe1-ac97859d9b6b",
+              "internalId": 21739,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "electromagnetic_therapy",
+          "title": "Electromagnetic Therapy Programmes",
+          "programs": [
+            {
+              "id": "set_of_programs_electromagnetic_therapy_anti_pain_1",
+              "name": "Anti-Pain",
+              "uuid": "49c2a6de-e39e-571a-8e77-f50c93f833f4",
+              "internalId": 21872,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_antistress_1",
+              "name": "Antistress",
+              "uuid": "44bf3bb1-237c-50d5-b3ae-b11d5064402f",
+              "internalId": 21868,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_back_fatigue_1",
+              "name": "Back Fatigue",
+              "uuid": "a54adc03-13e2-589b-ac51-9d61bfc0b8ba",
+              "internalId": 21867,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_blood_circulation_1_1",
+              "name": "Blood Circulation 1",
+              "uuid": "de9835ab-a380-5670-becb-5c636cfbff2b",
+              "internalId": 21863,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_cholesterol_2_1",
+              "name": "Cholesterol 2",
+              "uuid": "c8eeff34-6c8c-5828-a6ce-e18ca07d42dc",
+              "internalId": 21870,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_deep_cleansing_1",
+              "name": "Deep Cleansing",
+              "uuid": "04ab91e0-6a15-5a66-8fdf-d74d2fa34c56",
+              "internalId": 21869,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_disbacteriosis_1",
+              "name": "Disbacteriosis",
+              "uuid": "5aed16c7-cc27-5a37-8449-c2f39e21ce7f",
+              "internalId": 21871,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_female_genitourinary_system_1",
+              "name": "Female Genitourinary System",
+              "uuid": "8a4d3b7c-82d3-571e-912d-b6e6fcd04d0f",
+              "internalId": 21866,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_git_regulation_1",
+              "name": "GIT Regulation",
+              "uuid": "3708c127-b426-567a-bf30-a3f8c1d57dc0",
+              "internalId": 21861,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_heart_regulation_1",
+              "name": "Heart Regulation",
+              "uuid": "5e87329c-0d0e-5fc9-80ea-d4bf27663b15",
+              "internalId": 21862,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_kidney_pattern_1",
+              "name": "Kidney Pattern",
+              "uuid": "2eb05ccb-100f-53fe-af01-772b53a5a91e",
+              "internalId": 21864,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_male_genitourinary_system_1",
+              "name": "Male Genitourinary System",
+              "uuid": "9fb9d729-4983-5565-a4e5-850fb224942d",
+              "internalId": 21865,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_electromagnetic_therapy_proactive_defence_1",
+              "name": "Proactive Defence",
+              "uuid": "f4c6bd0c-7c02-5abc-8a07-344787d71de8",
+              "internalId": 21860,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "gallstone_disease",
+          "title": "Gallstone Disease",
+          "programs": [
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone1_1",
+              "name": "Gallstone1",
+              "uuid": "fcf5f4fd-d477-5bd4-b562-3212a5844d17",
+              "internalId": 21740,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone2_1",
+              "name": "Gallstone2",
+              "uuid": "f8a535b0-694a-52c6-8560-a6f4ece38f34",
+              "internalId": 21741,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone3_1",
+              "name": "Gallstone3",
+              "uuid": "171ad086-6359-5188-9569-5c1f05bbf0d6",
+              "internalId": 21742,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone4_1",
+              "name": "Gallstone4",
+              "uuid": "c6355ecf-e132-56e2-9db6-6a4c1552d672",
+              "internalId": 21743,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone5_1",
+              "name": "Gallstone5",
+              "uuid": "74e45d9a-ac7c-5a51-b804-8b8addcd257d",
+              "internalId": 21744,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gallstone_disease_gallstone6_1",
+              "name": "Gallstone6",
+              "uuid": "609b6893-6908-5fff-a899-2a1e77cd3de6",
+              "internalId": 21745,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "gastric_ulcer",
+          "title": "Gastric Ulcer",
+          "programs": [
+            {
+              "id": "set_of_programs_gastric_ulcer_ulcer_disease1_1",
+              "name": "Ulcer Disease1",
+              "uuid": "39a8bccf-a05c-5c11-9edb-aec247e06e44",
+              "internalId": 21855,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastric_ulcer_ulcer_disease2_1",
+              "name": "Ulcer Disease2",
+              "uuid": "1df02f0c-879e-52c7-955e-c2a176a75993",
+              "internalId": 21856,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastric_ulcer_ulcer_disease_4_1",
+              "name": "Ulcer Disease 4",
+              "uuid": "c10050f5-ce90-54b8-b806-3fa5b1dd2d77",
+              "internalId": 21857,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastric_ulcer_ulcer_disease_5_1",
+              "name": "Ulcer Disease 5",
+              "uuid": "7edf7ef5-1d74-5302-b4d5-cbb0d1a2a530",
+              "internalId": 21858,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastric_ulcer_ulcer_disease_6_1",
+              "name": "Ulcer Disease 6",
+              "uuid": "66b5bcad-47f2-56d6-ad3f-dc8eea722900",
+              "internalId": 21859,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "gastritis",
+          "title": "Gastritis",
+          "programs": [
+            {
+              "id": "set_of_programs_gastritis_gastritis_1_1",
+              "name": "Gastritis 1",
+              "uuid": "62314e03-712e-546c-9b0d-2225d291e422",
+              "internalId": 22398,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastritis_gastritis_2_1",
+              "name": "Gastritis 2",
+              "uuid": "0fbb0d28-aeb8-5149-9f2e-419201bb8113",
+              "internalId": 22399,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastritis_gastritis_3_1",
+              "name": "Gastritis 3",
+              "uuid": "fcfacd82-d0c1-592b-85cf-6b90dd94aa92",
+              "internalId": 22400,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastritis_gastritis_4_1",
+              "name": "Gastritis 4",
+              "uuid": "a48b6a37-3550-56a8-9fa2-3d92d5d11cfd",
+              "internalId": 21724,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastritis_gastritis_5_1",
+              "name": "Gastritis 5",
+              "uuid": "c0ae81e4-e0e6-5669-9b07-70ac161ac519",
+              "internalId": 21725,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_gastritis_gastritis_6_1",
+              "name": "Gastritis 6",
+              "uuid": "5f478d63-cd2d-5845-a232-606169d6027e",
+              "internalId": 21726,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "hypertension",
+          "title": "Hypertension",
+          "programs": [
+            {
+              "id": "set_of_programs_hypertension_hypertension_1_1",
+              "name": "Hypertension 1",
+              "uuid": "3cce3fed-d9a0-5fa4-a200-58432fdc07ea",
+              "internalId": 21728,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_hypertension_hypertension_2_1",
+              "name": "Hypertension 2",
+              "uuid": "68f708af-b559-51a2-a6d7-2ba63c613934",
+              "internalId": 21729,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_hypertension_hypertension_3_1",
+              "name": "Hypertension 3",
+              "uuid": "edc3012b-b569-5301-ab7c-5e12de64691a",
+              "internalId": 21730,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_hypertension_hypertension_4_1",
+              "name": "Hypertension 4",
+              "uuid": "5281b65f-2fe3-5a08-b195-41f49a24a005",
+              "internalId": 21731,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_hypertension_hypertension_5_1",
+              "name": "Hypertension 5",
+              "uuid": "5898b14a-bfc8-5eca-8f42-46758a551dc2",
+              "internalId": 21732,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_hypertension_hypertension_6_1",
+              "name": "Hypertension 6",
+              "uuid": "808979c0-b469-5f02-9085-a54581213998",
+              "internalId": 21733,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "insomnia",
+          "title": "Insomnia",
+          "programs": [
+            {
+              "id": "set_of_programs_insomnia_insomnia_2_1",
+              "name": "Insomnia 2",
+              "uuid": "49cec09a-6747-5ff8-a2a2-47c1d45e996d",
+              "internalId": 21695,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_insomnia_insomnia_3_1",
+              "name": "Insomnia 3",
+              "uuid": "f6c02213-c5cc-5fb2-b7e5-fd316b435b0f",
+              "internalId": 22821,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_insomnia_insomnia_4_1",
+              "name": "Insomnia 4",
+              "uuid": "a7edde82-bcc9-578e-b53d-e046fbd0545e",
+              "internalId": 21698,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_insomnia_insomnia_4_2",
+              "name": "Insomnia 4",
+              "uuid": "a7edde82-bcc9-578e-b53d-e046fbd0545e",
+              "internalId": 21698,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_insomnia_insomnia_5_1",
+              "name": "Insomnia 5",
+              "uuid": "798d9b62-f502-57d2-af1a-fee23d0d41fc",
+              "internalId": 22822,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_insomnia_insomnia_6_1",
+              "name": "Insomnia 6",
+              "uuid": "59f1b39d-64a9-5d65-a0e5-c50be78b74bf",
+              "internalId": 21700,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "mammary_glands",
+          "title": "Mammary Glands",
+          "programs": [
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_1_1",
+              "name": "Mastopathy 1",
+              "uuid": "bd429675-5313-5259-9414-1125f9e81d7a",
+              "internalId": 21777,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_2_1",
+              "name": "Mastopathy 2",
+              "uuid": "5abb10fe-dfd8-59d0-be08-6885fa30a35c",
+              "internalId": 21778,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_3_1",
+              "name": "Mastopathy 3",
+              "uuid": "e8c50f18-f69e-54cf-afc3-7c1591f186df",
+              "internalId": 21779,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_4_1",
+              "name": "Mastopathy 4",
+              "uuid": "f8650a36-1723-53ae-811e-3e19a29c2e18",
+              "internalId": 21780,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_5_1",
+              "name": "Mastopathy 5",
+              "uuid": "18643995-ad62-5680-a7c4-8fb83be6912f",
+              "internalId": 21781,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_mammary_glands_mastopathy_6_1",
+              "name": "Mastopathy 6",
+              "uuid": "72c5fcd9-4d02-5ddd-b199-a92b007cfabb",
+              "internalId": 21782,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "menopause",
+          "title": "Menopause",
+          "programs": [
+            {
+              "id": "set_of_programs_menopause_menopause_1_1",
+              "name": "Menopause 1",
+              "uuid": "6042d3ac-a0e3-578e-9980-45f0fbd06c11",
+              "internalId": 21746,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_menopause_menopause_2_1",
+              "name": "Menopause 2",
+              "uuid": "08cee858-9f6f-5e25-963e-64341af701cd",
+              "internalId": 21747,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_menopause_menopause_3_1",
+              "name": "Menopause 3",
+              "uuid": "13cc5423-f5be-543c-80b8-987acfc8c09b",
+              "internalId": 21748,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_menopause_menopause_4_1",
+              "name": "Menopause 4",
+              "uuid": "6d16f38f-d621-579a-8553-971af049db2c",
+              "internalId": 21749,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_menopause_menopause_5_1",
+              "name": "Menopause 5",
+              "uuid": "4ac9dab6-c91e-531f-abc3-adb582d38bac",
+              "internalId": 21750,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_menopause_menopause_6_1",
+              "name": "Menopause 6",
+              "uuid": "c8fadfe2-8b2a-5174-9e20-0c8acdb59b00",
+              "internalId": 21751,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "myoma",
+          "title": "Myoma",
+          "programs": [
+            {
+              "id": "set_of_programs_myoma_myoma_1_1",
+              "name": "Myoma 1",
+              "uuid": "7d0a556d-e114-5e9b-826a-f547c5ca0bd6",
+              "internalId": 21771,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_myoma_myoma_2_1",
+              "name": "Myoma 2",
+              "uuid": "e368d225-5df6-5823-b22c-a3e78c046f1e",
+              "internalId": 21772,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_myoma_myoma_3_1",
+              "name": "Myoma 3",
+              "uuid": "11fda34f-0e1c-5510-9858-02c420786f9c",
+              "internalId": 21773,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_myoma_myoma_4_1",
+              "name": "Myoma 4",
+              "uuid": "1d3b85c0-6298-51a2-9e63-1a6d7fcc7413",
+              "internalId": 21774,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_myoma_myoma_5_1",
+              "name": "Myoma 5",
+              "uuid": "77178c6e-f25c-5e28-91d8-97e40bb0926f",
+              "internalId": 21775,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_myoma_myoma_6_1",
+              "name": "Myoma 6",
+              "uuid": "f5dc31ad-7b3b-51d7-ad8b-54af32440e35",
+              "internalId": 21776,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "obesity",
+          "title": "Obesity",
+          "programs": [
+            {
+              "id": "set_of_programs_obesity_obesity_1_1",
+              "name": "Obesity 1",
+              "uuid": "ade90b3f-e851-5931-8868-01fb47a6a14b",
+              "internalId": 21788,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_obesity_obesity_2_1",
+              "name": "Obesity 2",
+              "uuid": "a0c437bb-0d19-5934-96ac-6addf501571e",
+              "internalId": 21789,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_obesity_obesity_3_1",
+              "name": "Obesity 3",
+              "uuid": "29f65e7b-ab7c-5aaa-beba-85afaa8887cf",
+              "internalId": 21790,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_obesity_obesity_4_1",
+              "name": "Obesity 4",
+              "uuid": "514aab9d-9d94-5d6a-93e9-b2ecae0605c7",
+              "internalId": 21791,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_obesity_obesity_5_1",
+              "name": "Obesity 5",
+              "uuid": "eb63ad41-ce7f-5d00-8c69-596f9e7552cc",
+              "internalId": 21792,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "otitis",
+          "title": "Otitis",
+          "programs": [
+            {
+              "id": "set_of_programs_otitis_otitis_1_1",
+              "name": "Otitis 1",
+              "uuid": "07b6a039-8b74-54cf-bd16-e7c9442b58ae",
+              "internalId": 21798,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_otitis_otitis_2_1",
+              "name": "Otitis 2",
+              "uuid": "0ab545e5-97a8-5018-9695-e7c1cc090c5c",
+              "internalId": 21799,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_otitis_otitis_3_1",
+              "name": "Otitis 3",
+              "uuid": "5a1be4e0-a302-54c9-83c6-a5a220f39e05",
+              "internalId": 21800,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_otitis_otitis_4_1",
+              "name": "Otitis 4",
+              "uuid": "6d81aef2-b967-56ea-b6bb-de44dfb1a0b6",
+              "internalId": 21801,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_otitis_otitis_5_1",
+              "name": "Otitis 5",
+              "uuid": "879ce4ad-a552-548f-a141-47f7af722620",
+              "internalId": 21802,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_otitis_otitis_6_1",
+              "name": "Otitis 6",
+              "uuid": "250ca464-b642-5573-85a6-518d2c704283",
+              "internalId": 21803,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "post_influenza_complications",
+          "title": "Post-Influenza Complications",
+          "programs": [
+            {
+              "id": "set_of_programs_post_influenza_complications_mycoplasma_1",
+              "name": "Mycoplasma",
+              "uuid": "bf232d89-4d0f-5cb0-914c-042bb82af390",
+              "internalId": 22163,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_post_influenza_complications_streptococcus_pneumonia_1",
+              "name": "Streptococcus Pneumonia",
+              "uuid": "924bc72e-a216-5ecf-84fc-f20d39fca41c",
+              "internalId": 21883,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "prostatic_adenoma",
+          "title": "Prostatic Adenoma",
+          "programs": [
+            {
+              "id": "set_of_programs_prostatic_adenoma_active_protection_1",
+              "name": "Active protection",
+              "uuid": "b89eff38-74bd-59c6-85ff-57fa3e7eecca",
+              "internalId": 21669,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_1_1",
+              "name": "Adenoma 1",
+              "uuid": "2057827f-cc26-5454-ad6c-86c537f1ef28",
+              "internalId": 21667,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_2_1",
+              "name": "Adenoma 2",
+              "uuid": "ec90235c-cee9-5c63-8193-3e31d3d1d0ec",
+              "internalId": 21668,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_4_1",
+              "name": "Adenoma 4",
+              "uuid": "b14d73e0-fe33-5f7e-b404-f7b9dc950b01",
+              "internalId": 21670,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_5_1",
+              "name": "Adenoma 5",
+              "uuid": "38d86010-ea5e-5b42-b947-62a2f62b0c2e",
+              "internalId": 21671,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_6_1",
+              "name": "Adenoma 6",
+              "uuid": "f2f18879-addd-5400-b190-a0b99e6f82c0",
+              "internalId": 21672,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatic_adenoma_adenoma_7_1",
+              "name": "Adenoma 7",
+              "uuid": "e3bca763-d9bb-5b76-b659-9df15429f179",
+              "internalId": 21673,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "prostatitis",
+          "title": "Prostatitis",
+          "programs": [
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_1_1",
+              "name": "Prostatitis 1",
+              "uuid": "07270fc6-bee0-5a38-9fed-f380b88c3c1a",
+              "internalId": 21831,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_2_1",
+              "name": "Prostatitis 2",
+              "uuid": "9e770724-30fb-5574-9352-9a9736cc3e04",
+              "internalId": 21832,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_3_1",
+              "name": "Prostatitis 3",
+              "uuid": "b865a8ed-8601-5fd5-b0d3-2e26e450bfd5",
+              "internalId": 21833,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_4_1",
+              "name": "Prostatitis 4",
+              "uuid": "2d621b4a-c616-5e20-84e3-2049fe8f3a07",
+              "internalId": 21834,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_5_1",
+              "name": "Prostatitis 5",
+              "uuid": "d6503691-3413-5fbc-9e24-112f9b195ad0",
+              "internalId": 21835,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_prostatitis_prostatitis_6_1",
+              "name": "Prostatitis 6",
+              "uuid": "ecd87866-8cac-56a7-b6e4-073e26b377bf",
+              "internalId": 21836,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "pyelonephritis",
+          "title": "Pyelonephritis",
+          "programs": [
+            {
+              "id": "set_of_programs_pyelonephritis_pyelonephritis1_1",
+              "name": "Pyelonephritis1",
+              "uuid": "ded9769e-5cc3-5d47-98a8-0a272dd5f5c6",
+              "internalId": 21808,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_pyelonephritis_pyelonephritis2_1",
+              "name": "Pyelonephritis2",
+              "uuid": "93fb3f54-c61a-5e65-a84e-f3c76ce19b83",
+              "internalId": 21809,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_pyelonephritis_pyelonephritis3_1",
+              "name": "Pyelonephritis3",
+              "uuid": "5f828798-8a2d-53ae-9c95-202b11f1b209",
+              "internalId": 21810,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_pyelonephritis_pyelonephritis4_1",
+              "name": "Pyelonephritis4",
+              "uuid": "65653ba0-ceff-592a-acf3-df0eb5ab8af1",
+              "internalId": 21811,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_pyelonephritis_pyelonephritis5_1",
+              "name": "Pyelonephritis5",
+              "uuid": "2bcf8488-c2b1-5e5b-beb3-1444f372e4e0",
+              "internalId": 21812,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "sinusitis",
+          "title": "Sinusitis",
+          "programs": [
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_1_1",
+              "name": "Sinusitis 1",
+              "uuid": "28b7522f-7001-5b20-8e39-e2f03771ce03",
+              "internalId": 22671,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_2_1",
+              "name": "Sinusitis 2",
+              "uuid": "cb854ce3-f1eb-59ac-b2f9-850ffa1b462a",
+              "internalId": 22694,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_3_1",
+              "name": "Sinusitis 3",
+              "uuid": "5614818c-f27b-519b-b30e-7434be28cffd",
+              "internalId": 21845,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_4_1",
+              "name": "Sinusitis 4",
+              "uuid": "e92d2a19-a1ee-5162-91e1-84aa603323be",
+              "internalId": 21846,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_5_1",
+              "name": "Sinusitis 5",
+              "uuid": "e2e9bc51-ff04-5486-bc88-eb481aa8f83a",
+              "internalId": 21847,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_sinusitis_sinusitis_6_1",
+              "name": "Sinusitis 6",
+              "uuid": "d796dc2a-0c64-5d13-b91f-5776b661742b",
+              "internalId": 21848,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "spinal_disorders",
+          "title": "Spinal Disorders",
+          "programs": [
+            {
+              "id": "set_of_programs_spinal_disorders_spinal_column1_1",
+              "name": "Spinal Column1",
+              "uuid": "83c96e7d-1c81-5728-933d-8ce39d2f9f68",
+              "internalId": 21813,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_spinal_disorders_spinal_column2_1",
+              "name": "Spinal Column2",
+              "uuid": "104016f8-c070-5d3c-93b2-b771d085f4f6",
+              "internalId": 21814,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_spinal_disorders_spinal_column4_1",
+              "name": "Spinal Column4",
+              "uuid": "75bb7f74-5f79-5320-9090-107176dfc968",
+              "internalId": 21815,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_spinal_disorders_spinal_column5_1",
+              "name": "Spinal Column5",
+              "uuid": "b0d19d34-1cc2-520f-9f95-67cef8d73bee",
+              "internalId": 21816,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_spinal_disorders_spinal_column6_1",
+              "name": "Spinal Column6",
+              "uuid": "5874a7cd-8843-55d3-85b9-f4e4bc01d9e1",
+              "internalId": 21817,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "tonsillitis",
+          "title": "Tonsillitis",
+          "programs": [
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_1_1",
+              "name": "Tonsillitis 1",
+              "uuid": "ab2e5620-327d-5c2a-8550-899894205fff",
+              "internalId": 22668,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_2_1",
+              "name": "Tonsillitis 2",
+              "uuid": "384d7df6-a33a-55b9-8272-8c87b6ab2042",
+              "internalId": 22697,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_3_1",
+              "name": "Tonsillitis 3",
+              "uuid": "3346147d-8aaa-5618-8eb0-0b72818401b6",
+              "internalId": 21684,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_4_1",
+              "name": "Tonsillitis 4",
+              "uuid": "46db6e39-36d8-52f0-8a02-f88c679786a3",
+              "internalId": 21685,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_5_1",
+              "name": "Tonsillitis 5",
+              "uuid": "fde94423-6d6b-536f-a0a3-3eeaed85958c",
+              "internalId": 21686,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_tonsillitis_tonsillitis_6_1",
+              "name": "Tonsillitis 6",
+              "uuid": "366141d9-42a9-5155-bb5f-654279c1a4f7",
+              "internalId": 21687,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "type_2_diabetes_mellitus",
+          "title": "Type 2 Diabetes Mellitus",
+          "programs": [
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_1_1",
+              "name": "Diabetes 1",
+              "uuid": "4a11ccb7-3cbe-5fbc-8b71-e93d3170b9f7",
+              "internalId": 23035,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_2_1",
+              "name": "Diabetes 2",
+              "uuid": "84ea154d-4eae-58d6-bae6-7246233d690d",
+              "internalId": 23036,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_3_1",
+              "name": "Diabetes 3",
+              "uuid": "159df00a-43fb-5dfc-9856-68f731c8f180",
+              "internalId": 23037,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_4_1",
+              "name": "Diabetes 4",
+              "uuid": "baf62ca1-84e4-5486-b890-7bb1bdf76242",
+              "internalId": 23042,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_5_1",
+              "name": "Diabetes 5",
+              "uuid": "55a8ff4e-10e8-5855-84e9-cfbe4686f7a6",
+              "internalId": 21841,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_type_2_diabetes_mellitus_diabetes_6_1",
+              "name": "Diabetes 6",
+              "uuid": "be12480d-921c-5de5-a642-afd957dbc9e3",
+              "internalId": 21842,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "urolithiasis",
+          "title": "Urolithiasis",
+          "programs": [
+            {
+              "id": "set_of_programs_urolithiasis_kidney_stones1_1",
+              "name": "Kidney Stones1",
+              "uuid": "8ccdea42-738a-5eeb-8da9-83ba6e0da435",
+              "internalId": 21783,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_urolithiasis_kidney_stones_2_1",
+              "name": "Kidney Stones 2"
+            },
+            {
+              "id": "set_of_programs_urolithiasis_kidney_stones3_1",
+              "name": "Kidney Stones3",
+              "uuid": "b041d844-617e-51aa-8535-e1b6bd85764d",
+              "internalId": 21785,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_urolithiasis_kidney_stones4_1",
+              "name": "Kidney Stones4",
+              "uuid": "a1c61085-3b66-51b7-a73e-b6fd735bbbff",
+              "internalId": 21786,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_urolithiasis_kidney_stones5_1",
+              "name": "Kidney Stones5",
+              "uuid": "92864483-8385-5117-9bb5-d4a2c007e6d3",
+              "internalId": 21787,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "varicose_veins",
+          "title": "Varicose Veins",
+          "programs": [
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_1_1",
+              "name": "Varicosis 1",
+              "uuid": "6f027842-2d5c-56f5-97ef-ba4ab8972283",
+              "internalId": 21714,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_2_1",
+              "name": "Varicosis 2",
+              "uuid": "887ac604-d9f1-51cb-a15d-c4f832d1f12e",
+              "internalId": 21715,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_3_1",
+              "name": "Varicosis 3",
+              "uuid": "d0dd7c7d-feed-5bf5-8341-b6458776c31c",
+              "internalId": 21716,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_4_1",
+              "name": "Varicosis 4",
+              "uuid": "eb1115a5-dbcb-5819-9d4a-1f8a903052ca",
+              "internalId": 21717,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_5_1",
+              "name": "Varicosis 5",
+              "uuid": "3dfc1c4b-9841-51b6-9e2d-915e03468218",
+              "internalId": 21718,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_6_1",
+              "name": "Varicosis 6",
+              "uuid": "93e91694-3c58-58d4-a5c7-f61ff3ff4e05",
+              "internalId": 21719,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_varicose_veins_varicosis_7_1",
+              "name": "Varicosis 7",
+              "uuid": "4f298d54-a640-5d9b-a6a3-d5882aaa85d6",
+              "internalId": 21720,
+              "level": 1
+            }
+          ]
+        },
+        {
+          "id": "vision_disorders",
+          "title": "Vision Disorders",
+          "programs": [
+            {
+              "id": "set_of_programs_vision_disorders_astigmatism_1",
+              "name": "Astigmatism",
+              "uuid": "e7050230-34de-54b1-90ac-172da430fae0",
+              "internalId": 21818,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_cataract_1",
+              "name": "Cataract",
+              "uuid": "eda8934c-2125-520f-bbd6-f444fe5a2ec8",
+              "internalId": 21822,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_conjunctivitis_1",
+              "name": "Conjunctivitis",
+              "uuid": "0f4084d0-3e85-5a96-9121-92abd1fbc874",
+              "internalId": 21823,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_eye_fatigue_1",
+              "name": "Eye Fatigue",
+              "uuid": "b931004a-59f4-5f81-bf1f-9727ce84d158",
+              "internalId": 21825,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_glaucoma_1",
+              "name": "Glaucoma",
+              "uuid": "d6d5601d-8655-5039-86b8-99bc05047ac1",
+              "internalId": 21820,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_hyperopia_1",
+              "name": "Hyperopia",
+              "uuid": "f7cd589d-e398-5b7a-ba36-083c2d44b717",
+              "internalId": 22807,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_myopia_1",
+              "name": "Myopia",
+              "uuid": "3b93512b-50b0-560c-9c45-29fe4222858e",
+              "internalId": 21819,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_retina_recovery_1",
+              "name": "Retina Recovery",
+              "uuid": "c41f4e4c-7d87-517f-8ade-6499787cad2c",
+              "internalId": 21826,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_squint_1",
+              "name": "Squint",
+              "uuid": "6acf9f80-f633-56d1-9aed-719bdbe6e524",
+              "internalId": 21824,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_vision_1_1",
+              "name": "Vision 1",
+              "uuid": "eac5fb98-5b67-5829-98ec-c3cea9cb662c",
+              "internalId": 21827,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_vision_2_1",
+              "name": "Vision 2",
+              "uuid": "894e788f-84b6-555a-a03f-d43cc6af7a7f",
+              "internalId": 21828,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_vision_3_1",
+              "name": "Vision 3",
+              "uuid": "eb0a5785-c912-5751-a8aa-4dec457b2971",
+              "internalId": 21829,
+              "level": 1
+            },
+            {
+              "id": "set_of_programs_vision_disorders_vision_4_1",
+              "name": "Vision 4",
+              "uuid": "5262f7b6-c41a-507e-9812-924e7d576419",
+              "internalId": 21830,
+              "level": 1
+            }
+          ]
+        }
+      ],
+      "programs": []
+    },
+    {
+      "id": "seven_chakras",
+      "title": "Seven Chakras",
+      "subcategories": [],
+      "programs": []
+    },
+    {
+      "id": "acupuncture",
+      "title": "Acupuncture",
+      "subcategories": [],
+      "programs": [
+        {
+          "id": "acupuncture_blockage_in_meridians_due_to_cicatrix_1",
+          "name": "Blockage in Meridians due to Cicatrix",
+          "uuid": "9896516c-9af6-5654-b659-f68f30a224b4",
+          "internalId": 22299,
+          "level": 1
+        },
+        {
+          "id": "acupuncture_block_of_acupuncture_points_1",
+          "name": "Block of Acupuncture Points",
+          "uuid": "cf8f80f2-4983-508b-986f-240a71bf236c",
+          "internalId": 22296,
+          "level": 1
+        },
+        {
+          "id": "acupuncture_recovery_of_aura_1",
+          "name": "Recovery of Aura",
+          "uuid": "f81cacb6-ec94-5cb3-9301-f7cbd9b5e174",
+          "internalId": 22297,
+          "level": 1
+        },
+        {
+          "id": "acupuncture_resistance_1",
+          "name": "Resistance",
+          "uuid": "b1a561b2-d86c-535f-8f74-1f54d8d501f4",
+          "internalId": 22298,
+          "level": 1
+        },
+        {
+          "id": "acupuncture_sedation_1",
+          "name": "Sedation",
+          "uuid": "dfbdd0e7-f362-56f5-a6a4-b896cb9e3fbb",
+          "internalId": 22300,
+          "level": 1
+        }
+      ]
+    }
+  ]
+}

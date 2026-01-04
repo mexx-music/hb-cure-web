@@ -8,12 +8,15 @@ class ProgramItem {
 
   final String? uuid; // ProgramUUID
   final int? internalId; // internalID
+  // New: optional program level (default = 1)
+  final int level;
 
   ProgramItem({
     required this.id,
     required this.name,
     this.uuid,
     this.internalId,
+    this.level = 1,
   });
 
   factory ProgramItem.fromJson(Map<String, dynamic> json) {
@@ -24,6 +27,9 @@ class ProgramItem {
       internalId: json['internalId'] is int
           ? json['internalId'] as int
           : int.tryParse('${json['internalId']}'),
+      level: (json['level'] is num)
+          ? (json['level'] as num).toInt()
+          : (int.tryParse('${json['level']}') ?? 1),
     );
   }
 
@@ -32,6 +38,7 @@ class ProgramItem {
         'name': name,
         if (uuid != null) 'uuid': uuid,
         if (internalId != null) 'internalId': internalId,
+        'level': level,
       };
 
   @override

@@ -12,6 +12,8 @@ import '../widgets/intensity_picker.dart';
 import '../theme/app_colors.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'package:hbcure/i18n/program_name_localizer.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 
 class ProgramDetailPage extends StatefulWidget {
   final ProgramItem program;
@@ -289,7 +291,10 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                 const SizedBox(height: 16),
                 // limit scaling/size to avoid overflow on large system text settings
                 Text(
-                  widget.program.name,
+                  ProgramNameLocalizer.instance.displayName(
+                    keyEn: widget.program.name,
+                    langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
+                  ),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppColors.textPrimary, fontSize: 28),
                   textAlign: TextAlign.center,
                   maxLines: 2,

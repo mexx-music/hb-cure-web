@@ -3,6 +3,8 @@ import 'package:hbcure/models/program_category.dart';
 import 'package:hbcure/ui/pages/program_list_page.dart';
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
+import 'package:hbcure/i18n/program_name_localizer.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 
 class CategoriesPage extends StatelessWidget {
   final ProgramCategory category;
@@ -11,6 +13,7 @@ class CategoriesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
     if (category.subcategories.isEmpty) {
       // No subcategories -> show programs directly
       return ProgramListPage(title: category.title, programs: category.programs);
@@ -39,7 +42,10 @@ class CategoriesPage extends StatelessWidget {
                     decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderSubtle)),
                     child: ListTile(
                       leading: CircleAvatar(backgroundColor: AppColors.primaryMuted, child: const Icon(Icons.folder, color: AppColors.textPrimary)),
-                      title: Text(sub.title, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      title: Text(
+                        ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode),
+                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      ),
                       trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProgramListPage(title: sub.title, programs: sub.programs))),
                     ),

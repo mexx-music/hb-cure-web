@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
+import 'package:hbcure/i18n/program_name_localizer.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 
 import '../../data/program_repository.dart';
 import '../../models/program_item.dart';
@@ -135,10 +137,12 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // No debug prints here in production; layout adjusted to nav geometry.
+    // Determine desired program name language once per build
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+     // No debug prints here in production; layout adjusted to nav geometry.
 
-    // Build a single scrollable ListView that contains the header and the programs.
-    return GradientBackground(
+     // Build a single scrollable ListView that contains the header and the programs.
+     return GradientBackground(
       child: Padding(
         // slightly reduced vertical padding to save height
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
@@ -188,7 +192,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                           children: [
                             Icon(Icons.play_arrow, color: AppColors.primary),
                             const SizedBox(width: 10),
-                            Expanded(child: Text(_displayNameById[program.id] ?? program.name, style: TextStyle(color: AppColors.textPrimary))),
+                            // Use enriched display name if available, then localize per langCode
+                            Expanded(
+                              child: Text(
+                                ProgramNameLocalizer.instance.displayName(
+                                  keyEn: _displayNameById[program.id] ?? program.name,
+                                  langCode: langCode,
+                                ),
+                                style: TextStyle(color: AppColors.textPrimary),
+                              ),
+                            ),
                             IconButton(
                               icon: Icon(Icons.delete, color: AppColors.textSecondary),
                               onPressed: () async => _remove(program.id),
