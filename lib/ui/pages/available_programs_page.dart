@@ -41,9 +41,11 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     // compute current mode and visible categories here (cannot declare 'final' inside a list literal)
     final mode = AppMemory.instance.programMode;
     final visibleCategories = _categories.where((cat) {
-      final isYellow = ((cat.color ?? '').toString().trim().toLowerCase() == 'yellow');
-      if (mode == ProgramMode.beginner && isYellow) return false;
-      return true;
+      final raw = (cat.color ?? '').toString().trim().toLowerCase();
+      final color = raw.isEmpty ? 'green' : raw; // default = green
+      if (mode == ProgramMode.beginner) return color == 'green';
+      if (mode == ProgramMode.advanced) return color == 'green' || color == 'yellow';
+      return true; // expert
     }).toList();
     return GradientBackground(
       child: Padding(
