@@ -7,8 +7,10 @@ class ProgramCatalog {
   static final ProgramCatalog instance = ProgramCatalog._();
 
   List<dynamic>? _raw;
-  Map<String, dynamic>? _byUuid; // uuid -> entry map
-  Map<int, dynamic>? _byInternalId; // internalID -> entry map
+  // Indexes populated from Programs_decoded_full.json
+  Map<String, Map<String, dynamic>> _byUuid = {}; // uuid -> entry map
+  Map<int, Map<String, dynamic>> _byInternalId = {}; // internalID -> entry map
+  Map<String, List<Map<String, dynamic>>> _childrenByParentUuid = {}; // parent uuid -> children list
 
   Future<void> ensureLoaded() async {
     if (_raw != null) return;
@@ -20,27 +22,48 @@ class ProgramCatalog {
     }
     _raw = list;
 
-    _byUuid = {};
-    _byInternalId = {};
+    // clear any existing indexes
+    _byUuid.clear();
+    _byInternalId.clear();
+    _childrenByParentUuid.clear();
 
-    for (final e in list) {
-      if (e is! Map) continue;
+    for (final raw in list) {
+      if (raw is! Map) continue;
+      // normalize to a mutable map with String keys
+      final e = Map<String, dynamic>.from(raw as Map);
 
-      final uuid = e['ProgramUUID'];
-      if (uuid is String && uuid.isNotEmpty) {
-        _byUuid![uuid] = e;
+      final uuid = (e['ProgramUUID'] ?? '').toString();
+      if (uuid.isNotEmpty) {
+        _byUuid[uuid] = e;
       }
 
       final internal = e['internalID'];
-      final id = internal is int ? internal : int.tryParse('$internal');
+      final id = internal is int ? internal : int.tryParse('${internal}');
       if (id != null) {
-        _byInternalId![id] = e;
+        _byInternalId[id] = e;
+      }
+
+      final parent = (e['Parent'] ?? '').toString();
+      if (parent.isNotEmpty) {
+        (_childrenByParentUuid[parent] ??= <Map<String, dynamic>>[]).add(e);
       }
     }
   }
 
-  Map<String, dynamic>? byUuid(String uuid) => _byUuid?[uuid] as Map<String, dynamic>?;
-  Map<String, dynamic>? byInternalId(int id) => _byInternalId?[id] as Map<String, dynamic>?;
+  Map<String, dynamic>? byUuid(String uuid) => _byUuid[uuid];
+  Map<String, dynamic>? byInternalId(int id) => _byInternalId[id];
+
+  // Return a copy of the internal children list (never null) so callers
+  // cannot mutate ProgramCatalog's internal state.
+  List<Map<String, dynamic>> childrenByParentUuid(String parentUuid) =>
+      List<Map<String, dynamic>>.from(_childrenByParentUuid[parentUuid] ?? const []);
+
+  // Alias used by ProgramRepository (keeps naming consistent)
+  List<Map<String, dynamic>> childrenOfUuid(String parentUuid) {
+    final list = _childrenByParentUuid[parentUuid];
+    if (list == null) return const [];
+    return List<Map<String, dynamic>>.from(list);
+  }
 
   String name(Map<String, dynamic> entry, {String lang = 'DE'}) {
     final p = entry['Program'];

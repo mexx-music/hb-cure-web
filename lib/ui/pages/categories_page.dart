@@ -5,80 +5,202 @@ import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'package:hbcure/i18n/program_name_localizer.dart';
 import 'package:hbcure/services/program_language_controller.dart';
+import 'package:hbcure/services/app_memory.dart';
+import 'package:hbcure/core/program_mode.dart';
 
-class CategoriesPage extends StatelessWidget {
-	final ProgramCategory category;
+class CategoriesPage extends StatefulWidget {
+  final ProgramCategory category;
 
-	const CategoriesPage({super.key, required this.category});
+  const CategoriesPage({super.key, required this.category});
 
-	@override
-	Widget build(BuildContext context) {
-		final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
-		// Robust color selection for category avatars: only treat exact 'yellow' (trim/case-insensitive)
-		// as yellow; otherwise keep existing muted primary color so nothing gets forced to green.
-		final bgColor = (category.color != null && category.color!.trim().toLowerCase() == 'yellow')
-			? AppColors.yellow
-			: AppColors.primaryMuted;
-		if (category.subcategories.isEmpty) {
-			// No subcategories -> show programs directly
-			return ProgramListPage(title: category.title, programs: category.programs);
-		}
+  @override
+  State<CategoriesPage> createState() => _CategoriesPageState();
+}
 
-		// Highlight lists (both EN and DE variants) for the three special categories
-		final Set<String> highlightEn = {
-			'Therapeutic Frequencies',
-			'Detoxification Frequencies',
-			'After Operation Frequencies',
-		};
-		final Set<String> highlightDe = {
-			'Therapeutische Frequenzen',
-			'Entgiftung Frequenzen',
-			'Nach Operation Frequenzen',
-		};
+class _CategoriesPageState extends State<CategoriesPage> {
+  late final VoidCallback _langListener;
 
-		return GradientBackground(
-			child: Padding(
-				padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-				child: ListView(
-					padding: const EdgeInsets.only(bottom: 12.0),
-					children: [
-						Row(
-							children: [
-								IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
-								Expanded(child: Text(category.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary, fontSize: 18))),
-								IconButton(icon: const Icon(Icons.tune, color: AppColors.textPrimary), onPressed: () => debugPrint('Filter')),
-							],
-						),
-						const SizedBox(height: 6),
-						for (final sub in category.subcategories)
-							Padding(
-								padding: const EdgeInsets.only(bottom: 6.0),
-								child: Material(
-									color: Colors.transparent,
-									child: Container(
-										decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderSubtle)),
-										child: Builder(builder: (ctx) {
-											// Compute localized title and determine if this subcategory should be highlighted
-											final subTitleEn = sub.title.trim();
-											final subTitleDe = ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode).trim();
-											final isHighlight = highlightEn.contains(subTitleEn) || highlightDe.contains(subTitleDe) || highlightEn.contains(subTitleDe) || highlightDe.contains(subTitleEn);
-											final subBgColor = isHighlight ? AppColors.yellow : bgColor;
-											return ListTile(
-												leading: CircleAvatar(backgroundColor: subBgColor, child: const Icon(Icons.folder, color: AppColors.textPrimary)),
-												title: Text(
-													ProgramNameLocalizer.instance.displayName(keyEn: sub.title, langCode: langCode),
-													style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-												),
-												trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-												onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProgramListPage(title: sub.title, programs: sub.programs))),
-											);
-										}),
-								),
-								),
-						),
-					],
-				),
-			),
-		);
-	}
+  @override
+  void initState() {
+    super.initState();
+    _langListener = () => setState(() {});
+    ProgramLangController.instance.addListener(_langListener);
+  }
+
+  @override
+  void dispose() {
+    ProgramLangController.instance.removeListener(_langListener);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final langCode =
+        (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+
+    return ValueListenableBuilder<ProgramMode>(
+      valueListenable: AppMemory.instance.programModeNotifier,
+      builder: (context, mode, _) {
+        final category = widget.category;
+        // Robust color selection for category avatars: only treat exact 'yellow' (trim/case-insensitive)
+        // as yellow; otherwise keep existing muted primary color so nothing gets forced to green.
+        final catIsYellow =
+            (category.color ?? '').trim().toLowerCase() == 'yellow';
+        final bgColor = catIsYellow ? AppColors.yellow : AppColors.primaryMuted;
+
+        // ✅ Novice-Regel: gelbe Top-Kategorien komplett verstecken
+        if (mode == ProgramMode.beginner && catIsYellow) {
+          // NOTE: avoid returning an empty SizedBox here to prevent a black/empty screen
+          // for novice users — show a small informative page with a back button instead.
+          return GradientBackground(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          ProgramNameLocalizer.instance.displayName(
+                            keyEn: category.title,
+                            langCode: langCode,
+                          ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Diese Kategorie ist im Novice-Modus nicht sichtbar.',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (category.subcategories.isEmpty) {
+          // No subcategories -> show programs directly
+          return ProgramListPage(
+            title: ProgramNameLocalizer.instance.displayName(
+              keyEn: category.title,
+              langCode: langCode,
+            ),
+            programs: category.programs,
+            mode: mode,
+          );
+        }
+
+        // Filter subcategories once: remove completely empty entries (no programs and no sub-subcategories)
+        // and, in Novice (beginner) mode, hide categories that are marked yellow.
+        final visibleSubcategories = category.subcategories.where((sub) {
+          // ProgramSubcategory defines only `programs` (no `subcategories`).
+          // Treat a subcategory as empty if it has no programs.
+          final progCount = (sub.programs.length);
+          final isEmpty = (progCount == 0);
+          if (isEmpty) return false;
+
+          final subIsYellow = ((category.color ?? '').toString().trim().toLowerCase() == 'yellow');
+          if (mode == ProgramMode.beginner && subIsYellow) return false;
+
+          return true;
+        }).toList();
+
+        return GradientBackground(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Text(
+                        ProgramNameLocalizer.instance.displayName(
+                          keyEn: category.title,
+                          langCode: langCode,
+                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.tune, color: AppColors.textPrimary),
+                      onPressed: () => debugPrint('Filter'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                for (final sub in visibleSubcategories)
+                  Builder(builder: (ctx) {
+                    // ProgramSubcategory does not define a `color` field.
+                    // Use the parent category's color as the marker source.
+                    final subIsYellow = ((category.color ?? '').toString().trim().toLowerCase() == 'yellow');
+
+                    final subBgColor = subIsYellow ? AppColors.yellow : bgColor;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: subBgColor,
+                              child: const Icon(Icons.folder, color: AppColors.textPrimary),
+                            ),
+                            title: Text(
+                              ProgramNameLocalizer.instance.displayName(
+                                keyEn: sub.title,
+                                langCode: langCode,
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProgramListPage(
+                                  title: sub.title,
+                                  programs: sub.programs,
+                                  mode: mode,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

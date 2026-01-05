@@ -60,6 +60,8 @@ class _SettingsPageState extends State<SettingsPage> {
               });
               // update shared AppMemory state
               AppMemory.instance.programMode = newMode;
+              // DEBUG: verify readback
+              debugPrint('[MODE_SAVE] set=$newMode readBack=${AppMemory.instance.programMode}');
             },
             style: TextStyle(color: AppColors.textPrimary),
             dropdownColor: AppColors.cardBackground,

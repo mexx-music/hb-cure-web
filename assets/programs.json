@@ -3099,6 +3099,7 @@
       "id": "detoxification",
       "title": "Entgiftung Frequenzen",
       "color": "yellow",
+      "internalId": 30101,
       "programs": [],
       "subcategories": []
     },
@@ -3106,6 +3107,7 @@
       "id": "post_operation",
       "title": "Nach Operation Frequenzen",
       "color": "yellow",
+      "internalId": 30095,
       "programs": [],
       "subcategories": []
     },
@@ -3113,6 +3115,7 @@
       "id": "therapeutic",
       "title": "Therapeutische Frequenzen",
       "color": "yellow",
+      "internalId": 30000,
       "programs": [],
       "subcategories": []
     }

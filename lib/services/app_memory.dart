@@ -4,30 +4,62 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:yaml/yaml.dart' as yaml;
-import '../models/ble_device_profile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/ble_device_profile.dart';
 import '../core/program_mode.dart';
 
 class AppMemory extends ChangeNotifier {
-  AppMemory._internal();
+  AppMemory._internal() {
+    // ensure notifier initial value matches the private field
+    programModeNotifier.value = _programMode;
+  }
 
   static final AppMemory instance = AppMemory._internal();
+
+  static const String _kProgramModeKey = 'programMode';
 
   // Example fields
   int appLaunchCount = 0;
   final Map<String, dynamic> deviceProfilesCache = {};
   String? lastConnectedDeviceId;
   final Map<String, bool> featureFlags = {};
-  // Program mode (beginner/advanced/expert) used by ProgramListPage
+
+  // Program mode (beginner/advanced/expert)
   // Backed by a private field so we can notify listeners on change.
   ProgramMode _programMode = ProgramMode.expert;
+
+  // ValueNotifier for quick value-listenable rebuilds in widgets that prefer it
+  // Consumers can use AppMemory.instance.programModeNotifier
+  final ValueNotifier<ProgramMode> programModeNotifier =
+  ValueNotifier<ProgramMode>(ProgramMode.expert);
 
   ProgramMode get programMode => _programMode;
 
   set programMode(ProgramMode v) {
     if (_programMode == v) return;
     _programMode = v;
+
+    // update notifier for ValueListenableBuilders
+    try {
+      programModeNotifier.value = v;
+    } catch (_) {}
+
     notifyListeners();
+  }
+
+  /// Persisted setter (minimal):
+  /// - updates in-memory mode + notifiers
+  /// - saves to SharedPreferences
+  Future<void> setProgramMode(ProgramMode v) async {
+    programMode = v;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kProgramModeKey, v.name);
+    } catch (e) {
+      debugPrint('AppMemory.setProgramMode: could not persist mode: $e');
+    }
   }
 
   bool _initialized = false;
@@ -35,16 +67,33 @@ class AppMemory extends ChangeNotifier {
   // BLE profiles loaded from doc/app_memory/40_ble_profiles.yaml
   final Map<String, BleDeviceProfile> bleProfilesById = {};
 
-  /// Initialize AppMemory - placeholder for async init (SharedPreferences/Hive)
+  /// Initialize AppMemory
+  /// - loads persisted ProgramMode first (so UI is consistent on first paint)
+  /// - loads optional YAML profiles
   Future<void> init() async {
     if (_initialized) return;
-    // TODO: load persisted state from SharedPreferences / Hive
-    // e.g. final prefs = await SharedPreferences.getInstance();
-    // appLaunchCount = prefs.getInt('appLaunchCount') ?? 0;
 
-    // Try to load BLE profiles from YAML documentation file
+    // 1) Load persisted program mode (if available)
     try {
-      final yamlText = await rootBundle.loadString('doc/app_memory/40_ble_profiles.yaml');
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kProgramModeKey);
+      if (raw != null && raw.trim().isNotEmpty) {
+        final loaded = ProgramMode.values.firstWhere(
+              (m) => m.name == raw,
+          orElse: () => ProgramMode.expert,
+        );
+        _programMode = loaded;
+        programModeNotifier.value = loaded;
+        // no notifyListeners here; init usually happens before UI
+      }
+    } catch (e) {
+      debugPrint('AppMemory.init: could not load persisted mode: $e');
+    }
+
+    // 2) Try to load BLE profiles from YAML documentation file
+    try {
+      final yamlText =
+      await rootBundle.loadString('doc/app_memory/40_ble_profiles.yaml');
       if (yamlText.trim().isNotEmpty) {
         final parsed = yaml.loadYaml(yamlText);
         if (parsed is yaml.YamlMap || parsed is Map) {
@@ -58,7 +107,8 @@ class AppMemory extends ChangeNotifier {
               }
             } catch (e) {
               // ignore single profile errors
-              debugPrint('AppMemory.init: failed to parse profile entry ${entry.key}: $e');
+              debugPrint(
+                  'AppMemory.init: failed to parse profile entry ${entry.key}: $e');
             }
           }
         }
@@ -91,6 +141,6 @@ class AppMemory extends ChangeNotifier {
 
   BleDeviceProfile? getBleProfile(String id) => bleProfilesById[id];
 
-  // If deviceProfilesCache was previously used for something else, keep it but document
-  // it's recommended to use bleProfilesById for static YAML-profiles.
+// If deviceProfilesCache was previously used for something else, keep it but document
+// it's recommended to use bleProfilesById for static YAML-profiles.
 }

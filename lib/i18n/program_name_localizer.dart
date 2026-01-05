@@ -9,6 +9,8 @@ class ProgramNameLocalizer {
 
   bool _loaded = false;
   final Map<String, String> _enToDe = HashMap<String, String>();
+  // DE -> EN fallback map (populated alongside EN->DE)
+  final Map<String, String> _deToEn = HashMap<String, String>();
 
   /// Loads the CSV once.
   /// Asset path must match pubspec.yaml exactly.
@@ -35,41 +37,20 @@ class ProgramNameLocalizer {
       final de = _unquote(line.substring(0, idx).trim());
       final en = _unquote(line.substring(idx + 1).trim());
 
-      // Normalize EN key so lookups are tolerant to extra spaces, NBSP and BOM.
-      final enKeyRaw = en;
-      final enKey = _normKey(enKeyRaw);
+      final enKey = en.trim();
       if (enKey.isEmpty) continue;
 
-      final deValRaw = de.trim();
-      final deVal = deValRaw.isEmpty ? enKey : _normKey(deValRaw);
-
-      final existing = _enToDe[enKey];
-
-      final isRealDe = deVal.isNotEmpty && deVal != enKey;
-
-      if (existing == null) {
-        _enToDe[enKey] = isRealDe ? deVal : enKey;
-      } else {
-        final existingIsRealDe = existing.isNotEmpty && existing != enKey;
-        if (!existingIsRealDe && isRealDe) {
-          _enToDe[enKey] = deVal;
-        }
-      }
-
-      // store lowercase/alternate key for case-insensitive lookup
-      final mapped = _enToDe[enKey];
-      if (mapped != null) {
-        _enToDe[enKey.toLowerCase()] = mapped;
-      } else {
-        _enToDe[enKey.toLowerCase()] = deVal;
+      final deVal = de.isEmpty ? enKey : de.trim();
+      _enToDe[enKey] = deVal;
+      // populate reverse mapping for cases where the UI provides DE but we need EN
+      if (deVal.isNotEmpty && deVal != enKey) {
+        _deToEn[deVal] = enKey;
       }
     }
 
     _loaded = true;
     debugPrint('ProgramNameLocalizer: map size=${_enToDe.length}');
-    debugPrint('SANITY Animals => ${_enToDe["Animals"]}');
-    debugPrint('SANITY Antiparasitic => ${_enToDe["Antiparasitic"]}');
-    debugPrint('SANITY Available Programs => ${_enToDe["Available Programs"]}');
+    debugPrint("ProgramNameLocalizer: test('Seven Chakras') => '${_enToDe['Seven Chakras']}'");
   }
 
   /// Returns display name for the given EN key.
@@ -79,31 +60,12 @@ class ProgramNameLocalizer {
     required String keyEn,
     required String langCode, // 'de' | 'en'
   }) {
-    final key = _normKey(keyEn);
+    final key = keyEn.trim();
 
-    if (langCode.toLowerCase() != 'de') {
-      return keyEn.trim();
+    if (langCode.toLowerCase() == 'en') {
+      return _deToEn[key] ?? key;
     }
-
-    // direct lookup
-    final hit = _enToDe[key] ?? _enToDe[key.toLowerCase()];
-    if (hit != null) return hit;
-
-    // Fallback: try to match by normalizing stored keys (tolerant matching)
-    for (final storedKey in _enToDe.keys) {
-      try {
-        if (_normKey(storedKey) == key) {
-          final found = _enToDe[storedKey];
-          if (found != null) {
-            debugPrint('ProgramNameLocalizer: fallback matched "$keyEn" -> "$found" (storedKey="$storedKey")');
-            return found;
-          }
-        }
-      } catch (_) {}
-    }
-
-    // final fallback: return trimmed EN key
-    return keyEn.trim();
+    return _enToDe[key] ?? key;
   }
 
   String _unquote(String s) {
@@ -113,19 +75,5 @@ class ProgramNameLocalizer {
       return s.substring(1, s.length - 1);
     }
     return s;
-  }
-
-  String _normKey(String s) {
-    // Remove BOM and NBSP, normalize CR, collapse whitespace, remove
-    // optional spaces around slashes so "A / B" == "A/ B" etc.
-    var t = s.replaceAll('\uFEFF', '') // BOM
-        .replaceAll('\u00A0', ' ') // NBSP -> space
-        .replaceAll('\r', '')
-        .trim();
-    // collapse whitespace into single spaces
-    t = t.replaceAll(RegExp(r'\s+'), ' ');
-    // remove spaces around '/'
-    t = t.replaceAll(' / ', '/').replaceAll('/ ', '/').replaceAll(' /', '/');
-    return t;
   }
 }
