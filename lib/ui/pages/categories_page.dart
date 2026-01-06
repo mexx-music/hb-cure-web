@@ -129,16 +129,24 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     Expanded(
-                      child: Text(
-                        ProgramNameLocalizer.instance.displayName(
-                          keyEn: category.title,
-                          langCode: langCode,
-                        ),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 18,
-                            ),
-                      ),
+                      child: Builder(builder: (_) {
+                        // HOTFIX: special-case 'seven_chakras' id to produce stable DE/EN labels
+                        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                        final id = category.id;
+                        final titleText = (id == 'seven_chakras')
+                            ? (isDe ? '7 Chakra Frequenzen' : '7 Chakra Frequencies')
+                            : ProgramNameLocalizer.instance.displayName(
+                                keyEn: category.title,
+                                langCode: langCode,
+                              );
+                        return Text(
+                          titleText,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                              ),
+                        );
+                      }),
                     ),
                     IconButton(
                       icon: const Icon(Icons.tune, color: AppColors.textPrimary),
@@ -173,7 +181,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             title: Text(
                               ProgramNameLocalizer.instance.displayName(
                                 keyEn: sub.title,
-                                langCode: langCode,
+                                langCode: ProgramLangController.instance.lang.toString().toLowerCase(),
                               ),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,

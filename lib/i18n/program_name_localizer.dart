@@ -60,8 +60,26 @@ class ProgramNameLocalizer {
     required String keyEn,
     required String langCode, // 'de' | 'en'
   }) {
+    // Requested Chakra-special-case: handle Seven Chakras variants first
+    final lc = langCode.toLowerCase().trim();
+    final k = keyEn.trim();
+    // ✅ Chakra programs: handle locally because CSV/keys can be inconsistent
+    if (k == 'Seven Chakras' || k.startsWith('Seven Chakras ')) {
+      if (lc == 'de') {
+        // exact base name => use the DE label from decoded set
+        if (k == 'Seven Chakras') return '7 Chakra Frequenzen';
+        // keep suffix (e.g. " 1", " 1-7")
+        final suffix = k.substring('Seven Chakras'.length); // includes leading space
+        return 'Sieben Chakras$suffix';
+      } else {
+        // en
+        return k;
+      }
+    }
+
     final key = keyEn.trim();
 
+    // existing fallback behavior
     if (langCode.toLowerCase() == 'en') {
       return _deToEn[key] ?? key;
     }

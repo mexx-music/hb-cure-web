@@ -93,10 +93,18 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                          debugPrint('CAT_COLOR id=${c.id} color=${c.color}');
                          return ListTile(
                            leading: CircleAvatar(backgroundColor: markerColor, child: Icon(Icons.apps, color: AppColors.textPrimary)),
-                           title: Text(
-                             ProgramNameLocalizer.instance.displayName(keyEn: c.title, langCode: langCode),
-                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                           ),
+                           title: Builder(builder: (_) {
+                             // HOTFIX: special-case the known 'seven_chakras' top-folder id
+                             final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                             final id = c.id;
+                             final titleText = (id == 'seven_chakras')
+                                 ? (isDe ? '7 Chakra Frequenzen' : '7 Chakra Frequencies')
+                                 : ProgramNameLocalizer.instance.displayName(keyEn: c.title, langCode: langCode);
+                             return Text(
+                               titleText,
+                               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                             );
+                           }),
                            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                            onTap: () {
                              // Pre-checks and small rules before navigation

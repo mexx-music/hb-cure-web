@@ -65,6 +65,14 @@ class _ProgramListPageState extends State<ProgramListPage> {
     super.dispose();
   }
 
+  // Helper: Build localized Chakra name from program id (e.g. "..._1" -> "Seven Chakras 1")
+  String _chakraNameFromId(String id, {required bool isDe}) {
+    final m = RegExp(r"(\d+)$").firstMatch(id.trim());
+    final n = m?.group(1);
+    final base = isDe ? 'Sieben Chakras' : 'Seven Chakras';
+    return (n == null) ? base : '$base $n';
+  }
+
   @override
   Widget build(BuildContext context) {
     final programs = widget.programs;
@@ -164,10 +172,15 @@ class _ProgramListPageState extends State<ProgramListPage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  ProgramNameLocalizer.instance.displayName(
-                                    keyEn: p.name,
-                                    langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
-                                  ),
+                                  (p.name.trim() == 'Seven Chakras')
+                                      ? _chakraNameFromId(
+                                          p.id,
+                                          isDe: (ProgramLangController.instance.lang == ProgramLang.de),
+                                        )
+                                      : ProgramNameLocalizer.instance.displayName(
+                                          keyEn: p.name,
+                                          langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
+                                        ),
                                   style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
