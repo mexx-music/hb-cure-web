@@ -3054,9 +3054,11 @@
     },
     {
       "id": "seven_chakras",
-      "title": "Seven Chakras",
+      "title": "Sieben Chakras",
       "subcategories": [],
-      "programs": []
+      "programs": [],
+      "internalId": 30104,
+      "color": "yellow"
     },
     {
       "id": "acupuncture",
