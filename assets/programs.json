@@ -1346,7 +1346,31 @@
     {
       "id": "general_energy_vitalisation",
       "title": "General Energy, Vitalisation",
-      "subcategories": [],
+      "subcategories": [
+        {
+          "id": "acupuncture",
+          "title": "Akupunktur",
+          "color": "green",
+          "subcategories": [],
+          "programs": [
+            {
+              "internalId": 22296
+            },
+            {
+              "internalId": 22297
+            },
+            {
+              "internalId": 22298
+            },
+            {
+              "internalId": 22299
+            },
+            {
+              "internalId": 22300
+            }
+          ]
+        }
+      ],
       "programs": [
         {
           "id": "general_energy_vitalisation_biological_exercise_1",
@@ -3064,38 +3088,7 @@
       "id": "acupuncture",
       "title": "Acupuncture",
       "subcategories": [],
-      "programs": [
-        {
-          "id": "acupuncture_blockage_in_meridians_due_to_cicatrix_1",
-          "name": "Blockage in Meridians due to Cicatrix",
-          "uuid": "9896516c-9af6-5654-b659-f68f30a224b4",
-          "internalId": 22299
-        },
-        {
-          "id": "acupuncture_block_of_acupuncture_points_1",
-          "name": "Block of Acupuncture Points",
-          "uuid": "cf8f80f2-4983-508b-986f-240a71bf236c",
-          "internalId": 22296
-        },
-        {
-          "id": "acupuncture_recovery_of_aura_1",
-          "name": "Recovery of Aura",
-          "uuid": "f81cacb6-ec94-5cb3-9301-f7cbd9b5e174",
-          "internalId": 22297
-        },
-        {
-          "id": "acupuncture_resistance_1",
-          "name": "Resistance",
-          "uuid": "b1a561b2-d86c-535f-8f74-1f54d8d501f4",
-          "internalId": 22298
-        },
-        {
-          "id": "acupuncture_sedation_1",
-          "name": "Sedation",
-          "uuid": "dfbdd0e7-f362-56f5-a6a4-b896cb9e3fbb",
-          "internalId": 22300
-        }
-      ]
+      "programs": []
     },
     {
       "id": "detoxification",
