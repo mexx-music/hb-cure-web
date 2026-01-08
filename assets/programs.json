@@ -265,6 +265,996 @@
           ]
         },
         {
+          "id": "gastroenterology",
+          "title": "Gastroenterology",
+          "programs": [
+            {
+              "id": "antiparasitic_gastroenterology_crohns_disease_2_1",
+              "name": "Crohn's Disease 2",
+              "uuid": "3ba2181f-12e5-503c-9867-05cf6f3a1f04",
+              "internalId": 22394
+            },
+            {
+              "id": "antiparasitic_gastroenterology_crohns_disease_1_1",
+              "name": "Crohn's Disease 1",
+              "uuid": "b2edc7a7-8bcd-5fba-a1ce-433396096752",
+              "internalId": 22395
+            },
+            {
+              "id": "antiparasitic_gastroenterology_crohns_disease_4_1",
+              "name": "Crohn's Disease 4",
+              "uuid": "3b911a42-0b30-51b7-88a1-089b1f6e693e",
+              "internalId": 22396
+            },
+            {
+              "id": "antiparasitic_gastroenterology_crohns_disease_3_1",
+              "name": "Crohn's Disease 3",
+              "uuid": "13f217d1-6dd0-53d6-85e5-95e9059d73e9",
+              "internalId": 22397
+            },
+            {
+              "id": "antiparasitic_gastroenterology_gastritis_1_1",
+              "name": "Gastritis 1",
+              "uuid": "62314e03-712e-546c-9b0d-2225d291e422",
+              "internalId": 22398
+            },
+            {
+              "id": "antiparasitic_gastroenterology_gastritis_2_1",
+              "name": "Gastritis 2",
+              "uuid": "0fbb0d28-aeb8-5149-9f2e-419201bb8113",
+              "internalId": 22399
+            },
+            {
+              "id": "antiparasitic_gastroenterology_gastritis_3_1",
+              "name": "Gastritis 3",
+              "uuid": "fcfacd82-d0c1-592b-85cf-6b90dd94aa92",
+              "internalId": 22400
+            },
+            {
+              "id": "antiparasitic_gastroenterology_diarrhea_1",
+              "name": "Diarrhea",
+              "uuid": "09bb48ce-27b0-543c-849b-979099fe24e1",
+              "internalId": 22401
+            },
+            {
+              "id": "antiparasitic_gastroenterology_diverticulitis_1",
+              "name": "Diverticulitis",
+              "uuid": "f23d82a0-b3c7-5eaf-8324-da37457c0b8f",
+              "internalId": 22402
+            },
+            {
+              "id": "antiparasitic_gastroenterology_dysbiosis_1",
+              "name": "Dysbiosis",
+              "uuid": "61d8f681-27f2-51d5-aa1f-2ef1ed5ae8d4",
+              "internalId": 22403
+            },
+            {
+              "id": "antiparasitic_gastroenterology_dyspepsia_1",
+              "name": "Dyspepsia",
+              "uuid": "bbcc0d88-87ec-5727-a123-0dfb9e69bb6c",
+              "internalId": 22404
+            },
+            {
+              "id": "antiparasitic_gastroenterology_reflux_1",
+              "name": "Reflux",
+              "uuid": "53e2b8ec-89b9-51e9-89b9-e3155c77213e",
+              "internalId": 22406
+            },
+            {
+              "id": "antiparasitic_gastroenterology_gastrointestinal_tract_basic_programme_1_1",
+              "name": "Gastrointestinal Tract-Basic Programme 1",
+              "uuid": "75793674-1d7f-5500-934c-f482f6db907c",
+              "internalId": 22407
+            },
+            {
+              "id": "antiparasitic_gastroenterology_gastrointestinal_tract_basic_programme_2_1",
+              "name": "Gastrointestinal Tract-Basic Programme 2",
+              "uuid": "86e113d0-208e-5eef-ab53-9ce627df17cd",
+              "internalId": 22408
+            },
+            {
+              "id": "antiparasitic_gastroenterology_ulcer_repair_1",
+              "name": "Ulcer Repair",
+              "uuid": "bb6df9e1-2a20-5525-82ee-f2578f9ac2bd",
+              "internalId": 22409
+            },
+            {
+              "id": "antiparasitic_gastroenterology_constipation_1",
+              "name": "Constipation",
+              "uuid": "35cb31e8-180e-5d2c-a66d-72805dae3b5d",
+              "internalId": 22410
+            },
+            {
+              "id": "antiparasitic_gastroenterology_heartburn_1",
+              "name": "Heartburn",
+              "uuid": "54c83ec8-201c-5a60-97e5-fa7bc2ce7e93",
+              "internalId": 22411
+            },
+            {
+              "id": "antiparasitic_gastroenterology_hiccup_1",
+              "name": "Hiccup",
+              "uuid": "42691d97-0577-5308-b908-da9c6838ad6b",
+              "internalId": 22412
+            },
+            {
+              "id": "antiparasitic_gastroenterology_colics_1",
+              "name": "Colics",
+              "uuid": "6d0f11fa-797b-5993-ad9c-cc9a87761469",
+              "internalId": 22414
+            },
+            {
+              "id": "antiparasitic_gastroenterology_colitis_and_diarrhera_1",
+              "name": "Colitis and Diarrhera",
+              "uuid": "e2b99320-20b9-51f8-8ce5-4c7dd168ead6",
+              "internalId": 22415
+            },
+            {
+              "id": "antiparasitic_gastroenterology_colitis_1",
+              "name": "Colitis",
+              "uuid": "e4b136c6-bed4-5228-b08b-5782dbcee252",
+              "internalId": 22416
+            },
+            {
+              "id": "antiparasitic_gastroenterology_meteorism_1",
+              "name": "Meteorism",
+              "uuid": "50dafb90-0fbc-5c60-8a7a-347ec4e29f05",
+              "internalId": 22417
+            },
+            {
+              "id": "antiparasitic_gastroenterology_pancreatitis_1",
+              "name": "Pancreatitis",
+              "uuid": "2e1fd989-40c8-5cc3-9f2f-5b29e4e441de",
+              "internalId": 22418
+            },
+            {
+              "id": "antiparasitic_gastroenterology_peracidity_1",
+              "name": "Peracidity",
+              "uuid": "74f631be-1007-5fbf-a8f3-6578281cf22f",
+              "internalId": 22420
+            },
+            {
+              "id": "antiparasitic_gastroenterology_hypoacidity_1",
+              "name": "Hypoacidity",
+              "uuid": "ca537262-b483-54ce-a5ff-1eb24c5798c6",
+              "internalId": 22421
+            },
+            {
+              "id": "antiparasitic_gastroenterology_responsive_pancreatitis_1",
+              "name": "Responsive Pancreatitis",
+              "uuid": "138b9afc-9fa6-51fe-865c-67df86bb0d3a",
+              "internalId": 22422
+            },
+            {
+              "id": "antiparasitic_gastroenterology_upset_stomach_1",
+              "name": "Upset Stomach",
+              "uuid": "8d7a02d9-f61e-5063-8359-00487e67e022",
+              "internalId": 22423
+            },
+            {
+              "id": "antiparasitic_gastroenterology_stomach_spasm_1",
+              "name": "Stomach Spasm",
+              "uuid": "2b822c5f-6eb4-5e9b-ac41-22fcdb2afd9d",
+              "internalId": 22424
+            },
+            {
+              "id": "antiparasitic_gastroenterology_intestine_spasm_1",
+              "name": "Intestine Spasm",
+              "uuid": "cd22ca8b-baf0-5fe6-ade6-b3df9e23427c",
+              "internalId": 22425
+            },
+            {
+              "id": "antiparasitic_gastroenterology_sphincter_of_oddi_1",
+              "name": "Sphincter of Oddi",
+              "uuid": "cca2729e-3008-5d8d-bf3f-4ee01201d4f7",
+              "internalId": 22426
+            },
+            {
+              "id": "antiparasitic_gastroenterology_chronic_esophagitis_1",
+              "name": "Chronic Esophagitis",
+              "uuid": "5f4578bc-ccf9-5218-b737-351d04828164",
+              "internalId": 22427
+            },
+            {
+              "id": "antiparasitic_gastroenterology_barrets_esophagus_1",
+              "name": "Barret's Esophagus",
+              "uuid": "cd945edc-7378-5318-bd78-072a7a5928fa",
+              "internalId": 22428
+            },
+            {
+              "id": "antiparasitic_gastroenterology_coeliac_disease_1",
+              "name": "Coeliac Disease",
+              "uuid": "9f1c7041-b256-5a3e-b349-be6bcf666207",
+              "internalId": 22429
+            },
+            {
+              "id": "antiparasitic_gastroenterology_enteritis_1",
+              "name": "Enteritis",
+              "uuid": "59f3c9a7-8d8d-5dc1-93ad-bc055b1e790a",
+              "internalId": 22430
+            },
+            {
+              "id": "antiparasitic_gastroenterology_enterocolitis_1",
+              "name": "EnteroColitis",
+              "uuid": "68abe796-06fb-5029-824f-d4c685c279e5",
+              "internalId": 22431
+            },
+            {
+              "id": "antiparasitic_gastroenterology_parasitic_ulcer_1",
+              "name": "Parasitic Ulcer",
+              "uuid": "7d233ea2-0637-5064-9d79-b4e0bd8ce58f",
+              "internalId": 22432
+            },
+            {
+              "id": "antiparasitic_gastroenterology_duodenal_ulcer_1",
+              "name": "Duodenal Ulcer",
+              "uuid": "6ef4543c-376e-5ed3-b57b-96250ae2d269",
+              "internalId": 22433
+            },
+            {
+              "id": "antiparasitic_gastroenterology_peptic_ulcer_1",
+              "name": "Peptic Ulcer",
+              "uuid": "42439284-f420-5132-8385-f8771eac1aea",
+              "internalId": 22434
+            },
+            {
+              "id": "antiparasitic_gastroenterology_small_intestine_ulcer_1",
+              "name": "Small Intestine Ulcer",
+              "uuid": "fbf29896-6a0d-50b7-8813-bb2067c9b56e",
+              "internalId": 22435
+            },
+            {
+              "id": "antiparasitic_gastroenterology_ulcer_basic_1",
+              "name": "Ulcer-Basic",
+              "uuid": "b603fa22-fb33-5689-b9c5-c0de06c7fc7c",
+              "internalId": 22436
+            }
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": "gynecology",
+          "title": "Gynecology",
+          "programs": [
+            {
+              "id": "antiparasitic_gynecology_breast_adenoma_1",
+              "name": "Breast Adenoma",
+              "uuid": "415ee95f-af22-5784-b3f9-ea4cf2bd0c4e",
+              "internalId": 22461
+            },
+            {
+              "id": "antiparasitic_gynecology_cervix_adenoma_1",
+              "name": "Cervix Adenoma",
+              "uuid": "43d487f7-649f-5b38-87be-cb8bea979287",
+              "internalId": 22462
+            },
+            {
+              "id": "antiparasitic_gynecology_adnexitis_1",
+              "name": "Adnexitis",
+              "uuid": "cdd74c9e-6e64-5fad-b3a3-1889496a3581",
+              "internalId": 22463
+            },
+            {
+              "id": "antiparasitic_gynecology_algodismenorrhea_1",
+              "name": "Algodismenorrhea",
+              "uuid": "1805cffe-b5cd-5db7-901d-21abd0e5e011",
+              "internalId": 22464
+            },
+            {
+              "id": "antiparasitic_gynecology_amenorrhoea_1",
+              "name": "Amenorrhoea",
+              "uuid": "ed240631-8a8b-5849-844a-b71c69133b6f",
+              "internalId": 22465
+            },
+            {
+              "id": "antiparasitic_gynecology_leucorrhoea_1",
+              "name": "Leucorrhoea",
+              "uuid": "1a1d2fbf-f43d-5d9f-8c99-5bfa9ddd2c1e",
+              "internalId": 22466
+            },
+            {
+              "id": "antiparasitic_gynecology_infertility_1",
+              "name": "Infertility",
+              "uuid": "500aa039-d7bf-52af-99d5-54f9229c54dd",
+              "internalId": 22467
+            },
+            {
+              "id": "antiparasitic_gynecology_vaginosis_1",
+              "name": "Vaginosis",
+              "uuid": "7c73ac29-f65a-5810-8c93-03af8606ac86",
+              "internalId": 22468
+            },
+            {
+              "id": "antiparasitic_gynecology_pelvic_inflammatory_disease_1",
+              "name": "Pelvic Inflammatory Disease",
+              "uuid": "4e6be43f-0a37-5dc4-9ac4-3d6b6262883a",
+              "internalId": 22469
+            },
+            {
+              "id": "antiparasitic_gynecology_dermoid_cyst_1",
+              "name": "Dermoid Cyst",
+              "uuid": "da85c5ea-6a1b-5a88-af70-5b2fc334e253",
+              "internalId": 22470
+            },
+            {
+              "id": "antiparasitic_gynecology_dymenorrhoea_1",
+              "name": "Dymenorrhoea",
+              "uuid": "e82dc243-faf2-5f03-86e2-c3ee791ab4c5",
+              "internalId": 22471
+            },
+            {
+              "id": "antiparasitic_gynecology_ovarian_dysfunction_1",
+              "name": "Ovarian Dysfunction",
+              "uuid": "9e88c97e-aee9-5b83-ac41-76df91c3fa5d",
+              "internalId": 22472
+            },
+            {
+              "id": "antiparasitic_gynecology_fungal_vaginosis_1",
+              "name": "Fungal Vaginosis",
+              "uuid": "e2c3027d-6432-5cbe-bc8e-22b21969d3ea",
+              "internalId": 22473
+            },
+            {
+              "id": "antiparasitic_gynecology_ovarian_cyst_1",
+              "name": "Ovarian Cyst",
+              "uuid": "bcac48ef-c63d-5512-bb77-dd5789684c71",
+              "internalId": 22474
+            },
+            {
+              "id": "antiparasitic_gynecology_menopause_basic_programme_1",
+              "name": "Menopause-Basic Programme",
+              "uuid": "8aa7064d-7fab-5541-b9a6-c8fdbe9f220a",
+              "internalId": 22475
+            },
+            {
+              "id": "antiparasitic_gynecology_hot_flashes_1",
+              "name": "Hot Flashes",
+              "uuid": "ef98f6fd-938f-5083-9f24-216a7f3f97e3",
+              "internalId": 22476
+            },
+            {
+              "id": "antiparasitic_gynecology_menopause_symptoms_1",
+              "name": "Menopause Symptoms",
+              "uuid": "ffa615b3-eabc-597a-91f2-5e7a7e2d750d",
+              "internalId": 22477
+            },
+            {
+              "id": "antiparasitic_gynecology_leukoplakia_1",
+              "name": "Leukoplakia",
+              "uuid": "dcce41b9-4e29-5d09-bbea-395caacc0f2e",
+              "internalId": 22478
+            },
+            {
+              "id": "antiparasitic_gynecology_mastitis_1",
+              "name": "Mastitis",
+              "uuid": "a99dedae-276f-5369-87e0-2c7f35c6581b",
+              "internalId": 22479
+            },
+            {
+              "id": "antiparasitic_gynecology_myoma_1",
+              "name": "Myoma",
+              "uuid": "fc671dd8-1aaa-57f8-9aae-e7797edd36ac",
+              "internalId": 22480
+            },
+            {
+              "id": "antiparasitic_gynecology_cervical_polyps_1",
+              "name": "Cervical Polyps",
+              "uuid": "13645199-5893-53ce-ac49-3096c44aefb5",
+              "internalId": 22483
+            },
+            {
+              "id": "antiparasitic_gynecology_rhesus_incompatibility_1",
+              "name": "Rhesus Incompatibility",
+              "uuid": "4c851611-f31c-5afb-ace3-666fe8b3dd9d",
+              "internalId": 22484
+            },
+            {
+              "id": "antiparasitic_gynecology_sexual_dysfunction_1",
+              "name": "Sexual Dysfunction",
+              "uuid": "593a7825-394e-524c-8dca-794e7fa04ae6",
+              "internalId": 22486
+            },
+            {
+              "id": "antiparasitic_gynecology_inflammation_of_the_genitourinary_tract_1",
+              "name": "Inflammation of the Genitourinary Tract",
+              "uuid": "192db94f-d37e-5b47-b172-c0865a78fa1c",
+              "internalId": 22488
+            },
+            {
+              "id": "antiparasitic_gynecology_fybrocystic_mastopathy_1",
+              "name": "Fybrocystic Mastopathy",
+              "uuid": "5d18e035-ac42-54ae-8aea-13ad948ef884",
+              "internalId": 22489
+            },
+            {
+              "id": "antiparasitic_gynecology_fibroadenoma_1",
+              "name": "Fibroadenoma",
+              "uuid": "e2ba28ce-54be-59e1-8eb9-3b599f7625ad",
+              "internalId": 22490
+            },
+            {
+              "id": "antiparasitic_gynecology_mammary_gland_fibroma_1",
+              "name": "Mammary Gland Fibroma",
+              "uuid": "c55bdfc9-ad64-5676-aa61-e003eb80f6a0",
+              "internalId": 22492
+            },
+            {
+              "id": "antiparasitic_gynecology_crevicitis_1",
+              "name": "Crevicitis",
+              "uuid": "4ea5a12d-409d-5093-850b-953a649c84d3",
+              "internalId": 22494
+            },
+            {
+              "id": "antiparasitic_gynecology_endometreosis_due_to_the_intestine_virus_1",
+              "name": "Endometreosis due to the Intestine Virus",
+              "uuid": "0a8c37bc-ca2f-514d-b789-b8db3db6729a",
+              "internalId": 22495
+            },
+            {
+              "id": "antiparasitic_gynecology_endometreosis_1",
+              "name": "Endometreosis",
+              "uuid": "7de7fe73-39e9-57f4-a063-d031d5bb9633",
+              "internalId": 22496
+            }
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": "cardiology",
+          "title": "Cardiology",
+          "programs": [
+            {
+              "id": "antiparasitic_cardiology_aortic_aneurysm_1",
+              "name": "Aortic Aneurysm",
+              "uuid": "b60d7db9-76a9-5188-9e57-77914292f00c",
+              "internalId": 22635
+            },
+            {
+              "id": "antiparasitic_cardiology_arrhythmia_1",
+              "name": "Arrhythmia",
+              "uuid": "39040dc9-4adb-5a85-bb5e-d61e8d5f393a",
+              "internalId": 22636
+            },
+            {
+              "id": "antiparasitic_cardiology_arteriosclerosis_1",
+              "name": "ArterioSclerosis",
+              "uuid": "52a75b97-f244-590c-ba34-f7cc83e1dcad",
+              "internalId": 22637
+            },
+            {
+              "id": "antiparasitic_cardiology_atherosclerosis_1",
+              "name": "AtheroSclerosis",
+              "uuid": "cc342f4a-643a-50c4-8180-17b97ae81832",
+              "internalId": 22638
+            },
+            {
+              "id": "antiparasitic_cardiology_hypertension_1",
+              "name": "Hypertension",
+              "uuid": "a5cbf26d-886f-5277-93e1-574163375b46",
+              "internalId": 22640
+            },
+            {
+              "id": "antiparasitic_cardiology_hypotonia_1",
+              "name": "Hypotonia",
+              "uuid": "cc54a5ae-31ab-5cc1-83f8-b86019fcc205",
+              "internalId": 22641
+            },
+            {
+              "id": "antiparasitic_cardiology_diastolic_hypertension_1",
+              "name": "Diastolic Hypertension",
+              "uuid": "c3e19be3-2cba-5f46-b3b5-d3822017e0c4",
+              "internalId": 22642
+            },
+            {
+              "id": "antiparasitic_cardiology_heart_attack_1",
+              "name": "Heart Attack",
+              "uuid": "b5b9e8fc-6dfb-5536-9991-758c544a6b78",
+              "internalId": 22643
+            },
+            {
+              "id": "antiparasitic_cardiology_cardiac_neurosis_1",
+              "name": "Cardiac Neurosis",
+              "uuid": "2a2a2111-7bfa-5ee6-9bd7-b04bffa79159",
+              "internalId": 22644
+            },
+            {
+              "id": "antiparasitic_cardiology_myocarditis_1",
+              "name": "Myocarditis",
+              "uuid": "9e0235ea-4045-56fe-8270-0a969a1ad63a",
+              "internalId": 22645
+            },
+            {
+              "id": "antiparasitic_cardiology_cardiac_conduction_disorder_1",
+              "name": "Cardiac Conduction Disorder",
+              "uuid": "f0ce6720-bde5-53fc-a12a-1738856e0caf",
+              "internalId": 22646
+            },
+            {
+              "id": "antiparasitic_cardiology_circulation_disorder_1",
+              "name": "Circulation Disorder",
+              "uuid": "c52155f9-f3c4-5394-b6ec-0439f4a49219",
+              "internalId": 22647
+            },
+            {
+              "id": "antiparasitic_cardiology_normalization_of_heart_function_1",
+              "name": "Normalization of Heart Function",
+              "uuid": "6aafd434-6fa1-5826-82e7-58c248e8f612",
+              "internalId": 22648
+            },
+            {
+              "id": "antiparasitic_cardiology_cardiac_edema_1",
+              "name": "Cardiac Edema",
+              "uuid": "e5891ff5-d387-5dd0-8448-1950c0362188",
+              "internalId": 22649
+            },
+            {
+              "id": "antiparasitic_cardiology_hemodilution_1",
+              "name": "Hemodilution",
+              "uuid": "f5a58a8c-d578-5cfe-b23d-a50704a8b3f1",
+              "internalId": 22650
+            },
+            {
+              "id": "antiparasitic_cardiology_regulation_of_blood_circulation_1",
+              "name": "Regulation of Blood Circulation",
+              "uuid": "17407505-5072-57e4-bcf6-5a6890873555",
+              "internalId": 22651
+            },
+            {
+              "id": "antiparasitic_cardiology_heart_and_circulation_1",
+              "name": "Heart and Circulation",
+              "uuid": "451d8b0d-62c9-5064-9d29-27b61c1a71d3",
+              "internalId": 22652
+            },
+            {
+              "id": "antiparasitic_cardiology_cardiac_angina_1",
+              "name": "Cardiac Angina",
+              "uuid": "e26e096b-4353-5059-a33e-75b9089fc73e",
+              "internalId": 22653
+            },
+            {
+              "id": "antiparasitic_cardiology_stimulation_of_arteries_1",
+              "name": "Stimulation of Arteries",
+              "uuid": "f3df7c24-79ca-5373-a12f-602919639218",
+              "internalId": 22654
+            },
+            {
+              "id": "antiparasitic_cardiology_cholesterol_3_1",
+              "name": "Cholesterol 3",
+              "uuid": "e18d4bfb-caca-509b-a508-cdf7fc15353a",
+              "internalId": 22655
+            }
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": "rheumatology",
+          "title": "Rheumatology",
+          "programs": [
+            {
+              "id": "antiparasitic_rheumatology_arthritis_rheumatism_1",
+              "name": "Arthritis-Rheumatism",
+              "uuid": "8d10f5c9-8747-5d36-a5cb-1d97a685999b",
+              "internalId": 22867
+            },
+            {
+              "id": "antiparasitic_rheumatology_lupus_basic_secondary_1",
+              "name": "Lupus-Basic Secondary",
+              "uuid": "b0d28c7c-cece-5a21-8eab-032eddb06e36",
+              "internalId": 22868
+            },
+            {
+              "id": "antiparasitic_rheumatology_lupus_basic_1",
+              "name": "Lupus-Basic",
+              "uuid": "fa3f2500-29ed-531f-95ea-325067c54338",
+              "internalId": 22869
+            },
+            {
+              "id": "antiparasitic_rheumatology_lupus_secondary_1",
+              "name": "Lupus-Secondary",
+              "uuid": "1032016a-233b-59b0-9523-f18a4f7a44f1",
+              "internalId": 22870
+            },
+            {
+              "id": "antiparasitic_rheumatology_lupus_1",
+              "name": "Lupus",
+              "uuid": "fd37e834-f7b2-5a8c-a665-1109bd12ba36",
+              "internalId": 22871
+            },
+            {
+              "id": "antiparasitic_rheumatology_lupus_butterfly_1",
+              "name": "Lupus Butterfly",
+              "uuid": "8da17e65-4410-5f9c-ba31-cd7fc77ff8a4",
+              "internalId": 22872
+            },
+            {
+              "id": "antiparasitic_rheumatology_myositis_1",
+              "name": "Myositis",
+              "uuid": "a56bd7df-c461-5655-8ba9-8bb6cd557449",
+              "internalId": 22874
+            },
+            {
+              "id": "antiparasitic_rheumatology_rheumatoid_myositis_1",
+              "name": "Rheumatoid Myositis",
+              "uuid": "adba2b8d-9e5e-538d-bce0-c8eb2e243aec",
+              "internalId": 22875
+            },
+            {
+              "id": "antiparasitic_rheumatology_rheumatism_1",
+              "name": "Rheumatism",
+              "uuid": "d3cb3c52-0aea-5e45-9f14-ad8c84c52bc8",
+              "internalId": 22876
+            },
+            {
+              "id": "antiparasitic_rheumatology_rheumatoid_arthritis_1",
+              "name": "Rheumatoid Arthritis",
+              "uuid": "0150781e-0dae-551e-ba75-9765a4bc1972",
+              "internalId": 22877
+            },
+            {
+              "id": "antiparasitic_rheumatology_rheumatoid_arthritis_of_mixed_type_1",
+              "name": "Rheumatoid Arthritis of Mixed Type",
+              "uuid": "296926c8-c14f-5f93-96a7-dc3a1d3a66b5",
+              "internalId": 22878
+            },
+            {
+              "id": "antiparasitic_rheumatology_stiff_shoulder_1",
+              "name": "Stiff Shoulder",
+              "uuid": "123ebad6-f0b3-5ad9-b159-9f87fd3a3851",
+              "internalId": 22879
+            },
+            {
+              "id": "antiparasitic_rheumatology_schleroderma_1",
+              "name": "Schleroderma",
+              "uuid": "ecae8fcf-e53b-5961-9c8b-1ead5bbed226",
+              "internalId": 22881
+            },
+            {
+              "id": "antiparasitic_rheumatology_fibromyalgia_1",
+              "name": "Fibromyalgia",
+              "uuid": "beee6a62-8c71-52e7-88c5-c97c74e8cd6a",
+              "internalId": 22882
+            },
+            {
+              "id": "antiparasitic_rheumatology_juvenile_arthritis_1",
+              "name": "Juvenile Arthritis",
+              "uuid": "834b1f89-414c-5424-bfc0-8c1d472a5703",
+              "internalId": 22883
+            }
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": "urology",
+          "title": "Urology",
+          "programs": [
+            {
+              "id": "antiparasitic_urology_benign_prostatic_hyperplasia_1",
+              "name": "Benign Prostatic Hyperplasia",
+              "uuid": "c112e91f-e681-5fed-9fc6-dc44ef4fe8fc",
+              "internalId": 22940
+            },
+            {
+              "id": "antiparasitic_urology_congestion_prostatitis_1",
+              "name": "Congestion Prostatitis",
+              "uuid": "f161d276-da4f-500d-ad61-ab4e9b6deac1",
+              "internalId": 22941
+            },
+            {
+              "id": "antiparasitic_urology_impotence_1",
+              "name": "Impotence",
+              "uuid": "1e792e13-f048-5018-bd41-ebc8d19a8a92",
+              "internalId": 22942
+            },
+            {
+              "id": "antiparasitic_urology_urinary_tract_infection_cystitis_1",
+              "name": "Urinary Tract Infection-Cystitis",
+              "uuid": "9fc52783-45f4-5aaa-94b8-5193654da670",
+              "internalId": 22943
+            },
+            {
+              "id": "antiparasitic_urology_urinary_tract_infection_1",
+              "name": "Urinary Tract Infection",
+              "uuid": "02b7db87-2286-5b32-97c5-5f25d9c44b5c",
+              "internalId": 22944
+            },
+            {
+              "id": "antiparasitic_urology_infectious_prostatitis_1",
+              "name": "Infectious Prostatitis",
+              "uuid": "cf84155a-4991-5411-97ee-5542f6e73677",
+              "internalId": 22945
+            },
+            {
+              "id": "antiparasitic_urology_seminal_cyct_1",
+              "name": "Seminal Cyct",
+              "uuid": "43af52f6-3ebd-5fb4-8097-3d964fc49b82",
+              "internalId": 22946
+            },
+            {
+              "id": "antiparasitic_urology_urinary_bladder_prostate_1",
+              "name": "Urinary Bladder-Prostate",
+              "uuid": "7832367d-5df1-55ae-8751-d38623a8885b",
+              "internalId": 22947
+            },
+            {
+              "id": "antiparasitic_urology_urinary_bladder_1",
+              "name": "Urinary Bladder",
+              "uuid": "45897b44-1695-59e1-8320-f945710608ff",
+              "internalId": 22948
+            },
+            {
+              "id": "antiparasitic_urology_urolithiasis_1",
+              "name": "Urolithiasis",
+              "uuid": "f5ec17f2-a6db-5f9f-aca1-07b4188ea9e1",
+              "internalId": 22949
+            },
+            {
+              "id": "antiparasitic_urology_male_infertility_1_1",
+              "name": "Male Infertility 1",
+              "uuid": "7f70d0f2-7e66-50b4-a50d-cba6dffe913a",
+              "internalId": 22950
+            },
+            {
+              "id": "antiparasitic_urology_male_infertility_2_1",
+              "name": "Male Infertility 2",
+              "uuid": "e43d3c20-8f73-5db5-bf2e-0c682dfab00f",
+              "internalId": 22951
+            },
+            {
+              "id": "antiparasitic_urology_common_nephritis_1",
+              "name": "Common Nephritis",
+              "uuid": "bec6e60d-9ad2-5302-84b9-d14b3651aa3b",
+              "internalId": 22952
+            },
+            {
+              "id": "antiparasitic_urology_nephritis_1",
+              "name": "Nephritis",
+              "uuid": "ffc05599-3899-57ff-9931-b891409ceac7",
+              "internalId": 22953
+            },
+            {
+              "id": "antiparasitic_urology_acute_nephritis_1",
+              "name": "Acute Nephritis",
+              "uuid": "c49e1983-8f16-59f4-a8b9-3def2c0ca840",
+              "internalId": 22954
+            },
+            {
+              "id": "antiparasitic_urology_secondary_orchitis_1",
+              "name": "Secondary Orchitis",
+              "uuid": "f890b52b-725d-5943-b7e9-b71261aa35e8",
+              "internalId": 22956
+            },
+            {
+              "id": "antiparasitic_urology_orchitis_1",
+              "name": "Orchitis",
+              "uuid": "f955fb7a-ffd7-5c02-8fd8-78f443d8b78e",
+              "internalId": 22957
+            },
+            {
+              "id": "antiparasitic_urology_kidney_papilloma_1",
+              "name": "Kidney Papilloma",
+              "uuid": "44f02dc7-60cb-5cfe-b6d8-3ec1d5469a7f",
+              "internalId": 22958
+            },
+            {
+              "id": "antiparasitic_urology_kidney_failure_1",
+              "name": "Kidney Failure",
+              "uuid": "98a18fe3-48f7-5543-ab30-76d73b59e2f2",
+              "internalId": 22960
+            },
+            {
+              "id": "antiparasitic_urology_kidneys_1",
+              "name": "Kidneys",
+              "uuid": "880ae0d6-1371-5b19-942f-a9351cc407bb",
+              "internalId": 22961
+            },
+            {
+              "id": "antiparasitic_urology_kidneys_activation_1",
+              "name": "Kidneys-Activation",
+              "uuid": "1ef9f65b-09fa-5f21-bf9f-eef134c6db04",
+              "internalId": 22962
+            },
+            {
+              "id": "antiparasitic_urology_kidneys_stimulation_1",
+              "name": "Kidneys-Stimulation",
+              "uuid": "511d07a1-fdf9-599a-94fd-0e429f157ee9",
+              "internalId": 22963
+            },
+            {
+              "id": "antiparasitic_urology_prostatitis_1",
+              "name": "Prostatitis",
+              "uuid": "a4175efd-9427-5f08-b79c-aece217b4272",
+              "internalId": 22964
+            },
+            {
+              "id": "antiparasitic_urology_sexual_debility_1",
+              "name": "Sexual Debility",
+              "uuid": "a44ccdbb-8146-5267-abd9-da1a04f69cf9",
+              "internalId": 22965
+            },
+            {
+              "id": "antiparasitic_urology_smegma_1",
+              "name": "Smegma",
+              "uuid": "893b87f1-16dc-5f86-a116-57fb8d0c1e48",
+              "internalId": 22966
+            },
+            {
+              "id": "antiparasitic_urology_renal_stimulation_1",
+              "name": "Renal Stimulation",
+              "uuid": "4f43896a-a9bb-5e2e-acc1-d55c1a524814",
+              "internalId": 22967
+            },
+            {
+              "id": "antiparasitic_urology_urethral_stricture_1",
+              "name": "Urethral Stricture",
+              "uuid": "b413ccfe-b975-5548-a336-da2f6fc918a9",
+              "internalId": 22968
+            },
+            {
+              "id": "antiparasitic_urology_urethritis_1",
+              "name": "Urethritis",
+              "uuid": "05683ae6-2ff2-51d4-a954-38681316f8b6",
+              "internalId": 22970
+            },
+            {
+              "id": "antiparasitic_urology_chronic_cystitis_1",
+              "name": "Chronic Cystitis",
+              "uuid": "983347fc-d9ac-5a27-9d1d-0eeb468112bd",
+              "internalId": 22971
+            },
+            {
+              "id": "antiparasitic_urology_cystitis_2_1",
+              "name": "Cystitis 2",
+              "uuid": "1915da9c-8577-5df2-907d-d89021f93fa0",
+              "internalId": 22972
+            },
+            {
+              "id": "antiparasitic_urology_epididymite_1",
+              "name": "Epididymite",
+              "uuid": "6e5cbefb-e5a2-5106-8b33-63de84d81af6",
+              "internalId": 22973
+            },
+            {
+              "id": "antiparasitic_urology_erectile_dysfunction_1",
+              "name": "Erectile Dysfunction",
+              "uuid": "f0536170-ba33-5216-b5f5-7dde5b10e17e",
+              "internalId": 22974
+            }
+          ],
+          "color": "yellow"
+        },
+        {
+          "id": "vertebrology",
+          "title": "Vertebrology",
+          "programs": [
+            {
+              "id": "antiparasitic_vertebrology_ankylosing_spondylitis_1",
+              "name": "Ankylosing Spondylitis",
+              "uuid": "968eb771-054a-5df8-8544-facdd64a3fd2",
+              "internalId": 22361
+            },
+            {
+              "id": "antiparasitic_vertebrology_diskal_hernia_1",
+              "name": "Diskal Hernia",
+              "uuid": "6ee2cf73-d31f-583a-a8da-4ada93140969",
+              "internalId": 22362
+            },
+            {
+              "id": "antiparasitic_vertebrology_lumbar_vertebrae_deformities_1",
+              "name": "Lumbar Vertebrae Deformities",
+              "uuid": "a58a40b4-3bb7-5bc9-a499-bb4f55eca40d",
+              "internalId": 22363
+            },
+            {
+              "id": "antiparasitic_vertebrology_spinal_curvature_1",
+              "name": "Spinal Curvature",
+              "uuid": "dc883560-e512-5c8c-9b23-6bdf72334e40",
+              "internalId": 22364
+            },
+            {
+              "id": "antiparasitic_vertebrology_hernia_of_the_intervertebral_disk_1",
+              "name": "Hernia of the Intervertebral Disk",
+              "uuid": "e9b85fbb-3767-5ab0-bc4b-3c9e1e4d4070",
+              "internalId": 22365
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_spasm_1_1",
+              "name": "Muscle Spasm 1",
+              "uuid": "f05d5c96-7c8b-5ec1-8b57-d0fc37a28496",
+              "internalId": 22366
+            },
+            {
+              "id": "antiparasitic_vertebrology_back_muscles_1",
+              "name": "Back Muscles",
+              "uuid": "e61f5a88-1558-5fb0-8a3d-544df111a972",
+              "internalId": 22367
+            },
+            {
+              "id": "antiparasitic_vertebrology_osteophyte_1",
+              "name": "Osteophyte",
+              "uuid": "af20893c-8e1f-526c-94c2-2b9038fccf0d",
+              "internalId": 22368
+            },
+            {
+              "id": "antiparasitic_vertebrology_osteochondrosis_1",
+              "name": "Osteochondrosis",
+              "uuid": "82750440-5e43-5ccf-b0d9-f22c526015a9",
+              "internalId": 22369
+            },
+            {
+              "id": "antiparasitic_vertebrology_rachialgia_1",
+              "name": "Rachialgia",
+              "uuid": "2a771938-da39-56a7-beb7-d00cdd8d0b9a",
+              "internalId": 22370
+            },
+            {
+              "id": "antiparasitic_vertebrology_lumbosacral_radiculitis_1",
+              "name": "Lumbosacral Radiculitis",
+              "uuid": "e8cf1eb3-670c-58fb-b645-d8f5c907f732",
+              "internalId": 22371
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_stiffness_1",
+              "name": "Muscle Stiffness",
+              "uuid": "fade8d9c-a79f-5c62-985d-fdab6516a44a",
+              "internalId": 22372
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_stiffness_basic_1",
+              "name": "Muscle Stiffness-Basic",
+              "uuid": "17634cdd-e868-5816-8a0c-4daac70e9763",
+              "internalId": 22373
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_stiffness_secondary_1",
+              "name": "Muscle Stiffness-Secondary",
+              "uuid": "6fe7f7e6-cb27-51bb-92b3-bad096e890a3",
+              "internalId": 22374
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_stiffness_comprehensive_1",
+              "name": "Muscle Stiffness-Comprehensive",
+              "uuid": "6bbc0678-0586-5f7b-802e-99355c093db0",
+              "internalId": 22375
+            },
+            {
+              "id": "antiparasitic_vertebrology_stiff_neck_1",
+              "name": "Stiff Neck",
+              "uuid": "a5f6cd90-a1db-5c2c-821a-772cf0df3486",
+              "internalId": 22376
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscle_spasm_2_1",
+              "name": "Muscle Spasm 2",
+              "uuid": "8f4f9026-7300-5a26-9528-be1f0e6922c7",
+              "internalId": 22377
+            },
+            {
+              "id": "antiparasitic_vertebrology_spondylitis_1",
+              "name": "Spondylitis",
+              "uuid": "90d38913-2192-53e4-95dc-f5868dbe782f",
+              "internalId": 22378
+            },
+            {
+              "id": "antiparasitic_vertebrology_comprehensive_muscles_structure_1",
+              "name": "Comprehensive Muscles Structure",
+              "uuid": "7f3f6965-4a6a-568b-b337-64d0b5d0223d",
+              "internalId": 22379
+            },
+            {
+              "id": "antiparasitic_vertebrology_muscles_stimulating_1",
+              "name": "Muscles Stimulating",
+              "uuid": "b20d099d-2ab0-539a-9994-0ef3d70121f5",
+              "internalId": 22380
+            },
+            {
+              "id": "antiparasitic_vertebrology_neck_spasms_1",
+              "name": "Neck Spasms",
+              "uuid": "63b6a80c-831b-5f5e-9fbc-47be49c2bbce",
+              "internalId": 22381
+            }
+          ],
+          "color": "yellow"
+        },
+        {
           "id": "dentistry",
           "title": "Dentistry",
           "programs": [
