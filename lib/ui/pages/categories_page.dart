@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hbcure/models/program_category.dart';
 import 'package:hbcure/ui/pages/program_list_page.dart';
+import 'package:hbcure/ui/pages/program_detail_page.dart' as detail;
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'package:hbcure/i18n/program_name_localizer.dart';
 import 'package:hbcure/services/program_language_controller.dart';
 import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
+import 'package:hbcure/services/cure_device_unlock_service.dart';
+import 'package:hbcure/services/my_programs_service.dart';
 
 class CategoriesPage extends StatefulWidget {
   final ProgramCategory category;
@@ -36,75 +39,33 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   Widget build(BuildContext context) {
     final langCode =
-        (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+    (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
     return ValueListenableBuilder<ProgramMode>(
       valueListenable: AppMemory.instance.programModeNotifier,
       builder: (context, mode, _) {
         final category = widget.category;
-        // Robust color selection for category avatars: only treat exact 'yellow' (trim/case-insensitive)
-        // as yellow; otherwise keep existing muted primary color so nothing gets forced to green.
-        final catIsYellow =
-            (category.color ?? '').trim().toLowerCase() == 'yellow';
-        final bgColor = catIsYellow ? AppColors.yellow : AppColors.primaryMuted;
 
-        // ✅ Novice-Regel: gelbe Top-Kategorien komplett verstecken
-        if (mode == ProgramMode.beginner && catIsYellow) {
-          // NOTE: avoid returning an empty SizedBox here to prevent a black/empty screen
-          // for novice users — show a small informative page with a back button instead.
-          return GradientBackground(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Expanded(
-                        child: Text(
-                          ProgramNameLocalizer.instance.displayName(
-                            keyEn: category.title,
-                            langCode: langCode,
-                          ),
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Diese Kategorie ist im Novice-Modus nicht sichtbar.',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-          );
+        // ---------- Color handling (single source of truth) ----------
+        final baseColor = AppColors.primaryMuted;
+
+        Color markerFrom(String? color) {
+          final c = (color ?? '').trim().toLowerCase();
+          if (c == 'yellow') return AppColors.yellow;
+          if (c == 'red') return AppColors.accentRed;
+          return baseColor;
         }
 
-        // Removed early-return for categories without subcategories so we can show
-        // both programs and subcategories in a single ListView (programs first).
+        final categoryMarkerColor = markerFrom(category.color);
 
-        // Filter subcategories once: remove completely empty entries (no programs and no sub-subcategories)
-        // and, in Novice (beginner) mode, hide categories that are marked yellow.
+        // ---------- Filter visible subcategories ----------
         final visibleSubcategories = category.subcategories.where((sub) {
-          // ProgramSubcategory defines only `programs` (no `subcategories`).
-          // Treat a subcategory as empty if it has no programs.
-          final progCount = (sub.programs.length);
-          final isEmpty = (progCount == 0);
-          if (isEmpty) return false;
+          if (sub.programs.isEmpty) return false;
 
-          // Prefer sub.color if present, otherwise fall back to parent category.color
-          final subIsYellow = ((sub.color ?? category.color ?? '').toString().trim().toLowerCase() == 'yellow');
-          if (mode == ProgramMode.beginner && subIsYellow) return false;
+          final subColor = (sub.color ?? category.color ?? '').trim().toLowerCase();
+          final isYellowOrRed = (subColor == 'yellow' || subColor == 'red');
 
+          if (mode == ProgramMode.beginner && isYellowOrRed) return false;
           return true;
         }).toList();
 
@@ -114,6 +75,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             child: ListView(
               padding: const EdgeInsets.only(bottom: 12.0),
               children: [
+                // ---------- Header ----------
                 Row(
                   children: [
                     IconButton(
@@ -122,21 +84,23 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     ),
                     Expanded(
                       child: Builder(builder: (_) {
-                        // HOTFIX: special-case 'seven_chakras' id to produce stable DE/EN labels
-                        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                        final isDe =
+                            ProgramLangController.instance.lang == ProgramLang.de;
                         final id = category.id;
                         final titleText = (id == 'seven_chakras')
-                            ? (isDe ? '7 Chakra Frequenzen' : '7 Chakra Frequencies')
+                            ? (isDe
+                            ? '7 Chakra Frequenzen'
+                            : '7 Chakra Frequencies')
                             : ProgramNameLocalizer.instance.displayName(
-                                keyEn: category.title,
-                                langCode: langCode,
-                              );
+                          keyEn: category.title,
+                          langCode: langCode,
+                        );
                         return Text(
                           titleText,
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                              ),
+                            color: AppColors.textPrimary,
+                            fontSize: 18,
+                          ),
                         );
                       }),
                     ),
@@ -148,7 +112,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 ),
                 const SizedBox(height: 6),
 
-                // --- NEW: show programs first, if any ---
+                // ---------- Programs directly in category ----------
                 if (category.programs.isNotEmpty) ...[
                   for (final p in category.programs)
                     Padding(
@@ -163,8 +127,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           ),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: bgColor,
-                              child: const Icon(Icons.bubble_chart, color: AppColors.textPrimary),
+                              backgroundColor: categoryMarkerColor,
+                              child: const Icon(Icons.bubble_chart,
+                                  color: AppColors.textPrimary),
                             ),
                             title: Text(
                               ProgramNameLocalizer.instance.displayName(
@@ -176,73 +141,162 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProgramListPage(
-                                  title: p.name,
-                                  programs: [p],
-                                  mode: mode,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    debugPrint(
+                                        'Add to My Programs: ${p.id} (${p.name})');
+                                    await MyProgramsService().add(p.id);
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Zu My Programs hinzugefügt: ${p.name}'),
+                                      ),
+                                    );
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: AppColors.primary,
+                                    child: Icon(Icons.add,
+                                        color: Colors.white, size: 18),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.chevron_right,
+                                    color: AppColors.textSecondary),
+                              ],
                             ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => detail.ProgramDetailPage(
+                                    program: p,
+                                    deviceId: CureDeviceUnlockService
+                                        .instance.nativeConnectedDeviceId ??
+                                        '',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
                     ),
                 ],
 
-                // existing subcategory loop (unchanged)
+                // ---------- Subcategories ----------
                 for (final sub in visibleSubcategories)
-                  Builder(builder: (ctx) {
-                    // ProgramSubcategory may define its own `color`; prefer it and
-                    // otherwise fall back to the parent category's color.
-                    final subIsYellow = ((sub.color ?? category.color ?? '').toString().trim().toLowerCase() == 'yellow');
-
-                    final subBgColor = subIsYellow ? AppColors.yellow : bgColor;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6.0),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.borderSubtle),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.borderSubtle),
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor:
+                            markerFrom(sub.color ?? category.color),
+                            child: const Icon(Icons.folder,
+                                color: AppColors.textPrimary),
                           ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: subBgColor,
-                              child: const Icon(Icons.folder, color: AppColors.textPrimary),
+                          title: Text(
+                            ProgramNameLocalizer.instance.displayName(
+                              keyEn: sub.title,
+                              langCode: langCode,
                             ),
-                            title: Text(
-                              ProgramNameLocalizer.instance.displayName(
-                                keyEn: sub.title,
-                                langCode: langCode,
-                              ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
-                            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                            onTap: () => Navigator.push(
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (sub.programs.length == 1)
+                                GestureDetector(
+                                  onTap: () async {
+                                    final p = sub.programs.first;
+                                    debugPrint(
+                                        'Add to My Programs: ${p.id} (${p.name})');
+                                    await MyProgramsService().add(p.id);
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Zu My Programs hinzugefügt: ${p.name}'),
+                                      ),
+                                    );
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: AppColors.primary,
+                                    child: Icon(Icons.add,
+                                        color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              if (sub.programs.length == 1)
+                                const SizedBox(width: 10),
+                              const Icon(Icons.chevron_right,
+                                  color: AppColors.textSecondary),
+                            ],
+                          ),
+                          onTap: () {
+                            final progs = sub.programs;
+                            if (progs.length == 1) {
+                              final p = progs.first;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => detail.ProgramDetailPage(
+                                    program: p,
+                                    deviceId: CureDeviceUnlockService
+                                        .instance.nativeConnectedDeviceId ??
+                                        '',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            // If subcategory has no explicit color, infer from parent marker
+                            final inferredColor = (() {
+                              final ck = (sub.color ?? '').trim().toLowerCase();
+                              if (ck == 'yellow' || ck == 'red') return ck;
+                              if (categoryMarkerColor == AppColors.yellow) return 'yellow';
+                              if (categoryMarkerColor == AppColors.accentRed) return 'red';
+                              return null;
+                            })();
+
+                            // Build a ProgramCategory object (always) to pass to CategoriesPage.
+                            final effectiveColor = inferredColor ?? (category.color ?? '').trim().toLowerCase();
+
+                            final fixedCategory = ProgramCategory(
+                              id: sub.id,
+                              title: sub.title,
+                              color: effectiveColor.isNotEmpty ? effectiveColor : null,
+                              programs: sub.programs ?? const [],
+                              subcategories: const [],
+                            );
+
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => ProgramListPage(
-                                  title: sub.title,
-                                  programs: sub.programs,
-                                  mode: mode,
-                                ),
+                                builder: (_) => CategoriesPage(category: fixedCategory),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
-                    );
-                  }),
+                    ),
+                  ),
               ],
             ),
           ),
