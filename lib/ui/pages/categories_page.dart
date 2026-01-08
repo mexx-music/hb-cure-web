@@ -89,17 +89,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
           );
         }
 
-        if (category.subcategories.isEmpty) {
-          // No subcategories -> show programs directly
-          return ProgramListPage(
-            title: ProgramNameLocalizer.instance.displayName(
-              keyEn: category.title,
-              langCode: langCode,
-            ),
-            programs: category.programs,
-            mode: mode,
-          );
-        }
+        // Removed early-return for categories without subcategories so we can show
+        // both programs and subcategories in a single ListView (programs first).
 
         // Filter subcategories once: remove completely empty entries (no programs and no sub-subcategories)
         // and, in Novice (beginner) mode, hide categories that are marked yellow.
@@ -110,7 +101,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
           final isEmpty = (progCount == 0);
           if (isEmpty) return false;
 
-          final subIsYellow = ((category.color ?? '').toString().trim().toLowerCase() == 'yellow');
+          // Prefer sub.color if present, otherwise fall back to parent category.color
+          final subIsYellow = ((sub.color ?? category.color ?? '').toString().trim().toLowerCase() == 'yellow');
           if (mode == ProgramMode.beginner && subIsYellow) return false;
 
           return true;
@@ -155,11 +147,58 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   ],
                 ),
                 const SizedBox(height: 6),
+
+                // --- NEW: show programs first, if any ---
+                if (category.programs.isNotEmpty) ...[
+                  for (final p in category.programs)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: bgColor,
+                              child: const Icon(Icons.bubble_chart, color: AppColors.textPrimary),
+                            ),
+                            title: Text(
+                              ProgramNameLocalizer.instance.displayName(
+                                keyEn: p.name,
+                                langCode: langCode,
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProgramListPage(
+                                  title: p.name,
+                                  programs: [p],
+                                  mode: mode,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+
+                // existing subcategory loop (unchanged)
                 for (final sub in visibleSubcategories)
                   Builder(builder: (ctx) {
-                    // ProgramSubcategory does not define a `color` field.
-                    // Use the parent category's color as the marker source.
-                    final subIsYellow = ((category.color ?? '').toString().trim().toLowerCase() == 'yellow');
+                    // ProgramSubcategory may define its own `color`; prefer it and
+                    // otherwise fall back to the parent category's color.
+                    final subIsYellow = ((sub.color ?? category.color ?? '').toString().trim().toLowerCase() == 'yellow');
 
                     final subBgColor = subIsYellow ? AppColors.yellow : bgColor;
 
@@ -181,7 +220,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             title: Text(
                               ProgramNameLocalizer.instance.displayName(
                                 keyEn: sub.title,
-                                langCode: ProgramLangController.instance.lang.toString().toLowerCase(),
+                                langCode: langCode,
                               ),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,

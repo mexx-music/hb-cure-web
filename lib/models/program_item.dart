@@ -20,13 +20,30 @@ class ProgramItem {
   });
 
   factory ProgramItem.fromJson(Map<String, dynamic> json) {
+    String _s(dynamic v) => (v == null) ? '' : v.toString().trim();
+
+    int? _i(dynamic v) {
+      if (v is int) return v;
+      final s = _s(v);
+      return s.isEmpty ? null : int.tryParse(s);
+    }
+
+    final String uuid = _s(json['uuid']);
+    final String name = _s(json['name']);
+    final String idRaw = _s(json['id']);
+    final int? internalId = _i(json['internalId']);
+
+    // Choose a safe id: prefer explicit id, else uuid, else internalId
+    final String id = idRaw.isNotEmpty
+        ? idRaw
+        : (uuid.isNotEmpty ? uuid : (internalId?.toString() ?? ''));
+
+    // NEVER crash on missing fields
     return ProgramItem(
-      id: json['id'] as String,
-      name: (json['name'] as String?) ?? '',
-      uuid: json['uuid'] as String?,
-      internalId: json['internalId'] is int
-          ? json['internalId'] as int
-          : int.tryParse('${json['internalId']}'),
+      id: id.isNotEmpty ? id : 'unknown_${DateTime.now().millisecondsSinceEpoch}',
+      name: name.isNotEmpty ? name : '-',
+      uuid: uuid,
+      internalId: internalId,
       level: (json['level'] is num)
           ? (json['level'] as num).toInt()
           : (int.tryParse('${json['level']}') ?? 1),

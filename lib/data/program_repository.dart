@@ -8,6 +8,8 @@ import '../models/program_item.dart';
 
 import 'package:hbcure/services/program_catalog.dart';
 import 'package:hbcure/services/app_memory.dart';
+import 'package:hbcure/services/program_language_controller.dart';
+import 'package:hbcure/i18n/program_name_localizer.dart';
 
 /// Repository that loads the programs catalog from `assets/programs.json`.
 ///
@@ -62,6 +64,7 @@ class ProgramRepository {
       for (var i = 0; i < categories.length; i++) {
         final raw = rawCats[i];
         final c = categories[i];
+        // pass raw into normalizer (so we can resolve localized titles for subcategories)
         final nc = _normalizeCategory(c, raw: raw, parentColor: null);
         if (nc != null) normalized.add(nc);
       }
@@ -75,6 +78,11 @@ class ProgramRepository {
         debugPrint('CATS_LOADED(post) mode=$mode count=${normalized.length} empty=$empty yellow=$yellow red=$red');
       } catch (_) {}
 
+      // Debug: Anzahl und IDs aller geladenen Kategorien
+      debugPrint("CATS_DEBUG count=${categories.length} ids=${categories.map((c) => c.id).toList()}");
+      final energy = categories.where((c) => c.id == "general_energy_vitalisation").toList();
+      debugPrint("CATS_DEBUG energy_found=${energy.isNotEmpty} energy_programs=${energy.isNotEmpty ? energy.first.programs.length : -1} energy_subcats=${energy.isNotEmpty ? energy.first.subcategories.length : -1}");
+
       _cachedCategories = normalized;
       return normalized;
     } catch (e, st) {
@@ -86,7 +94,7 @@ class ProgramRepository {
   }
 
   // Normalize a category (inherits parent color, normalizes subcategories and programs)
-  // Also expands empty categories from decoded catalog when raw["internalId"] is present.
+  // Also expands empty categories from decoded if raw["internalId"] is present.
   ProgramCategory? _normalizeCategory(
       ProgramCategory c, {
         required Map<String, dynamic> raw,
@@ -103,11 +111,14 @@ class ProgramRepository {
         .toList();
 
     // Normalize subcategories recursively
-    var subs = c.subcategories
-        .map((s) => _normalizeSubcategory(s, parentColor: effective))
-        .where((s) => s != null)
-        .cast<ProgramSubcategory>()
-        .toList();
+    var subs = <ProgramSubcategory>[];
+    final subsRaw = (raw['subcategories'] as List<dynamic>?) ?? const [];
+    for (var j = 0; j < c.subcategories.length; j++) {
+      final s = c.subcategories[j];
+      final rawSub = (j < subsRaw.length && subsRaw[j] is Map) ? Map<String, dynamic>.from(subsRaw[j] as Map) : <String, dynamic>{};
+      final ns = _normalizeSubcategory(s, parentColor: effective, raw: rawSub);
+      if (ns != null) subs.add(ns);
+    }
 
     // If category is empty from UI JSON, try to populate from decoded using raw["internalId"]
     if (progs.isEmpty && subs.isEmpty) {
@@ -123,30 +134,37 @@ class ProgramRepository {
 
     return ProgramCategory(
       id: c.id,
-      title: c.title,
+      // resolve localized title (decoded preferred, CSV fallback)
+      title: _resolveLocalizedTitle(rawTitle: c.title, internalId: raw['internalId'] is int ? raw['internalId'] as int : int.tryParse('${raw['internalId']}')),
       color: effective,
       subcategories: subs,
       programs: progs,
     );
   }
 
-  ProgramSubcategory? _normalizeSubcategory(ProgramSubcategory s, {String? parentColor}) {
-    final own = (s.color ?? '').trim().toLowerCase();
-    final effective = own.isNotEmpty ? own : (parentColor ?? 'green');
+  ProgramSubcategory? _normalizeSubcategory(ProgramSubcategory s, {String? parentColor, Map<String, dynamic>? raw}) {
+    // Eigene Farbe hat Vorrang, sonst Parent-Farbe, sonst grün
+    final ownRaw = s.color ?? '';
+    final own = ownRaw.toString().trim().toLowerCase();
+    final effectiveColor =
+        own.isNotEmpty ? own : (parentColor?.toLowerCase() ?? 'green');
 
-    final progs = s.programs
-        .map((p) => _normalizeProgram(p, parentColor: effective))
+    // Programme normalisieren
+    final programs = s.programs
+        .map((p) => _normalizeProgram(p, parentColor: effectiveColor))
         .where((p) => p != null)
         .cast<ProgramItem>()
         .toList();
 
-    if (progs.isEmpty) return null; // remove empty subcategories
+    // Unterordner ohne Programme entfernen
+    if (programs.isEmpty) return null;
 
     return ProgramSubcategory(
       id: s.id,
-      title: s.title,
-      color: effective,
-      programs: progs,
+      // localized title resolution
+      title: _resolveLocalizedTitle(rawTitle: s.title, internalId: raw != null && raw['internalId'] != null ? (raw['internalId'] is int ? raw['internalId'] as int : int.tryParse('${raw['internalId']}')) : null),
+      color: effectiveColor, // 🔴 DAS ist entscheidend
+      programs: programs,
     );
   }
 
@@ -170,6 +188,7 @@ class ProgramRepository {
     String? uuid = p.uuid;
     int? internalId = p.internalId;
     int level = p.level;
+    String name = p.name;
 
     if (entry != null) {
       final u = (entry['ProgramUUID'] ?? '').toString();
@@ -183,65 +202,103 @@ class ProgramRepository {
       final l = entry['level'];
       if (l is num) level = l.toInt();
       else if (l is String) level = int.tryParse(l) ?? level;
+
+      // If name is missing or placeholder, try to fill from decoded entry
+      if ((name.isEmpty || name == '-') ) {
+        final decodedName = _decodedTitleEn(entry);
+        if (decodedName.isNotEmpty) name = decodedName;
+      }
     }
 
-    // Return new ProgramItem with enriched fields (preserve original name)
+    // Return new ProgramItem with enriched fields (preserve original name if present)
     return ProgramItem(
       id: p.id,
-      name: p.name,
+      name: name,
       uuid: uuid,
       internalId: internalId,
       level: level,
     );
   }
 
-  /// If a UI category is empty (programs/subcategories empty), but has raw["internalId"],
-  /// we treat it as a pointer to a decoded root-node and derive children from decoded.
-  _ExpandedCategory? _expandEmptyCategoryFromDecoded({
-    required Map<String, dynamic> raw,
-    required String effectiveColor,
+  // Centralized title resolver: prefer decoded (by internalId) then CSV mapping, then raw
+  String _resolveLocalizedTitle({
+    required String rawTitle,
+    int? internalId,
   }) {
-    final internalId = raw['internalId'] is int
-        ? raw['internalId'] as int
-        : int.tryParse('${raw['internalId']}');
-
-    if (internalId == null) return null;
-
-    final root = ProgramCatalog.instance.byInternalId(internalId);
-    if (root == null) return null;
-
-    final rootUuid = (root['ProgramUUID'] ?? '').toString();
-    if (rootUuid.isEmpty) return null;
-
-    final children = ProgramCatalog.instance.childrenOfUuid(rootUuid);
-    if (children.isEmpty) return null;
-
-    final progs = <ProgramItem>[];
-    final subs = <ProgramSubcategory>[];
-
-    for (final child in children) {
-      if (_isDecodedProgram(child)) {
-        final pi = _programItemFromDecoded(child);
-        final np = _normalizeProgram(pi, parentColor: effectiveColor);
-        if (np != null) progs.add(np);
-      } else {
-        final subId = _decodedInternalId(child)?.toString() ?? _decodedUuid(child);
-        final subTitle = _decodedTitleEn(child);
-        subs.add(
-          ProgramSubcategory(
-            id: subId.isNotEmpty ? subId : 'sub_${subs.length}',
-            title: subTitle.isNotEmpty ? subTitle : 'Category',
-            color: effectiveColor,
-            programs: const [],
-          ),
-        );
+    // 1) Try decoded catalog by internalId
+    if (internalId != null) {
+      final decoded = ProgramCatalog.instance.byInternalId(internalId);
+      if (decoded != null) {
+        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+        final lang = isDe ? 'DE' : 'EN';
+        try {
+          return ProgramCatalog.instance.name(decoded, lang: lang);
+        } catch (_) {
+          // fall through
+        }
       }
     }
 
-    // NOTE: This builds only one level of children. That's enough to make the
-    // yellow roots non-empty and visible. We can deepen later if needed.
-    return _ExpandedCategory(programs: progs, subcategories: subs);
+    // 2) CSV mapping fallback (EN -> DE) via ProgramNameLocalizer
+    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+    if (isDe) {
+      try {
+        final mapped = ProgramNameLocalizer.instance.displayName(keyEn: rawTitle, langCode: 'de');
+        if (mapped.isNotEmpty) return mapped;
+      } catch (_) {}
+    }
+
+    // 3) Fallback: original raw title
+    return rawTitle;
   }
+
+   /// If a UI category is empty (programs/subcategories empty), but has raw["internalId"],
+   /// we treat it as a pointer to a decoded root-node and derive children from decoded.
+   _ExpandedCategory? _expandEmptyCategoryFromDecoded({
+     required Map<String, dynamic> raw,
+     required String effectiveColor,
+   }) {
+     final internalId = raw['internalId'] is int
+         ? raw['internalId'] as int
+         : int.tryParse('${raw['internalId']}');
+
+     if (internalId == null) return null;
+
+     final root = ProgramCatalog.instance.byInternalId(internalId);
+     if (root == null) return null;
+
+     final rootUuid = (root['ProgramUUID'] ?? '').toString();
+     if (rootUuid.isEmpty) return null;
+
+     final children = ProgramCatalog.instance.childrenOfUuid(rootUuid);
+     if (children.isEmpty) return null;
+
+     final progs = <ProgramItem>[];
+     final subs = <ProgramSubcategory>[];
+
+     for (final child in children) {
+       if (_isDecodedProgram(child)) {
+         final pi = _programItemFromDecoded(child);
+         final np = _normalizeProgram(pi, parentColor: effectiveColor);
+         if (np != null) progs.add(np);
+       } else {
+         final subId = _decodedInternalId(child)?.toString() ?? _decodedUuid(child);
+         final subTitle = _decodedTitleEn(child);
+         subs.add(
+           ProgramSubcategory(
+             id: subId.isNotEmpty ? subId : 'sub_${subs.length}',
+             title: subTitle.isNotEmpty ? subTitle : 'Category',
+             color: effectiveColor,
+             programs: const [],
+           ),
+         );
+       }
+     }
+
+     // NOTE: This builds only one level of children. That's enough to make the
+     // yellow roots non-empty and visible. We can deepen later if needed.
+     return _ExpandedCategory(programs: progs, subcategories: subs);
+   }
 
   bool _isDecodedProgram(Map<String, dynamic> e) {
     final freqs = e['Frequencies'];

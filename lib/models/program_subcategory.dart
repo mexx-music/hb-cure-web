@@ -15,14 +15,17 @@ class ProgramSubcategory {
   }) : programs = programs ?? [];
 
   factory ProgramSubcategory.fromJson(Map<String, dynamic> json) {
-    final programsJson = json['programs'] as List<dynamic>?;
+    final raw = (json['programs'] as List<dynamic>?) ?? const [];
+    final programs = raw
+        .whereType<Map>()
+        .map((e) => ProgramItem.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+
     return ProgramSubcategory(
       id: json['id'] as String,
       title: json['title'] as String,
       color: json['color'] is String ? (json['color'] as String) : null,
-      programs: programsJson != null
-          ? programsJson.map((e) => ProgramItem.fromJson(e as Map<String, dynamic>)).toList()
-          : [],
+      programs: programs,
     );
   }
 

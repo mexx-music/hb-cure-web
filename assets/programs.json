@@ -509,7 +509,8 @@
               "internalId": 22436
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30077
         },
         {
           "id": "gynecology",
@@ -696,7 +697,8 @@
               "internalId": 22496
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30080
         },
         {
           "id": "cardiology",
@@ -823,7 +825,8 @@
               "internalId": 22655
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30085
         },
         {
           "id": "rheumatology",
@@ -920,7 +923,8 @@
               "internalId": 22883
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30091
         },
         {
           "id": "urology",
@@ -1119,7 +1123,8 @@
               "internalId": 22974
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30094
         },
         {
           "id": "vertebrology",
@@ -1252,7 +1257,8 @@
               "internalId": 22381
             }
           ],
-          "color": "yellow"
+          "color": "yellow",
+          "internalId": 30076
         },
         {
           "id": "dentistry",
