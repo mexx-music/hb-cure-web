@@ -20,11 +20,16 @@ class ProgramListPage extends StatefulWidget {
   /// so that changes apply immediately without recreating the page.
   final ProgramMode mode;
 
+  // BEGIN PATCH: optional parentColor to allow caller to pass folder color
+  final String? parentColor;
+  // END PATCH
+
   const ProgramListPage({
     super.key,
     required this.title,
     required this.programs,
     this.mode = ProgramMode.expert,
+    this.parentColor,
   });
 
   @override
@@ -128,6 +133,15 @@ class _ProgramListPageState extends State<ProgramListPage> {
                 itemBuilder: (context, index) {
                   final p = filtered[index];
 
+                  // BEGIN PATCH: derive marker color from optional parentColor passed by caller
+                  final pc = (widget.parentColor ?? '').trim().toLowerCase();
+                  final markerColor = (pc == 'yellow')
+                      ? AppColors.yellow
+                      : (pc == 'red')
+                          ? AppColors.accentRed
+                          : AppColors.primaryMuted;
+                  // END PATCH
+
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     decoration: BoxDecoration(
@@ -166,7 +180,7 @@ class _ProgramListPageState extends State<ProgramListPage> {
                             children: [
                               CircleAvatar(
                                 radius: 20,
-                                backgroundColor: AppColors.primaryMuted,
+                                backgroundColor: markerColor,
                                 child: Icon(Icons.bubble_chart, color: AppColors.textPrimary),
                               ),
                               const SizedBox(width: 12),
@@ -187,20 +201,28 @@ class _ProgramListPageState extends State<ProgramListPage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () async {
-                                  debugPrint('Add to My Programs: ${p.id} (${p.name})');
-                                  await MyProgramsService().add(p.id);
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Zu My Programs hinzugefügt: ${p.name}')),
-                                  );
-                                },
-                                child: CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: AppColors.primary,
-                                  child: const Icon(Icons.add, color: Colors.white),
-                                ),
+                              // trailing: Add button + chevron
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () async {
+                                      debugPrint('Add to My Programs: ${p.id} (${p.name})');
+                                      await MyProgramsService().add(p.id);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Zu My Programs hinzugefügt: ${p.name}')),
+                                      );
+                                    },
+                                    child: const CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: AppColors.primary,
+                                      child: Icon(Icons.add, color: Colors.white, size: 18),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                                ],
                               ),
                             ],
                           ),
