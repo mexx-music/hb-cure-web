@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../models/playlist_item_settings.dart';
 
 class PlayerState {
   final bool isPlaying;
@@ -64,6 +65,20 @@ class PlayerService extends ChangeNotifier {
   Map<String, String> get titleKeyEnById => _titleKeyEnById;
   // END PATCH
 
+  // BEGIN PATCH: per-program settings (in-memory)
+  final Map<String, PlaylistItemSettings> _settingsByProgramId = {};
+
+  PlaylistItemSettings settingsFor(String programId) {
+    return _settingsByProgramId[programId] ?? PlaylistItemSettings.defaults;
+  }
+
+  void setSettings(String programId, PlaylistItemSettings settings) {
+    _settingsByProgramId[programId] = settings;
+    // Notify listeners so UI (player, lists) can react immediately to changes
+    notifyListeners();
+  }
+  // END PATCH
+
   void _stopTicker() {
     _ticker?.cancel();
     _ticker = null;
@@ -92,7 +107,16 @@ class PlayerService extends ChangeNotifier {
       {Duration? duration, Map<String, String>? titleKeyEnById}) {
     if (queueIds.isEmpty) return;
     final idx = startIndex.clamp(0, queueIds.length - 1);
-    final dur = duration ?? defaultDuration;
+
+    // If explicit duration passed -> use it; otherwise use settings for the first program
+    Duration dur;
+    if (duration != null) {
+      dur = duration;
+    } else {
+      final pid = queueIds[idx];
+      final s = settingsFor(pid);
+      dur = Duration(minutes: s.durationMinutes);
+    }
 
     // store provided title map (EN keys) for later resolving in UI
     _titleKeyEnById = titleKeyEnById ?? _titleKeyEnById;
@@ -110,7 +134,9 @@ class PlayerService extends ChangeNotifier {
   }
 
   void playSingle(String programId, {Duration? duration}) {
-    playQueue([programId], 0, duration: duration);
+    // prefer explicit duration; otherwise use settings
+    final dur = duration ?? Duration(minutes: settingsFor(programId).durationMinutes);
+    playQueue([programId], 0, duration: dur);
   }
 
   void play() {
@@ -151,7 +177,16 @@ class PlayerService extends ChangeNotifier {
   }
 
   void _jumpTo(int newIndex, {required bool autoplay}) {
-    final dur = _state.total == Duration.zero ? defaultDuration : _state.total;
+    // Determine program id at the target index (validate bounds)
+    String? pid;
+    if (_state.queueIds.isNotEmpty && newIndex >= 0 && newIndex < _state.queueIds.length) {
+      pid = _state.queueIds[newIndex];
+    }
+
+    // duration from per-item settings (fallback to defaultDuration)
+    final Duration dur = pid != null
+        ? Duration(minutes: settingsFor(pid).durationMinutes)
+        : defaultDuration;
 
     _stopTicker();
     _state = _state.copyWith(
