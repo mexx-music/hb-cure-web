@@ -15,6 +15,7 @@ import '../theme/app_colors.dart';
 import 'program_detail_page.dart';
 import '../../services/program_catalog.dart';
 import '../widgets/playlist_item_setup.dart';
+import '../../services/cube_device_service.dart';
 
 class MyProgramsPage extends StatefulWidget {
   const MyProgramsPage({super.key});
@@ -94,21 +95,29 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
         for (final program in programs) {
           final current = program.name.trim();
           final isPlaceholder =
-              current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
+              current.isEmpty ||
+              current == '-' ||
+              current.toLowerCase() == 'placeholder';
           if (!isPlaceholder) {
             _displayNameById[program.id] = program.name;
             continue;
           }
           final byUuid = ProgramCatalog.instance.byUuid(program.id);
           if (byUuid != null) {
-            _displayNameById[program.id] = ProgramCatalog.instance.name(byUuid, lang: 'EN');
+            _displayNameById[program.id] = ProgramCatalog.instance.name(
+              byUuid,
+              lang: 'EN',
+            );
             continue;
           }
           final intId = int.tryParse(program.id);
           if (intId != null) {
             final byInt = ProgramCatalog.instance.byInternalId(intId);
             if (byInt != null) {
-              _displayNameById[program.id] = ProgramCatalog.instance.name(byInt, lang: 'EN');
+              _displayNameById[program.id] = ProgramCatalog.instance.name(
+                byInt,
+                lang: 'EN',
+              );
               continue;
             }
           }
@@ -160,11 +169,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   }
 
   void _openPlayerPopup(BuildContext context) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
+        ? 'de'
+        : 'en';
 
     String resolveTitle(String programId) {
       // Prefer explicit title from playerService cache, then local enrichment, then id
-      final keyEn = playerService.titleKeyEnById[programId] ?? _displayNameById[programId] ?? programId;
+      final keyEn =
+          playerService.titleKeyEnById[programId] ??
+          _displayNameById[programId] ??
+          programId;
       return ProgramNameLocalizer.instance.displayName(
         keyEn: keyEn,
         langCode: langCode,
@@ -174,10 +188,8 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      builder: (_) => PlayerPopup(
-        player: playerService,
-        resolveTitle: resolveTitle,
-      ),
+      builder: (_) =>
+          PlayerPopup(player: playerService, resolveTitle: resolveTitle),
     );
   }
 
@@ -185,10 +197,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   String _settingsSubtitle(String programId) {
     try {
       final s = playerService.settingsFor(programId);
-      final parts = <String>[
-        '${s.durationMinutes}m',
-        '${s.intensity}%',
-      ];
+      final parts = <String>['${s.durationMinutes}m', '${s.intensity}%'];
       if (s.electric) parts.add('E:${s.electricWaveform.name}');
       if (s.magnetic) parts.add('M:${s.magneticWaveform.name}');
       return parts.join(' • ');
@@ -198,7 +207,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     }
   }
 
-  void _playFromIndex(int index, BuildContext context) {
+  Future<void> _playFromIndex(int index, BuildContext context) async {
     final ids = _programs.map((p) => p.id).toList(growable: false);
     if (ids.isEmpty) return;
 
@@ -211,7 +220,9 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     for (final p in _programs) {
       final current = p.name.trim();
       final isPlaceholder =
-          current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
+          current.isEmpty ||
+          current == '-' ||
+          current.toLowerCase() == 'placeholder';
       if (isPlaceholder && _displayNameById[p.id] != null) {
         keyEnMap[p.id] = _displayNameById[p.id]!;
       }
@@ -219,18 +230,21 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Play with titleKeyEnById so Player has consistent titles for IDs
     try {
-      playerService.playQueue(ids, index, titleKeyEnById: keyEnMap);
-    } catch (_) {
-      // Fallback to old call if signature not available at runtime
-      playerService.playQueue(ids, index);
+      await CubeDeviceService.instance.sendMyProgramsAsComposite();
+      _openPlayerPopup(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Composite-Start fehlgeschlagen: $e')),
+      );
     }
-
-    _openPlayerPopup(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
+        ? 'de'
+        : 'en';
 
     return GradientBackground(
       child: Padding(
@@ -240,23 +254,29 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
           children: [
             Text(
               'My Programs',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(color: AppColors.textPrimary, fontSize: 18),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+              ),
             ),
             const SizedBox(height: 6),
 
             if (_loading) ...[
               const SizedBox(height: 36),
-              const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
             ] else if (_programs.isEmpty) ...[
               const SizedBox(height: 36),
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.favorite_border, size: 64, color: AppColors.navBarInactive),
+                    Icon(
+                      Icons.favorite_border,
+                      size: 64,
+                      color: AppColors.navBarInactive,
+                    ),
                     SizedBox(height: 10),
                     Text(
                       'Keine gespeicherten Programme',
@@ -277,14 +297,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _programs.length,
-                    onReorder: (oldIndex, newIndex) => _reorder(oldIndex, newIndex),
+                    onReorder: (oldIndex, newIndex) =>
+                        _reorder(oldIndex, newIndex),
                     itemBuilder: (context, index) {
                       final program = _programs[index];
 
-                      final displayTitle = ProgramNameLocalizer.instance.displayName(
-                        keyEn: _displayNameById[program.id] ?? program.name,
-                        langCode: langCode,
-                      );
+                      final displayTitle = ProgramNameLocalizer.instance
+                          .displayName(
+                            keyEn: _displayNameById[program.id] ?? program.name,
+                            langCode: langCode,
+                          );
 
                       return Padding(
                         key: ValueKey(program.id),
@@ -300,8 +322,10 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                                 MaterialPageRoute(
                                   builder: (_) => ProgramDetailPage(
                                     program: program,
-                                    deviceId: CureDeviceUnlockService
-                                        .instance.nativeConnectedDeviceId ??
+                                    deviceId:
+                                        CureDeviceUnlockService
+                                            .instance
+                                            .nativeConnectedDeviceId ??
                                         '',
                                   ),
                                 ),
@@ -309,23 +333,30 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                               await _loadPrograms();
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 14,
+                              ),
                               child: Row(
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.play_arrow),
                                     color: AppColors.primary,
-                                    onPressed: () => _playFromIndex(index, context),
+                                    onPressed: () =>
+                                        _playFromIndex(index, context),
                                   ),
                                   const SizedBox(width: 4),
 
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           displayTitle,
-                                          style: const TextStyle(color: AppColors.textPrimary),
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                          ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
@@ -341,33 +372,55 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
                                   // Setup placeholder (Phase 1.5)
                                   IconButton(
-                                    icon: const Icon(Icons.edit, color: AppColors.textSecondary),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: AppColors.textSecondary,
+                                    ),
                                     onPressed: () async {
                                       // Open setup sheet and save settings to PlayerService
-                                      final initial = playerService
-                                          .settingsFor(program.id);
-                                      final settings = await showPlaylistItemSetup(
-                                          context, program.id, initial);
+                                      final initial = playerService.settingsFor(
+                                        program.id,
+                                      );
+                                      final settings =
+                                          await showPlaylistItemSetup(
+                                            context,
+                                            program.id,
+                                            initial,
+                                          );
                                       if (settings != null) {
-                                        playerService.setSettings(program.id, settings);
+                                        playerService.setSettings(
+                                          program.id,
+                                          settings,
+                                        );
                                         if (!mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Einstellungen gespeichert')),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Einstellungen gespeichert',
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
                                   ),
 
                                   IconButton(
-                                    icon: const Icon(Icons.delete, color: AppColors.textSecondary),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: AppColors.textSecondary,
+                                    ),
                                     onPressed: () async => _remove(program.id),
                                   ),
 
                                   // Drag handle: long-press/drag only for reorder (as requested)
                                   ReorderableDragStartListener(
                                     index: index,
-                                    child: const Icon(Icons.drag_handle,
-                                        color: AppColors.textSecondary),
+                                    child: const Icon(
+                                      Icons.drag_handle,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -385,5 +438,4 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       ),
     );
   }
-
 }
