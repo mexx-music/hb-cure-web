@@ -179,10 +179,16 @@ class _MainShellState extends State<MainShell> {
                 if (!context.mounted) return;
                 showModalBottomSheet(
                   context: context,
-                  showDragHandle: true,
-                  builder: (_) => PlayerPopup(
-                    player: playerService,
-                    resolveTitle: resolveTitle,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  showDragHandle: false,
+                  builder: (ctx) => SafeArea(
+                    child: Center(
+                      child: PlayerPopup(
+                        player: playerService,
+                        resolveTitle: resolveTitle,
+                      ),
+                    ),
                   ),
                 );
               },

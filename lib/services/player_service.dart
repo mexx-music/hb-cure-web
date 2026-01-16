@@ -103,8 +103,12 @@ class PlayerService extends ChangeNotifier {
     });
   }
 
-  void playQueue(List<String> queueIds, int startIndex,
-      {Duration? duration, Map<String, String>? titleKeyEnById}) {
+  void playQueue(
+    List<String> queueIds,
+    int startIndex, {
+    Duration? duration,
+    Map<String, String>? titleKeyEnById,
+  }) {
     if (queueIds.isEmpty) return;
     final idx = startIndex.clamp(0, queueIds.length - 1);
 
@@ -135,11 +139,53 @@ class PlayerService extends ChangeNotifier {
 
   void playSingle(String programId, {Duration? duration}) {
     // prefer explicit duration; otherwise use settings
-    final dur = duration ?? Duration(minutes: settingsFor(programId).durationMinutes);
+    final dur =
+        duration ?? Duration(minutes: settingsFor(programId).durationMinutes);
     playQueue([programId], 0, duration: dur);
   }
 
+  // BEGIN ADD: UI-only queue setter (no ticker, summed duration)
+  void setQueueUiOnly(
+    List<String> queueIds, {
+    int startIndex = 0,
+    Map<String, String>? titleKeyEnById,
+  }) {
+    if (queueIds.isEmpty) return;
+    final idx = startIndex.clamp(0, queueIds.length - 1).toInt();
+
+    // store provided title map (EN keys) for UI resolving
+    _titleKeyEnById = titleKeyEnById ?? _titleKeyEnById;
+
+    // sum durations from per-item settings
+    final totalMinutes = queueIds
+        .map((id) => settingsFor(id).durationMinutes)
+        .fold<int>(0, (a, b) => a + b);
+
+    final total = Duration(minutes: totalMinutes);
+
+    // UI-only: stop any running ticker and set state without starting playback
+    _stopTicker();
+    _state = PlayerState(
+      isPlaying: false,
+      queueIds: List.unmodifiable(queueIds),
+      currentIndex: idx,
+      total: total,
+      remaining: total,
+    );
+    notifyListeners();
+  }
+  // END ADD
+
   void play() {
+    if (_state.queueIds.isEmpty) return;
+    if (_state.isPlaying) return;
+    _state = _state.copyWith(isPlaying: true);
+    _startTicker();
+    notifyListeners();
+  }
+
+  // Minimal additive API: mark the current queue as started (UI flow after external device start)
+  void markStarted() {
     if (_state.queueIds.isEmpty) return;
     if (_state.isPlaying) return;
     _state = _state.copyWith(isPlaying: true);
@@ -179,7 +225,9 @@ class PlayerService extends ChangeNotifier {
   void _jumpTo(int newIndex, {required bool autoplay}) {
     // Determine program id at the target index (validate bounds)
     String? pid;
-    if (_state.queueIds.isNotEmpty && newIndex >= 0 && newIndex < _state.queueIds.length) {
+    if (_state.queueIds.isNotEmpty &&
+        newIndex >= 0 &&
+        newIndex < _state.queueIds.length) {
       pid = _state.queueIds[newIndex];
     }
 
