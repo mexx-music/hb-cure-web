@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:hbcure/services/player_service.dart';
 import 'package:hbcure/services/program_catalog.dart';
+import 'package:hbcure/services/cube_device_service.dart';
 import 'package:hbcure/ui/widgets/original_player_line.dart';
 
 class PlayerPopup extends StatefulWidget {
@@ -48,6 +49,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
   // ---- detect queue changes (so My Programs updates propagate)
   int _lastQueueHash = 0;
 
+  // ----- Cycle state for 50s window rotation (line refresh every cycle)
+  int _cycleNo = 0;
+  static const int _cycleWindowSize = 240;
+  List<num> _cycleFreqs = const <num>[];
+
   @override
   void initState() {
     super.initState();
@@ -64,11 +70,47 @@ class _PlayerPopupState extends State<PlayerPopup> {
       if (!mounted) return;
       final running = widget.player.state.isPlaying;
 
-      // advance only while running, and only until full
-      if (running && _fillIndex < (_fillSeconds - 1)) {
-        setState(() => _fillIndex += 1);
-      }
+      // advance only while running; when full, rotate cycle curve and reset fill
+      if (!running) return;
+
+      setState(() {
+        if (_fillIndex < (_fillSeconds - 1)) {
+          _fillIndex += 1;
+        } else {
+          // reset visual fill and rotate to next cycle curve
+          _fillIndex = 0;
+          _cycleNo += 1;
+          _rebuildCycleCurve();
+        }
+      });
     });
+  }
+
+  void _rebuildCycleCurve() {
+    final base = _cachedFreqs;
+
+    if (base.isEmpty) {
+      _cycleFreqs = const <num>[];
+      return;
+    }
+
+    final seed = (_cachedProgramId ?? '').hashCode.abs();
+    final stride = (37 + (seed % 200)).clamp(37, 236);
+
+    // Startpunkt pro Cycle verschieben
+    final start = (_cycleNo * stride) % base.length;
+
+    // WICHTIG:
+    // - Wenn base kurz ist: KEIN Wiederholen -> nur rotieren (gleiche Länge wie base)
+    // - Wenn base lang ist: Segment der Länge windowSize nehmen (mit wrap-around, aber ohne mehrfaches Wiederholen)
+    final int take = base.length < _cycleWindowSize ? base.length : _cycleWindowSize;
+
+    final out = <num>[];
+    for (int i = 0; i < take; i++) {
+      out.add(base[(start + i) % base.length]);
+    }
+
+    _cycleFreqs = out;
   }
 
   Future<void> _loadDecodedFallback() async {
@@ -84,6 +126,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
         _cachedProgramId = null;
         _cachedFreqs = const <num>[];
         _fillIndex = 0;
+        _cycleNo = 0;
+        _rebuildCycleCurve();
       });
     } catch (_) {
       // ignore; fallback not mandatory
@@ -134,6 +178,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
         _cachedProgramId = null;
         _cachedFreqs = const <num>[];
         _fillIndex = 0;
+        _cycleNo = 0;
+        _rebuildCycleCurve();
       });
     } catch (_) {
       if (!mounted) return;
@@ -373,6 +419,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
     // Reset 50s fill on program change
     _fillIndex = 0;
+    _cycleNo = 0;
+    _rebuildCycleCurve();
   }
 
   void _resetCachesOnQueueChange(PlayerState st) {
@@ -425,93 +473,50 @@ class _PlayerPopupState extends State<PlayerPopup> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              if (Navigator.of(context).canPop()) {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                          ),
-                        ],
-                      ),
+                      // Title
+                      Text(title, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 12),
 
-                      // Line (grey + black fill along path)
+                      // Visual (uses cached frequencies as fallback)
+                      // original_player_line expects progress and a values list (keeps existing API)
                       OriginalPlayerLine(
-                        values: _cachedFreqs,
                         progress: visualProgress,
-                        height: 140,
+                        values: _cycleFreqs.isNotEmpty ? _cycleFreqs : _cachedFreqs,
+                        height: 120,
                       ),
 
                       const SizedBox(height: 12),
 
-                      // Playback controls
+                      // Controls: Stop (Cube) only (UI is display-only)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          IconButton(
-                            tooltip: 'Prev',
-                            icon: const Icon(Icons.skip_previous),
-                            onPressed: st.hasPrev
-                                ? () {
-                              widget.player.previous();
-                              setState(() => _fillIndex = 0);
-                            }
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            tooltip: st.isPlaying ? 'Pause' : 'Play',
-                            icon: Icon(
-                              st.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.stop),
+                            label: const Text('Stop (Cube)'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
                             ),
-                            iconSize: 44,
-                            onPressed: () {
-                              if (st.isPlaying) {
-                                widget.player.pause();
-                              } else {
-                                setState(() => _fillIndex = 0);
-                                if (st.remaining == Duration.zero && st.total != Duration.zero) {
-                                  widget.player.stop();
-                                  widget.player.play();
-                                } else {
-                                  widget.player.play();
-                                }
+                            onPressed: () async {
+                              try {
+                                await CubeDeviceService.instance.stopProgram();
+                              } catch (e) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Stop failed: ${e.toString()}')),
+                                );
+                                return;
                               }
+
+                              // Stop UI player and reset visual fill
+                              try {
+                                widget.player.stop();
+                              } catch (_) {}
+                              if (mounted) setState(() => _fillIndex = 0);
                             },
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            tooltip: 'Stop',
-                            icon: const Icon(Icons.stop_circle_outlined),
-                            onPressed: () {
-                              widget.player.stop();
-                              setState(() => _fillIndex = 0);
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            tooltip: 'Next',
-                            icon: const Icon(Icons.skip_next),
-                            onPressed: st.hasNext
-                                ? () {
-                              widget.player.next();
-                              setState(() => _fillIndex = 0);
-                            }
-                                : null,
                           ),
                         ],
                       ),
@@ -533,9 +538,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
                           onPressed: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            }
+                            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
                           },
                           child: const Text('Close'),
                         ),

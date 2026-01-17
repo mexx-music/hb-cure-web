@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'my_programs_catalog_resolver.dart';
 import '../core/cure_protocol/cure_program_model.dart';
 import 'composite_program_types.dart';
+import '../models/playlist_item_settings.dart';
 
 class CubeDeviceService {
   static final instance = CubeDeviceService._();
@@ -83,13 +84,8 @@ class CubeDeviceService {
     debugPrint('COMPOSITE: payloads=${payloads.length}');
 
     // Ensure we have List<CompositeItemPayload> for encoder. The builder
-    // might return CureProgram objects or CompositeItemPayloads depending
-    // on implementation; handle both.
-    final compositePayloads = payloads.map((p) {
-      if (p is CompositeItemPayload) return p;
-      if (p is CureProgram) return _toCompositeItemPayload(p);
-      throw StateError('Unsupported payload item type: ${p.runtimeType}');
-    }).toList(growable: false);
+    // returns CompositeItemPayload items; cast defensively to the expected type.
+    final compositePayloads = payloads.cast<CompositeItemPayload>().toList(growable: false);
 
     final bytes = encodeQtCompositeProgramBytes(compositePayloads);
     debugPrint('COMPOSITE: bytes=${bytes.length}');
@@ -110,11 +106,16 @@ class CubeDeviceService {
   /// Build and upload a composite program from provided playlist IDs.
   Future<void> sendMyProgramsCompositeFromIds({
     required List<String> ids,
-    required Duration Function(String programId) durationForId,
+    required PlaylistItemSettings Function(String programId) settingsForId,
     required bool powerMode,
   }) async {
+    // Debug: incoming ids
+    debugPrint('COMPOSITE: ids=${ids.length}');
+
     // 1) Resolve slugs -> ProgramItems (enriched like single-flow)
     final programs = await MyProgramsCatalogResolver.resolveProgramItems(ids);
+    // Debug: how many resolved
+    debugPrint('COMPOSITE: resolved programs=${programs.length}');
 
     if (programs.isEmpty) {
       throw StateError('Composite: playlist is empty (no programs resolved)');
@@ -123,47 +124,53 @@ class CubeDeviceService {
     // 2) Ensure catalog loaded
     await ProgramCatalog.instance.ensureLoaded();
 
-    // 3) Build CureProgram payloads (one CureProgram per playlist item)
-    final payloads = <CureProgram>[];
+    // 3) Build CompositeItemPayload list (one payload per playlist item)
+    final compositePayloads = <CompositeItemPayload>[];
 
     for (final program in programs) {
       final entry =
           (program.uuid != null ? ProgramCatalog.instance.byUuid(program.uuid!) : null) ??
-              (program.internalId != null ? ProgramCatalog.instance.byInternalId(program.internalId!) : null) ??
-              ProgramCatalog.instance.byUuid(program.id) ??
-              ProgramCatalog.instance.byInternalId(int.tryParse(program.id) ?? -1);
+          (program.internalId != null ? ProgramCatalog.instance.byInternalId(program.internalId!) : null) ??
+          ProgramCatalog.instance.byUuid(program.id) ??
+          ProgramCatalog.instance.byInternalId(int.tryParse(program.id) ?? -1);
 
       if (entry == null) {
         throw StateError(
-          'Composite: Program not found in catalog: slug=${program.id}, uuid=${program.uuid}, internalId=${program.internalId}',
+          'Composite: Program not found in catalog: '
+          'slug=${program.id}, uuid=${program.uuid}, internalId=${program.internalId}',
         );
       }
 
-      final duration = durationForId(program.id);
+      final s = settingsForId(program.id);
+      final duration = Duration(minutes: s.durationMinutes);
+
+      // Factory: build CureProgram (ensures same encoding as single-upload)
       final cureProgram = CureProgramFactory.fromCatalogEntry(
         entry: entry,
         duration: duration,
         powerMode: powerMode,
       );
 
-      payloads.add(cureProgram);
+      compositePayloads.add(_toCompositeItemPayloadWithSettings(cureProgram, s));
     }
 
-    // 4) Encode composite bytes using your existing Qt encoder
-    // Convert CureProgram list to CompositeItemPayload list expected by encoder
-    final compositePayloads = payloads.map((p) => _toCompositeItemPayload(p)).toList(growable: false);
+    // Debug: payloads count
+    debugPrint('COMPOSITE: payloads=${compositePayloads.length}');
+
     final bytes = encodeQtCompositeProgramBytes(compositePayloads);
+    // Debug: bytes length
+    debugPrint('COMPOSITE: bytes=${bytes.length}');
     debugPrint('COMPOSITE(fromIds): items=${compositePayloads.length} bytes=${bytes.length}');
 
     final ok = await CureDeviceUnlockService.instance.uploadProgramBytes(bytes);
-    if (!ok) {
-      throw StateError('Composite: uploadProgramBytes failed');
-    }
+    // Debug: upload result
+    debugPrint('COMPOSITE: upload ok=$ok');
+    if (!ok) throw StateError('Composite: uploadProgramBytes failed');
 
     final started = await CureDeviceUnlockService.instance.progStart();
-    if (!started) {
-      throw StateError('Composite: progStart failed');
-    }
+    // Debug: start result
+    debugPrint('COMPOSITE: start ok=$started');
+    if (!started) throw StateError('Composite: progStart failed');
   }
 
   // ---------------------- Helpers ----------------------
@@ -193,6 +200,53 @@ class CubeDeviceService {
     );
   }
 
+  // Convert CureProgram + per-item UI settings -> CompositeItemPayload
+  CompositeItemPayload _toCompositeItemPayloadWithSettings(CureProgram p, PlaylistItemSettings s) {
+    final steps = <CompositeStep>[];
+    for (final st in p.steps) {
+      final dwell = st.dwellSeconds.clamp(0, 0xFFFF);
+      steps.add(CompositeStep(freqHz: st.frequencyHz, dwellSec: dwell));
+    }
+
+    // UI intensity 0..100 -> protocol 0..10
+    final intBase = (s.intensity / 10.0).round().clamp(0, 10);
+    final eInt = s.electric ? intBase : 0;
+    final hInt = s.magnetic ? intBase : 0;
+
+    final eWave = s.electric ? _waveToCodeFromName(s.electricWaveform.name) : 0;
+    final hWave = s.magnetic ? _waveToCodeFromName(s.magneticWaveform.name) : 0;
+
+    return CompositeItemPayload(
+      uuid16: p.programUuid16,
+      name: p.name,
+      eInt0to10: eInt,
+      hInt0to10: hInt,
+      eWave0to15: eWave,
+      hWave0to15: hWave,
+      steps: steps,
+    );
+  }
+
+  // Map waveform enum/name -> protocol code (0..15)
+  int _waveToCodeFromName(String name) {
+    final n = name.trim().toLowerCase();
+    switch (n) {
+      case 'sine':
+        return 0;
+      case 'square':
+        return 1;
+      case 'triangle':
+        return 2;
+      case 'saw':
+      case 'sawtooth':
+        return 3;
+      case 'pulse':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
   int _waveToCode(dynamic w) {
     // Accept different enum types/names or numeric values; map to 0..15
     try {
@@ -212,9 +266,13 @@ class CubeDeviceService {
   }
 
   // Minimal stopProgram: delegates to native shared progClear
-  Future<bool> stopProgram() async {
-    // Delegate to the native unlock service progClear command.
-    // Return the raw bool result from the native transport.
-    return await CureDeviceUnlockService.instance.progClear();
+  /// Stop the running program on the Cube device.
+  /// Uses the underlying native command to clear/stop the running program.
+  /// Throws StateError on failure.
+  Future<void> stopProgram() async {
+    final ok = await CureDeviceUnlockService.instance.progClear();
+    if (!ok) {
+      throw StateError('progClear (stop) failed');
+    }
   }
 }

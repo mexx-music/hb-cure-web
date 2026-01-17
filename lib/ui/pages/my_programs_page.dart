@@ -215,6 +215,15 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   }
 
   Future<void> _playFromIndex(int index, BuildContext context) async {
+    // Debug: show entry and current program count (modal for reliable visual feedback)
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          content: Text('ENTER _playFromIndex programs=${_programs.length}'),
+        ),
+      );
+    }
     final ids = _programs.map((p) => p.id).toList(growable: false);
     if (ids.isEmpty) return;
 
@@ -237,34 +246,32 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Play with titleKeyEnById so Player has consistent titles for IDs
     try {
-      // 1) Composite bauen + an Cube senden + starten
-      await CubeDeviceService.instance.sendMyProgramsCompositeFromIds(
-        ids: ids,
-        powerMode: true, // oder aus Settings
-        durationForId: (id) {
-          final s = playerService.settingsFor(id);
-          return Duration(minutes: s.durationMinutes);
-        },
-      );
-
-      // 2) UI-Queue setzen (nur Anzeige + Timer)
+      // UI sofort setzen, damit der Player definitiv triggert (unabhängig vom Composite)
       playerService.setQueueUiOnly(
         ids,
         startIndex: index,
         titleKeyEnById: keyEnMap,
       );
 
-      // 3) UI-Timer starten (kein Upload mehr!)
-      playerService.markStarted();
+      // Nur starten, wenn es auch eine sinnvolle Gesamtdauer gibt
+      if (playerService.state.total > Duration.zero) {
+        playerService.markStarted();
+      }
 
-      // 4) Player öffnen
       if (!context.mounted) return;
       _openPlayerPopup(context);
+
+      // Composite danach versuchen (wenn es scheitert, bleibt UI trotzdem offen)
+      await CubeDeviceService.instance.sendMyProgramsCompositeFromIds(
+        ids: ids,
+        powerMode: true,
+        settingsForId: (id) => playerService.settingsFor(id),
+      );
     } catch (e, st) {
       debugPrint('UI: composite or play failed: $e\n$st');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Start failed: $e')),
+        SnackBar(content: Text('Playlist-Upload fehlgeschlagen: $e')),
       );
     }
   }
@@ -289,6 +296,29 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
               ),
             ),
             const SizedBox(height: 6),
+
+            // Global Play Playlist button (minimal, visible test + start)
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: _programs.isEmpty
+                  ? null
+                  : () async {
+                // sichtbarer Trigger-Test (kann später entfernt werden)
+                await showDialog(
+                  context: context,
+                  builder: (_) => const AlertDialog(
+                    title: Text('DEBUG'),
+                    content: Text('PLAY PLAYLIST PRESSED'),
+                  ),
+                );
+
+                // Start playlist from beginning
+                await _playFromIndex(0, context);
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Play Playlist'),
+            ),
+            const SizedBox(height: 8),
 
             if (_loading) ...[
               const SizedBox(height: 36),
@@ -363,7 +393,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                               IconButton(
                                 icon: const Icon(Icons.play_arrow),
                                 color: AppColors.primary,
-                                onPressed: () => _playFromIndex(index, context),
+                                onPressed: () async {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (_) => const AlertDialog(
+                                      title: Text('DEBUG'),
+                                      content: Text('PLAY BUTTON PRESSED'),
+                                    ),
+                                  );
+                                  _playFromIndex(index, context);
+                                },
                               ),
                               const SizedBox(width: 4),
 
