@@ -79,6 +79,17 @@ class PlayerService extends ChangeNotifier {
   }
   // END PATCH
 
+  // BEGIN PATCH: uploading flag exposed for UI coordination
+  bool _isUploading = false;
+  bool get isUploading => _isUploading;
+
+  void setUploading(bool v) {
+    if (_isUploading == v) return;
+    _isUploading = v;
+    notifyListeners();
+  }
+  // END PATCH
+
   void _stopTicker() {
     _ticker?.cancel();
     _ticker = null;
@@ -104,12 +115,19 @@ class PlayerService extends ChangeNotifier {
   }
 
   void playQueue(
-    List<String> queueIds,
-    int startIndex, {
-    Duration? duration,
-    Map<String, String>? titleKeyEnById,
-  }) {
-    if (queueIds.isEmpty) return;
+      List<String> queueIds,
+      int startIndex, {
+        Duration? duration,
+        Map<String, String>? titleKeyEnById,
+      }) {
+    // If empty -> reset cleanly (do not silently return)
+    if (queueIds.isEmpty) {
+      _stopTicker();
+      _state = PlayerState.empty;
+      notifyListeners();
+      return;
+    }
+
     final idx = startIndex.clamp(0, queueIds.length - 1);
 
     // If explicit duration passed -> use it; otherwise use settings for the first program
@@ -146,11 +164,18 @@ class PlayerService extends ChangeNotifier {
 
   // BEGIN ADD: UI-only queue setter (no ticker, summed duration)
   void setQueueUiOnly(
-    List<String> queueIds, {
-    int startIndex = 0,
-    Map<String, String>? titleKeyEnById,
-  }) {
-    if (queueIds.isEmpty) return;
+      List<String> queueIds, {
+        int startIndex = 0,
+        Map<String, String>? titleKeyEnById,
+      }) {
+    // If empty -> reset cleanly (do not silently return)
+    if (queueIds.isEmpty) {
+      _stopTicker();
+      _state = PlayerState.empty;
+      notifyListeners();
+      return;
+    }
+
     final idx = startIndex.clamp(0, queueIds.length - 1).toInt();
 
     // store provided title map (EN keys) for UI resolving
@@ -202,7 +227,11 @@ class PlayerService extends ChangeNotifier {
 
   void stop() {
     _stopTicker();
-    if (_state.queueIds.isEmpty) return;
+    if (_state.queueIds.isEmpty) {
+      _state = PlayerState.empty;
+      notifyListeners();
+      return;
+    }
     _state = _state.copyWith(isPlaying: false, remaining: _state.total);
     notifyListeners();
   }

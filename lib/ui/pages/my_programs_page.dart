@@ -30,11 +30,9 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
   StreamSubscription<void>? _myProgramsSub;
 
-  // Loading guard / queue flags
   bool _isLoading = false;
   bool _pendingReload = false;
 
-  // Existing loading indicator and data
   bool _loading = true;
   List<ProgramItem> _programs = [];
 
@@ -45,10 +43,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   void initState() {
     super.initState();
     _loadPrograms();
-    _myProgramsSub = _service.onChange.listen((_) {
-      // schedule a reload; _loadPrograms itself will coalesce concurrent calls
-      _loadPrograms();
-    });
+    _myProgramsSub = _service.onChange.listen((_) => _loadPrograms());
   }
 
   @override
@@ -65,10 +60,10 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     }
     _isLoading = true;
     setState(() => _loading = true);
+
     try {
       final ids = await _service.loadIds();
 
-      // load all categories and build id->ProgramItem map
       final categories = await _repo.loadCategories();
       final Map<String, ProgramItem> map = {};
       for (final c in categories) {
@@ -95,50 +90,44 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
         for (final program in programs) {
           final current = program.name.trim();
           final isPlaceholder =
-              current.isEmpty ||
-                  current == '-' ||
-                  current.toLowerCase() == 'placeholder';
+              current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
+
           if (!isPlaceholder) {
             _displayNameById[program.id] = program.name;
             continue;
           }
+
           final byUuid = ProgramCatalog.instance.byUuid(program.id);
           if (byUuid != null) {
-            _displayNameById[program.id] = ProgramCatalog.instance.name(
-              byUuid,
-              lang: 'EN',
-            );
+            _displayNameById[program.id] = ProgramCatalog.instance.name(byUuid, lang: 'EN');
             continue;
           }
+
           final intId = int.tryParse(program.id);
           if (intId != null) {
             final byInt = ProgramCatalog.instance.byInternalId(intId);
             if (byInt != null) {
-              _displayNameById[program.id] = ProgramCatalog.instance.name(
-                byInt,
-                lang: 'EN',
-              );
+              _displayNameById[program.id] = ProgramCatalog.instance.name(byInt, lang: 'EN');
               continue;
             }
           }
+
           _displayNameById[program.id] = program.name;
         }
       } catch (_) {
-        // Non-fatal: if program catalog missing or parse fails, ignore enrichment
+        // ignore
       }
       // -------------------------------------------------------------------
 
       if (!mounted) return;
-      setState(() {
-        _programs = programs;
-      });
+      setState(() => _programs = programs);
     } finally {
       if (!mounted) return;
       _isLoading = false;
       setState(() => _loading = false);
+
       if (_pendingReload) {
         _pendingReload = false;
-        // schedule a single reload after current microtask
         Future.microtask(() => _loadPrograms());
       }
     }
@@ -149,7 +138,6 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     _loadPrograms();
   }
 
-  // ✅ FIXED: reorder locally first (stable UX), then persist IDs (no reload that can "snap back")
   Future<void> _reorder(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) newIndex -= 1;
 
@@ -161,26 +149,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       _programs.insert(newIndex, moved);
     });
 
-    // Persist order (Source of Truth for playlist order)
     final ids = _programs.map((p) => p.id).toList(growable: false);
     await _service.saveIds(ids);
   }
 
   void _openPlayerPopup(BuildContext context) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
-        ? 'de'
-        : 'en';
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
     String resolveTitle(String programId) {
-      // Prefer explicit title from playerService cache, then local enrichment, then id
-      final keyEn =
-          playerService.titleKeyEnById[programId] ??
-              _displayNameById[programId] ??
-              programId;
-      return ProgramNameLocalizer.instance.displayName(
-        keyEn: keyEn,
-        langCode: langCode,
-      );
+      final keyEn = playerService.titleKeyEnById[programId] ?? _displayNameById[programId] ?? programId;
+      return ProgramNameLocalizer.instance.displayName(keyEn: keyEn, langCode: langCode);
     }
 
     if (!context.mounted) return;
@@ -200,7 +178,6 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     );
   }
 
-  // Helper: build settings subtitle for a program id (read-only, no side-effects)
   String _settingsSubtitle(String programId) {
     try {
       final s = playerService.settingsFor(programId);
@@ -209,26 +186,15 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       if (s.magnetic) parts.add('M:${s.magneticWaveform.name}');
       return parts.join(' • ');
     } catch (_) {
-      // on any error, return a safe placeholder
       return '';
     }
   }
 
   Future<void> _playFromIndex(int index, BuildContext context) async {
-    // Debug: show entry and current program count (modal for reliable visual feedback)
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          content: Text('ENTER _playFromIndex programs=${_programs.length}'),
-        ),
-      );
-    }
     final ids = _programs.map((p) => p.id).toList(growable: false);
     if (ids.isEmpty) return;
 
-    // Build stable keyEn map: prefer p.name (usually EN from programs.json). If name is placeholder,
-    // and we have enrichment (_displayNameById) use that as fallback.
+    // keyEn map for consistent titles
     final keyEnMap = <String, String>{};
     for (final p in _programs) {
       keyEnMap[p.id] = p.name;
@@ -236,51 +202,47 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     for (final p in _programs) {
       final current = p.name.trim();
       final isPlaceholder =
-          current.isEmpty ||
-              current == '-' ||
-              current.toLowerCase() == 'placeholder';
+          current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
       if (isPlaceholder && _displayNameById[p.id] != null) {
         keyEnMap[p.id] = _displayNameById[p.id]!;
       }
     }
 
-    // Play with titleKeyEnById so Player has consistent titles for IDs
+    // UI queue + timer (sum of durations)
+    playerService.setQueueUiOnly(
+      ids,
+      startIndex: index,
+      titleKeyEnById: keyEnMap,
+    );
+    if (playerService.state.total > Duration.zero) {
+      playerService.markStarted();
+    }
+
+    // Open popup immediately
+    if (!context.mounted) return;
+    _openPlayerPopup(context);
+
+    // Upload banner in popup (PlayerPopup reads playerService.isUploading)
+    playerService.setUploading(true);
     try {
-      // UI sofort setzen, damit der Player definitiv triggert (unabhängig vom Composite)
-      playerService.setQueueUiOnly(
-        ids,
-        startIndex: index,
-        titleKeyEnById: keyEnMap,
-      );
-
-      // Nur starten, wenn es auch eine sinnvolle Gesamtdauer gibt
-      if (playerService.state.total > Duration.zero) {
-        playerService.markStarted();
-      }
-
-      if (!context.mounted) return;
-      _openPlayerPopup(context);
-
-      // Composite danach versuchen (wenn es scheitert, bleibt UI trotzdem offen)
       await CubeDeviceService.instance.sendMyProgramsCompositeFromIds(
         ids: ids,
         powerMode: true,
         settingsForId: (id) => playerService.settingsFor(id),
       );
-    } catch (e, st) {
-      debugPrint('UI: composite or play failed: $e\n$st');
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Playlist-Upload fehlgeschlagen: $e')),
       );
+    } finally {
+      if (mounted) playerService.setUploading(false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
-        ? 'de'
-        : 'en';
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
     return GradientBackground(
       child: Padding(
@@ -297,24 +259,9 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
             ),
             const SizedBox(height: 6),
 
-            // Global Play Playlist button (minimal, visible test + start)
             const SizedBox(height: 8),
             ElevatedButton.icon(
-              onPressed: _programs.isEmpty
-                  ? null
-                  : () async {
-                // sichtbarer Trigger-Test (kann später entfernt werden)
-                await showDialog(
-                  context: context,
-                  builder: (_) => const AlertDialog(
-                    title: Text('DEBUG'),
-                    content: Text('PLAY PLAYLIST PRESSED'),
-                  ),
-                );
-
-                // Start playlist from beginning
-                await _playFromIndex(0, context);
-              },
+              onPressed: _programs.isEmpty ? null : () async => _playFromIndex(0, context),
               icon: const Icon(Icons.play_arrow),
               label: const Text('Play Playlist'),
             ),
@@ -331,25 +278,17 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(
-                      Icons.favorite_border,
-                      size: 64,
-                      color: AppColors.navBarInactive,
-                    ),
+                    Icon(Icons.favorite_border, size: 64, color: AppColors.navBarInactive),
                     SizedBox(height: 10),
-                    Text(
-                      'Keine gespeicherten Programme',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
+                    Text('Keine gespeicherten Programme', style: TextStyle(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
             ] else ...[
               const SizedBox(height: 4),
 
-              // Important: keep existing outer ListView,
-              // render reorderable list inside (shrinkWrap + no inner scrolling).
               ReorderableListView.builder(
+                buildDefaultDragHandles: false, // IMPORTANT: avoid gesture conflicts with buttons
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _programs.length,
@@ -376,33 +315,21 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                             MaterialPageRoute(
                               builder: (_) => ProgramDetailPage(
                                 program: program,
-                                deviceId:
-                                CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '',
+                                deviceId: CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '',
                               ),
                             ),
                           );
                           await _loadPrograms();
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 14,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                           child: Row(
                             children: [
+                              // Optional: item-start (works now; can be removed later)
                               IconButton(
                                 icon: const Icon(Icons.play_arrow),
                                 color: AppColors.primary,
-                                onPressed: () async {
-                                  await showDialog(
-                                    context: context,
-                                    builder: (_) => const AlertDialog(
-                                      title: Text('DEBUG'),
-                                      content: Text('PLAY BUTTON PRESSED'),
-                                    ),
-                                  );
-                                  _playFromIndex(index, context);
-                                },
+                                onPressed: () => _playFromIndex(index, context),
                               ),
                               const SizedBox(width: 4),
 
@@ -410,65 +337,40 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      displayTitle,
-                                      style: const TextStyle(
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
+                                    Text(displayTitle, style: const TextStyle(color: AppColors.textPrimary)),
                                     const SizedBox(height: 2),
                                     Text(
                                       _settingsSubtitle(program.id),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                      ),
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                     ),
                                   ],
                                 ),
                               ),
 
-                              // Setup placeholder (Phase 1.5)
                               IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: AppColors.textSecondary,
-                                ),
+                                icon: const Icon(Icons.edit, color: AppColors.textSecondary),
                                 onPressed: () async {
-                                  // Open setup sheet and save settings to PlayerService
                                   final initial = playerService.settingsFor(program.id);
-                                  final settings = await showPlaylistItemSetup(
-                                    context,
-                                    program.id,
-                                    initial,
-                                  );
+                                  final settings = await showPlaylistItemSetup(context, program.id, initial);
                                   if (settings != null) {
                                     playerService.setSettings(program.id, settings);
                                     if (!mounted) return;
+                                    setState(() {}); // refresh subtitle immediately
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Einstellungen gespeichert'),
-                                      ),
+                                      const SnackBar(content: Text('Einstellungen gespeichert')),
                                     );
                                   }
                                 },
                               ),
 
                               IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: AppColors.textSecondary,
-                                ),
+                                icon: const Icon(Icons.delete, color: AppColors.textSecondary),
                                 onPressed: () async => _remove(program.id),
                               ),
 
-                              // Drag handle: long-press/drag only for reorder (as requested)
                               ReorderableDragStartListener(
                                 index: index,
-                                child: const Icon(
-                                  Icons.drag_handle,
-                                  color: AppColors.textSecondary,
-                                ),
+                                child: const Icon(Icons.drag_handle, color: AppColors.textSecondary),
                               ),
                             ],
                           ),

@@ -28,7 +28,7 @@ class PlayerPopup extends StatefulWidget {
 class _PlayerPopupState extends State<PlayerPopup> {
   // ---- Visual Fill (like original app): fixed 50 seconds to full black
   static const Duration _tickDur = Duration(seconds: 1);
-  static const int _fillSeconds = 50; // ~50s until fully black
+  static const int _fillSeconds = 50; // 50s fill cycle
 
   Timer? _tick;
   int _fillIndex = 0; // 0..49
@@ -49,7 +49,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
   // ---- detect queue changes (so My Programs updates propagate)
   int _lastQueueHash = 0;
 
-  // ----- Cycle state for 50s window rotation (line refresh every cycle)
+  // ---- Cycle state for 50s window rotation (line refresh every cycle)
   int _cycleNo = 0;
   static const int _cycleWindowSize = 240;
   List<num> _cycleFreqs = const <num>[];
@@ -62,15 +62,13 @@ class _PlayerPopupState extends State<PlayerPopup> {
     ProgramCatalog.instance.ensureLoaded();
 
     // Load helpers in background
-    _loadDecodedFallback(); // optional, for title fallback only
+    _loadDecodedFallback(); // optional
     _loadSlugKeysFromProgramsJson(); // critical: slug -> (uuid/internalId)
 
-    // timer for visual fill
+    // timer for visual fill + curve rotation
     _tick = Timer.periodic(_tickDur, (_) {
       if (!mounted) return;
       final running = widget.player.state.isPlaying;
-
-      // advance only while running; when full, rotate cycle curve and reset fill
       if (!running) return;
 
       setState(() {
@@ -86,33 +84,6 @@ class _PlayerPopupState extends State<PlayerPopup> {
     });
   }
 
-  void _rebuildCycleCurve() {
-    final base = _cachedFreqs;
-
-    if (base.isEmpty) {
-      _cycleFreqs = const <num>[];
-      return;
-    }
-
-    final seed = (_cachedProgramId ?? '').hashCode.abs();
-    final stride = (37 + (seed % 200)).clamp(37, 236);
-
-    // Startpunkt pro Cycle verschieben
-    final start = (_cycleNo * stride) % base.length;
-
-    // WICHTIG:
-    // - Wenn base kurz ist: KEIN Wiederholen -> nur rotieren (gleiche Länge wie base)
-    // - Wenn base lang ist: Segment der Länge windowSize nehmen (mit wrap-around, aber ohne mehrfaches Wiederholen)
-    final int take = base.length < _cycleWindowSize ? base.length : _cycleWindowSize;
-
-    final out = <num>[];
-    for (int i = 0; i < take; i++) {
-      out.add(base[(start + i) % base.length]);
-    }
-
-    _cycleFreqs = out;
-  }
-
   Future<void> _loadDecodedFallback() async {
     try {
       final raw = await rootBundle.loadString(
@@ -122,12 +93,12 @@ class _PlayerPopupState extends State<PlayerPopup> {
       if (!mounted) return;
       setState(() {
         _decodedRoot = decoded;
-        // decoded now available -> if we were stuck on fallback, allow re-resolve
+        // allow re-resolve
         _cachedProgramId = null;
         _cachedFreqs = const <num>[];
-        _fillIndex = 0;
         _cycleNo = 0;
-        _rebuildCycleCurve();
+        _cycleFreqs = const <num>[];
+        _fillIndex = 0;
       });
     } catch (_) {
       // ignore; fallback not mandatory
@@ -149,7 +120,6 @@ class _PlayerPopupState extends State<PlayerPopup> {
         final slug = _pickString(programMap, const ['id', 'Id', 'slug', 'programId']);
         if (slug == null || slug.isEmpty) return;
 
-        // IMPORTANT: field names may vary across versions
         final uuid = _pickString(programMap, const [
           'uuid',
           'programUuid',
@@ -174,12 +144,12 @@ class _PlayerPopupState extends State<PlayerPopup> {
       setState(() {
         _slugKeysLoaded = true;
 
-        // slug map now available -> force re-resolve so we don't remain on fallback
+        // slug map now available -> force re-resolve
         _cachedProgramId = null;
         _cachedFreqs = const <num>[];
-        _fillIndex = 0;
         _cycleNo = 0;
-        _rebuildCycleCurve();
+        _cycleFreqs = const <num>[];
+        _fillIndex = 0;
       });
     } catch (_) {
       if (!mounted) return;
@@ -191,10 +161,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
     }
   }
 
-  // Walk any JSON structure and call onProgram for objects that look like program nodes
   void _walkProgramsJson(dynamic node, void Function(dynamic programMap) onProgram) {
     if (node is Map) {
-      // Heuristic: treat any map that has an "id" as a program candidate
       if (node.containsKey('id') || node.containsKey('programId') || node.containsKey('slug')) {
         onProgram(node);
       }
@@ -266,11 +234,10 @@ class _PlayerPopupState extends State<PlayerPopup> {
     return int.tryParse(m.group(1)!);
   }
 
-  // Robust title normalize for fallback matching
   String _normTitle(String s) => s
       .trim()
       .toLowerCase()
-      .replaceAll(RegExp(r'[\u00AD]'), '') // soft hyphen
+      .replaceAll(RegExp(r'[\u00AD]'), '')
       .replaceAll(RegExp(r'[^a-z0-9äöüß ]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
@@ -327,57 +294,6 @@ class _PlayerPopupState extends State<PlayerPopup> {
     return const <num>[];
   }
 
-  // Primary: slug -> (ProgramUUID/internalID) -> ProgramCatalog lookup
-  List<num> _freqsForProgramId(String programId) {
-    // 1) If already UUID, use directly
-    if (_looksLikeUuid(programId)) {
-      try {
-        final rec = ProgramCatalog.instance.byUuid(programId);
-        return _extractFrequenciesFromRec(rec);
-      } catch (_) {}
-    }
-
-    // 2) Try slug map from programs.json
-    final keys = _slugKeys[programId];
-    if (keys != null) {
-      final uuid = keys.uuid;
-      final internalId = keys.internalId;
-
-      if (uuid != null) {
-        try {
-          final rec = ProgramCatalog.instance.byUuid(uuid);
-          final f = _extractFrequenciesFromRec(rec);
-          if (f.isNotEmpty) return f;
-        } catch (_) {}
-      }
-
-      if (internalId != null) {
-        try {
-          final rec = ProgramCatalog.instance.byInternalId(internalId);
-          final f = _extractFrequenciesFromRec(rec);
-          if (f.isNotEmpty) return f;
-        } catch (_) {}
-      }
-    }
-
-    // 3) Last resort: if programId contains trailing internalID (but ignore tiny suffix like "_1")
-    final trailing = _extractTrailingInt(programId);
-    if (trailing != null && trailing >= 1000) {
-      try {
-        final rec = ProgramCatalog.instance.byInternalId(trailing);
-        final f = _extractFrequenciesFromRec(rec);
-        if (f.isNotEmpty) return f;
-      } catch (_) {}
-    }
-
-    // 4) Optional fallback: title match against decoded list (only if available)
-    final title = widget.resolveTitle(programId);
-    final byTitle = (_decodedRoot != null) ? _freqsFromDecodedByTitle(_decodedRoot, title) : const <num>[];
-    if (byTitle.isNotEmpty) return byTitle;
-
-    return const <num>[];
-  }
-
   List<num> _extractFrequenciesFromRec(dynamic rec) {
     if (rec is! Map) return const <num>[];
 
@@ -401,26 +317,95 @@ class _PlayerPopupState extends State<PlayerPopup> {
     return const <num>[];
   }
 
+  List<num> _freqsForProgramId(String programId) {
+    // 1) if already UUID
+    if (_looksLikeUuid(programId)) {
+      try {
+        final rec = ProgramCatalog.instance.byUuid(programId);
+        return _extractFrequenciesFromRec(rec);
+      } catch (_) {}
+    }
+
+    // 2) try slug map
+    final keys = _slugKeys[programId];
+    if (keys != null) {
+      final uuid = keys.uuid;
+      final internalId = keys.internalId;
+
+      if (uuid != null) {
+        try {
+          final rec = ProgramCatalog.instance.byUuid(uuid);
+          final f = _extractFrequenciesFromRec(rec);
+          if (f.isNotEmpty) return f;
+        } catch (_) {}
+      }
+
+      if (internalId != null) {
+        try {
+          final rec = ProgramCatalog.instance.byInternalId(internalId);
+          final f = _extractFrequenciesFromRec(rec);
+          if (f.isNotEmpty) return f;
+        } catch (_) {}
+      }
+    }
+
+    // 3) trailing internalId
+    final trailing = _extractTrailingInt(programId);
+    if (trailing != null && trailing >= 1000) {
+      try {
+        final rec = ProgramCatalog.instance.byInternalId(trailing);
+        final f = _extractFrequenciesFromRec(rec);
+        if (f.isNotEmpty) return f;
+      } catch (_) {}
+    }
+
+    // 4) optional decoded title fallback
+    final title = widget.resolveTitle(programId);
+    final byTitle = (_decodedRoot != null)
+        ? _freqsFromDecodedByTitle(_decodedRoot, title)
+        : const <num>[];
+    if (byTitle.isNotEmpty) return byTitle;
+
+    return const <num>[];
+  }
+
   void _ensureCachedSeries(String? currentId) {
     if (currentId == null || currentId.isEmpty) {
       _cachedProgramId = null;
       _cachedFreqs = const <num>[];
+      _cycleFreqs = const <num>[];
       return;
     }
     if (_cachedProgramId == currentId) return;
 
     _cachedProgramId = currentId;
-
-    // STRICT: resolve via slugMap -> ProgramCatalog
     final series = _freqsForProgramId(currentId);
 
-    // safe fallback
     _cachedFreqs = series.isNotEmpty ? series : const <num>[100, 100, 100, 100, 100];
 
-    // Reset 50s fill on program change
     _fillIndex = 0;
     _cycleNo = 0;
     _rebuildCycleCurve();
+  }
+
+  void _rebuildCycleCurve() {
+    final base = _cachedFreqs;
+    if (base.isEmpty) {
+      _cycleFreqs = const <num>[];
+      return;
+    }
+
+    final seed = (_cachedProgramId ?? '').hashCode.abs();
+    final stride = (37 + (seed % 200)).clamp(37, 236);
+    final start = (_cycleNo * stride) % base.length;
+
+    final int take = base.length < _cycleWindowSize ? base.length : _cycleWindowSize;
+
+    final out = <num>[];
+    for (int i = 0; i < take; i++) {
+      out.add(base[(start + i) % base.length]);
+    }
+    _cycleFreqs = out;
   }
 
   void _resetCachesOnQueueChange(PlayerState st) {
@@ -431,7 +416,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
     _cachedProgramId = null;
     _cachedFreqs = const <num>[];
+    _cycleFreqs = const <num>[];
     _fillIndex = 0;
+    _cycleNo = 0;
   }
 
   @override
@@ -451,10 +438,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
             builder: (context, _) {
               final st = widget.player.state;
 
-              // IMPORTANT: if queue changes, clear caches
               _resetCachesOnQueueChange(st);
 
-              // Ensure slug map is loaded (fire & forget)
               if (!_slugKeysLoaded && !_slugKeysLoading) {
                 _loadSlugKeysFromProgramsJson();
               }
@@ -469,18 +454,41 @@ class _PlayerPopupState extends State<PlayerPopup> {
                   ? (_fillIndex / (_fillSeconds - 1)).clamp(0.0, 1.0)
                   : 0.0;
 
+              final bool uploading = widget.player.isUploading;
+
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Title
                       Text(title, style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 12),
 
-                      // Visual (uses cached frequencies as fallback)
-                      // original_player_line expects progress and a values list (keeps existing API)
+                      if (uploading) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: const [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Programme werden hochgeladen…',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const LinearProgressIndicator(),
+                        const SizedBox(height: 12),
+                      ] else ...[
+                        const SizedBox(height: 12),
+                      ],
+
                       OriginalPlayerLine(
                         progress: visualProgress,
                         values: _cycleFreqs.isNotEmpty ? _cycleFreqs : _cachedFreqs,
@@ -511,11 +519,14 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                 return;
                               }
 
-                              // Stop UI player and reset visual fill
+                              // Stop UI timer and reset fill
                               try {
                                 widget.player.stop();
                               } catch (_) {}
-                              if (mounted) setState(() => _fillIndex = 0);
+                              if (mounted) setState(() {
+                                _fillIndex = 0;
+                                _cycleNo = 0;
+                              });
                             },
                           ),
                         ],
@@ -523,7 +534,6 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       const SizedBox(height: 12),
 
-                      // Remaining time row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -554,4 +564,3 @@ class _PlayerPopupState extends State<PlayerPopup> {
     );
   }
 }
-
