@@ -1,18 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
 import 'package:hbcure/ui/pages/my_programs_page.dart';
 import 'package:hbcure/ui/pages/available_programs_page.dart';
 import 'package:hbcure/ui/pages/devices_page.dart';
 import 'package:hbcure/ui/pages/settings_page.dart';
-
 import 'package:hbcure/ui/theme/app_colors.dart';
 import 'package:hbcure/ui/widgets/program_lang_toggle.dart';
-
 import 'package:hbcure/services/program_language_controller.dart';
 import 'package:hbcure/app_services.dart';
 import 'package:hbcure/ui/widgets/player_popup.dart';
-
 import 'package:hbcure/services/my_programs_service.dart';
 import 'package:hbcure/data/program_repository.dart';
 import 'package:hbcure/models/program_item.dart';
@@ -29,10 +25,12 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
+  // MyPrograms subscription + sync guard
   final MyProgramsService _myProgramsService = MyProgramsService();
   StreamSubscription<void>? _myProgramsSub;
   bool _syncInProgress = false;
 
+  // Name cache for Player resolver
   final Map<String, String> _keyEnByProgramId = {};
   final _repo = ProgramRepository();
   bool _nameCacheReady = false;
@@ -40,7 +38,7 @@ class _MainShellState extends State<MainShell> {
   Future<void> _ensureNameCacheLoaded() async {
     if (_nameCacheReady) return;
 
-    // programs.json → id -> ProgramItem.name (EN key)
+    // 1) programs.json → id -> ProgramItem.name (EN key)
     final categories = await _repo.loadCategories();
     final Map<String, ProgramItem> map = {};
     for (final c in categories) {
@@ -54,26 +52,26 @@ class _MainShellState extends State<MainShell> {
       }
     }
 
-    // Try to load decoded catalog for fallbacks
+    // 2) try to load decoded catalog for fallbacks
     try {
       await ProgramCatalog.instance.ensureLoaded();
     } catch (_) {
       // non-fatal
     }
 
-    // Fill lazily per id when resolver is called
+    // We will fill _keyEnByProgramId lazily per id when resolver is called
     _nameCacheReady = true;
   }
 
   String _resolveTitleForPlayer(String programId) {
-    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
-        ? 'de'
-        : 'en';
+    final langCode =
+    (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
+    // 1) Cached EN key?
     var keyEn = _keyEnByProgramId[programId];
 
     if (keyEn == null) {
-      // Try decoded catalog by UUID / internalId
+      // 2) Try decoded catalog by UUID / internalId
       try {
         final byUuid = ProgramCatalog.instance.byUuid(programId);
         if (byUuid != null) {
@@ -91,7 +89,9 @@ class _MainShellState extends State<MainShell> {
         // ignore
       }
 
+      // 3) Fallback: if still null -> use id itself
       keyEn ??= programId;
+
       _keyEnByProgramId[programId] = keyEn!;
     }
 
@@ -104,10 +104,8 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-
     // initial sync
     _syncPlayerQueueWithMyPrograms();
-
     // subscribe to changes in MyPrograms and sync the player queue
     _myProgramsSub = _myProgramsService.onChange.listen((_) async {
       await _syncPlayerQueueWithMyPrograms();
@@ -123,13 +121,15 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // IMPORTANT: do NOT make these pages const – they must rebuild on language/mode changes
     final pages = <Widget>[
-      const MyProgramsPage(),
-      const AvailableProgramsPage(),
-      const DevicesPage(),
-      const SettingsPage(),
+      MyProgramsPage(),
+      AvailableProgramsPage(),
+      DevicesPage(),
+      SettingsPage(),
     ];
 
+    // Bind bottom-nav labels to ProgramLangController
     final isDe = ProgramLangController.instance.lang == ProgramLang.de;
 
     return Scaffold(
@@ -142,29 +142,36 @@ class _MainShellState extends State<MainShell> {
               tooltip: 'Player',
               icon: const Icon(Icons.queue_music),
               onPressed: () async {
+                // ensure name cache for sync resolver used by PlayerPopup
                 await _ensureNameCacheLoaded();
 
-                // If player has no queue yet, preload My Programs ids (+ titles map) into player
+                // Wenn Player noch keine Queue hat: starte automatisch "My Programs" (gefiltert)
                 if (playerService.state.queueIds.isEmpty) {
                   final res = await _loadPlayableIdsAndTitles();
                   final playableIds =
-                      (res['ids'] as List<dynamic>?)?.cast<String>() ?? <String>[];
+                      (res['ids'] as List<dynamic>?)?.cast<String>() ??
+                          <String>[];
                   final titles = (res['titles'] as Map<dynamic, dynamic>?)
                       ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
                       <String, String>{};
-
                   if (playableIds.isNotEmpty) {
                     try {
-                      playerService.playQueue(playableIds, 0, titleKeyEnById: titles);
+                      playerService.playQueue(
+                        playableIds,
+                        0,
+                        titleKeyEnById: titles,
+                      );
                     } catch (_) {
+                      // fallback if playQueue signature doesn't accept titles
                       playerService.playQueue(playableIds, 0);
                     }
                   }
                 }
 
-                // Resolver uses playerService.titleKeyEnById as EN-key source
+                // Konsistenter Resolver: nutze playerService.titleKeyEnById als Quelle für keyEn
                 String resolveTitle(String id) {
-                  final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
+                  final langCode =
+                  (ProgramLangController.instance.lang == ProgramLang.de)
                       ? 'de'
                       : 'en';
                   final keyEn = playerService.titleKeyEnById[id] ?? id;
@@ -218,7 +225,8 @@ class _MainShellState extends State<MainShell> {
                       onTap: () => setState(() => _currentIndex = 0),
                     ),
                     _NavTextTab(
-                      label: isDe ? 'Verfügbare\nProgramme' : 'Available\nPrograms',
+                      label:
+                      isDe ? 'Verfügbare\nProgramme' : 'Available\nPrograms',
                       selected: _currentIndex == 1,
                       onTap: () => setState(() => _currentIndex = 1),
                     ),
@@ -279,7 +287,6 @@ class _MainShellState extends State<MainShell> {
 
     final playable = <String>[];
     final titles = <String, String>{};
-
     for (final id in ids) {
       final p = map[id];
       if (p != null) {
@@ -294,7 +301,6 @@ class _MainShellState extends State<MainShell> {
   Future<void> _syncPlayerQueueWithMyPrograms() async {
     if (_syncInProgress) return;
     _syncInProgress = true;
-
     try {
       final st = playerService.state;
 
@@ -323,7 +329,7 @@ class _MainShellState extends State<MainShell> {
         return;
       }
 
-      // Keep current id if possible
+      // keep current id if possible
       final currentId = st.currentProgramId;
       int newIndex = 0;
       if (currentId != null) {

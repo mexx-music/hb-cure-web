@@ -240,6 +240,48 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     }
   }
 
+  Future<void> _playSingleProgram(ProgramItem program, BuildContext context) async {
+    final s = playerService.settingsFor(program.id);
+    final duration = Duration(minutes: s.durationMinutes);
+
+    // UI: only this program in the queue
+    final ids = <String>[program.id];
+
+    final keyEnMap = <String, String>{
+      program.id: (_displayNameById[program.id] ?? program.name),
+    };
+
+    playerService.setQueueUiOnly(
+      ids,
+      startIndex: 0,
+      titleKeyEnById: keyEnMap,
+    );
+
+    if (playerService.state.total > Duration.zero) {
+      playerService.markStarted();
+    }
+
+    if (!context.mounted) return;
+    _openPlayerPopup(context);
+
+    // Upload banner in popup
+    playerService.setUploading(true);
+    try {
+      await CubeDeviceService.instance.sendProgram(
+        program: program,
+        duration: duration,
+        powerMode: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Single-Start fehlgeschlagen: $e')),
+      );
+    } finally {
+      if (mounted) playerService.setUploading(false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
@@ -329,7 +371,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                               IconButton(
                                 icon: const Icon(Icons.play_arrow),
                                 color: AppColors.primary,
-                                onPressed: () => _playFromIndex(index, context),
+                                onPressed: () => _playSingleProgram(program, context),
                               ),
                               const SizedBox(width: 4),
 
