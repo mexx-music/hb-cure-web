@@ -14,6 +14,8 @@ import 'dart:math' as math;
 import 'dart:async';
 import 'package:hbcure/i18n/program_name_localizer.dart';
 import 'package:hbcure/services/program_language_controller.dart';
+import 'package:hbcure/app_services.dart';
+import 'package:hbcure/ui/widgets/player_popup.dart';
 
 class ProgramDetailPage extends StatefulWidget {
   final ProgramItem program;
@@ -152,6 +154,22 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
         const SnackBar(content: Text('Programm gestartet')),
       );
 
+      // ---- NEW: Sync PlayerService to this single program and open the popup (UI-only) ----
+      final keyEn = widget.program.name;
+      playerService.setQueueUiOnly(
+        [widget.program.id],
+        startIndex: 0,
+        titleKeyEnById: {widget.program.id: keyEn},
+      );
+      // Start UI timer (external device is running; UI should count down)
+      if (playerService.state.total > Duration.zero) {
+        playerService.markStarted();
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _openPlayerPopup();
+      });
+
       // Start local timer tracking
       _statusTimer?.cancel();
       _startedAt = DateTime.now();
@@ -254,6 +272,35 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
           ),
         );
       },
+    );
+  }
+
+  // Helper to open the Player popup for a single program
+  void _openPlayerPopup() {
+    String resolveTitle(String id) {
+      final langCode =
+          ProgramLangController.instance.lang == ProgramLang.de ? 'de' : 'en';
+      final keyEn = playerService.titleKeyEnById[id] ?? id;
+      return ProgramNameLocalizer.instance.displayName(
+        keyEn: keyEn,
+        langCode: langCode,
+      );
+    }
+
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      showDragHandle: false,
+      builder: (ctx) => SafeArea(
+        child: Center(
+          child: PlayerPopup(
+            player: playerService,
+            resolveTitle: resolveTitle,
+          ),
+        ),
+      ),
     );
   }
 

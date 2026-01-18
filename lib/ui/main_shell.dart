@@ -14,6 +14,9 @@ import 'package:hbcure/data/program_repository.dart';
 import 'package:hbcure/models/program_item.dart';
 import 'package:hbcure/i18n/program_name_localizer.dart';
 import 'package:hbcure/services/program_catalog.dart';
+import 'package:hbcure/services/app_memory.dart';
+import 'package:hbcure/core/program_mode.dart';
+import 'package:hbcure/ui/pages/custom_frequencies_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -110,24 +113,45 @@ class _MainShellState extends State<MainShell> {
     _myProgramsSub = _myProgramsService.onChange.listen((_) async {
       await _syncPlayerQueueWithMyPrograms();
     });
+
+    // Listen to AppMemory.programMode changes so the shell rebuilds (tabs/pages)
+    AppMemory.instance.addListener(_onModeChanged);
   }
 
   @override
   void dispose() {
+    AppMemory.instance.removeListener(_onModeChanged);
     _myProgramsSub?.cancel();
     _myProgramsSub = null;
     super.dispose();
   }
 
+  // Called when AppMemory.programMode changes
+  void _onModeChanged() {
+    if (!mounted) return;
+    setState(() {
+      // Rebuild to reflect mode-dependent pages / labels
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Determine whether Expert mode is active (affects tabs/pages)
+    final isExpert = AppMemory.instance.programMode == ProgramMode.expert;
+
     // IMPORTANT: do NOT make these pages const – they must rebuild on language/mode changes
     final pages = <Widget>[
       MyProgramsPage(),
       AvailableProgramsPage(),
+      if (isExpert) const CustomFrequenciesPage(),
       DevicesPage(),
       SettingsPage(),
     ];
+
+    // Safety: clamp current index when mode changed and pages count reduced
+    if (_currentIndex >= pages.length) {
+      _currentIndex = pages.length - 1;
+    }
 
     // Bind bottom-nav labels to ProgramLangController
     final isDe = ProgramLangController.instance.lang == ProgramLang.de;
@@ -230,15 +254,23 @@ class _MainShellState extends State<MainShell> {
                       selected: _currentIndex == 1,
                       onTap: () => setState(() => _currentIndex = 1),
                     ),
+
+                    if (isExpert)
+                      _NavTextTab(
+                        label: isDe ? 'Eigene\nFrequenzen' : 'Custom\nFrequencies',
+                        selected: _currentIndex == 2,
+                        onTap: () => setState(() => _currentIndex = 2),
+                      ),
+
                     _NavTextTab(
                       label: isDe ? 'Geräte' : 'Devices',
-                      selected: _currentIndex == 2,
-                      onTap: () => setState(() => _currentIndex = 2),
+                      selected: _currentIndex == (isExpert ? 3 : 2),
+                      onTap: () => setState(() => _currentIndex = (isExpert ? 3 : 2)),
                     ),
                     _NavTextTab(
                       label: isDe ? 'Einstellungen' : 'Settings',
-                      selected: _currentIndex == 3,
-                      onTap: () => setState(() => _currentIndex = 3),
+                      selected: _currentIndex == (isExpert ? 4 : 3),
+                      onTap: () => setState(() => _currentIndex = (isExpert ? 4 : 3)),
                     ),
                   ],
                 ),
@@ -252,6 +284,7 @@ class _MainShellState extends State<MainShell> {
 
   String _appBarTitle(BuildContext context) {
     final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+    final isExpert = AppMemory.instance.programMode == ProgramMode.expert;
 
     switch (_currentIndex) {
       case 0:
@@ -259,8 +292,10 @@ class _MainShellState extends State<MainShell> {
       case 1:
         return isDe ? 'Verfügbare Programme' : 'Available Programs';
       case 2:
-        return isDe ? 'Geräte' : 'Devices';
+        return isExpert ? (isDe ? 'Eigene Frequenzen' : 'Custom Frequencies') : (isDe ? 'Geräte' : 'Devices');
       case 3:
+        return isExpert ? (isDe ? 'Geräte' : 'Devices') : (isDe ? 'Einstellungen' : 'Settings');
+      case 4:
         return isDe ? 'Einstellungen' : 'Settings';
       default:
         return '';
