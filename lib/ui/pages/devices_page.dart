@@ -8,7 +8,6 @@ import 'dart:async';
 import 'package:hbcure/core/cure_protocol/cure_test_programs.dart';
 import 'package:hbcure/services/native_unlock_test.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
-import 'package:hbcure/services/reactive_ble_cure_test.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_compiler.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'package:hbcure/services/qt_remote_program_encoder.dart';
@@ -28,6 +27,15 @@ class _DevicesPageState extends State<DevicesPage> {
   bool _isScanningLocal = false;
   StreamSubscription<bool>? _unlockSub;
   bool _unlockInProgressLocal = false;
+
+  // UI-only: Unlock result per deviceId (null=unknown, true=OK, false=failed)
+  final Map<String, bool?> _unlockOkById = {};
+
+  // UI-only: Unlock running per deviceId
+  final Set<String> _unlockBusyById = {};
+
+  // UI-only: remember expansion state
+  bool _devExpanded = false;
 
   @override
   void initState() {
@@ -95,6 +103,27 @@ class _DevicesPageState extends State<DevicesPage> {
       builder: (context, snap) {
         final state = snap.data ?? BluetoothConnectionState.disconnected;
         final connected = state == BluetoothConnectionState.connected;
+
+        final deviceId = d.remoteId.toString();
+        final unlockOk = _unlockOkById[deviceId]; // null/true/false
+        final unlockBusy = _unlockBusyById.contains(deviceId);
+
+        // bolt color: orange while running, green if ok, red otherwise (unknown/fail)
+        final Color boltColor = unlockBusy
+            ? Colors.orange
+            : (unlockOk == true
+            ? Colors.green
+            : (unlockOk == false ? Colors.red : Colors.red));
+
+        // blue even when disabled
+        final ButtonStyle connectedBlueStyle = ButtonStyle(
+          backgroundColor: MaterialStateProperty.resolveWith((states) => Colors.blue),
+          foregroundColor: MaterialStateProperty.all(Colors.white),
+          padding: MaterialStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        );
+
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -108,7 +137,6 @@ class _DevicesPageState extends State<DevicesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Prefer platformName (newer API), fallback to name then id.str
                     Builder(builder: (ctx) {
                       final deviceName =
                       (d.platformName != null && d.platformName.isNotEmpty)
@@ -132,67 +160,115 @@ class _DevicesPageState extends State<DevicesPage> {
               ),
               const SizedBox(width: 8),
               if (connected) ...[
-                Text(
-                  'Connected',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                ElevatedButton(
+                  style: connectedBlueStyle,
+                  onPressed: null,
+                  child: const Text('Connected'),
                 ),
                 const SizedBox(width: 8),
-                // Disconnect button + NativeUnlockTester Smoke-Test
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton(
-                      onPressed: () => _ble.disconnect(d),
+                      onPressed: () {
+                        setState(() {
+                          _unlockOkById[deviceId] = null;
+                          _unlockBusyById.remove(deviceId);
+                        });
+                        _ble.disconnect(d);
+                      },
                       child: const Text('Disconnect'),
                     ),
                     const SizedBox(width: 6),
                     IconButton(
                       tooltip: 'Native Unlock Test',
-                      icon: const Icon(Icons.bolt),
-                      onPressed: () async {
-                        final deviceId = d.remoteId.toString();
+                      icon: Icon(Icons.bolt, color: boltColor),
+                      onPressed: unlockBusy
+                          ? null
+                          : () async {
+                        setState(() {
+                          _unlockBusyById.add(deviceId);
+                          _unlockOkById[deviceId] = null;
+                        });
+
                         try {
                           await NativeUnlockTester.instance
                               .testNativeUnlock(deviceId);
+
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockOkById[deviceId] = true;
+                          });
                         } catch (e) {
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockOkById[deviceId] = false;
+                          });
                           if (kDebugMode) {
                             debugPrint(
                                 'Native unlock test failed for $deviceId: $e');
                           }
+                        } finally {
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockBusyById.remove(deviceId);
+                          });
                         }
                       },
                     ),
                   ],
                 ),
               ] else ...[
-                // Connect button + NativeUnlockTester Smoke-Test
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: Colors.green,
                       ),
-                      onPressed: () => _ble.connect(d),
+                      onPressed: () {
+                        setState(() {
+                          _unlockOkById[deviceId] = null;
+                          _unlockBusyById.remove(deviceId);
+                        });
+                        _ble.connect(d);
+                      },
                       child: const Text('Connect'),
                     ),
                     const SizedBox(width: 6),
                     IconButton(
                       tooltip: 'Native Unlock Test',
-                      icon: const Icon(Icons.bolt),
-                      onPressed: () async {
-                        final deviceId = d.remoteId.toString();
+                      icon: Icon(Icons.bolt, color: boltColor),
+                      onPressed: unlockBusy
+                          ? null
+                          : () async {
+                        setState(() {
+                          _unlockBusyById.add(deviceId);
+                          _unlockOkById[deviceId] = null;
+                        });
+
                         try {
                           await NativeUnlockTester.instance
                               .testNativeUnlock(deviceId);
+
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockOkById[deviceId] = true;
+                          });
                         } catch (e) {
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockOkById[deviceId] = false;
+                          });
                           if (kDebugMode) {
                             debugPrint(
                                 'Native unlock test failed for $deviceId: $e');
                           }
+                        } finally {
+                          if (!mounted) return;
+                          setState(() {
+                            _unlockBusyById.remove(deviceId);
+                          });
                         }
                       },
                     ),
@@ -203,6 +279,290 @@ class _DevicesPageState extends State<DevicesPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDeveloperPanel(String deviceId) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      color: AppColors.cardBackground,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // no inner divider line
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: _devExpanded,
+          onExpansionChanged: (v) {
+            setState(() => _devExpanded = v);
+          },
+          title: Text(
+            'Developer / Native Tools',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          children: [
+            const SizedBox(height: 8),
+
+            // Native Unlock Tests
+            Text(
+              'Native Unlock Tests',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 8),
+            NativeUnlockTester.buildTestUI(context, deviceId),
+
+            const SizedBox(height: 12),
+
+            // Native Debug Panel (progStart/progClear/status etc.)
+            _NativeDebugPanel(deviceId: deviceId),
+
+            const SizedBox(height: 12),
+
+            // Developer test buttons (Upload/Start/Clear/Unlock/Reactive test)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: () async {
+                      try {
+                        final svc = CureDeviceUnlockService.instance;
+
+                        final connected = await FlutterBluePlus.connectedDevices;
+                        if (connected.isEmpty) throw Exception('No connected device');
+                        final String did = connected.first.remoteId.toString();
+
+                        if (!(svc.isNativeConnected && svc.nativeConnectedDeviceId == did)) {
+                          await svc.nativeConnect(did);
+                        }
+
+                        final programModel = buildSimpleTestProgram();
+                        final program = CureProgramCompiler().compile(programModel);
+                        final ok = await svc.uploadProgramBytes(program);
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                ok ? 'Testprogramm übertragen (ohne Start)' : 'Upload FAILED (kein OK)',
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Upload failed: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Testprogramm hochladen'),
+                  ),
+                  const SizedBox(height: 8),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: () async {
+                      try {
+                        final did = await _getConnectedDeviceIdOrThrow();
+                        await _ensureNativeConnected(did);
+
+                        final svc = CureDeviceUnlockService.instance;
+                        final ok = await svc.progStart();
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Start failed: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Programm starten'),
+                  ),
+                  const SizedBox(height: 8),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: () async {
+                      try {
+                        final did = await _getConnectedDeviceIdOrThrow();
+                        await _ensureNativeConnected(did);
+
+                        final svc = CureDeviceUnlockService.instance;
+                        final ok = await svc.progClear();
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('progClear failed: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('progClear testen'),
+                  ),
+                  const SizedBox(height: 8),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: _unlockInProgressLocal
+                        ? null
+                        : () async {
+                      if (!mounted) return;
+                      try {
+                        final connected = await FlutterBluePlus.connectedDevices;
+                        final has = connected.any((d) {
+                          final n = (d.platformName ?? '').toLowerCase();
+                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
+                          return n.contains('curebase') || id.contains('curebase');
+                        });
+
+                        if (!has) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Keine CureBase verbunden')),
+                            );
+                          }
+                          return;
+                        }
+
+                        final device = connected.firstWhere((d) {
+                          final n = (d.platformName ?? '').toLowerCase();
+                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
+                          return n.contains('curebase') || id.contains('curebase');
+                        });
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Unlock gestartet...')),
+                          );
+                        }
+
+                        final result = await CureDeviceUnlockService.instance.unlockDevice(
+                          device.remoteId.toString(),
+                          onStatus: (s) => debugPrint('HBDBG ensureUnlocked status: $s'),
+                        );
+
+                        if (result.success) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Unlock OK')),
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Unlock failed: ${result.errorMessage}')),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Unlock failed: ${e.toString()}')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Unlock'),
+                  ),
+                  const SizedBox(height: 8),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: () async {
+                      try {
+                        final connected = await FlutterBluePlus.connectedDevices;
+                        final has = connected.any((d) {
+                          final n = (d.platformName ?? '').toLowerCase();
+                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
+                          return n.contains('curebase') || id.contains('curebase');
+                        });
+
+                        if (!has) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Keine CureBase verbunden')),
+                            );
+                          }
+                          return;
+                        }
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Reactive BLE Unlock-Test gestartet')),
+                          );
+                        }
+
+                        // ReactiveBleCureTest removed (flutter_reactive_ble removed).
+                        // iOS/Android now use native CureBleNativePlugin; keep this button disabled
+                        // or implement native test call via CureDeviceUnlockService if needed.
+                        debugPrint('Reactive BLE Unlock-Test disabled (reactive_ble removed)');
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Reactive BLE Test failed: ${e.toString()}')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('ReactiveBLE Unlock-Test'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -249,9 +609,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           final msg = e.toString();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Scan failed: $msg'),
-                              ),
+                              SnackBar(content: Text('Scan failed: $msg')),
                             );
                           }
                           if (mounted) {
@@ -357,13 +715,11 @@ class _DevicesPageState extends State<DevicesPage> {
                 ),
                 const SizedBox(height: 12),
 
-                // Devices + Current Device Card + optional DebugPanel
+                // Devices + Current Device Card + Developer collapse
                 StreamBuilder<List<BluetoothDevice>>(
                   stream: _devicesStream,
                   builder: (context, snap) {
                     final devices = snap.data ?? [];
-
-                    // Prepare a deviceId variable for downstream debug panels
                     final String? deviceId =
                     devices.isNotEmpty ? devices.first.remoteId.toString() : null;
 
@@ -429,344 +785,15 @@ class _DevicesPageState extends State<DevicesPage> {
                             ),
                           )
                         else ...[
-                          // Liste von Device Cards (kein ListView mehr!)
                           for (final d in devices) _buildDeviceRow(d),
-
-                          const SizedBox(height: 16),
-
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            color: AppColors.cardBackground,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Native Unlock Tests',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  NativeUnlockTester.buildTestUI(
-                                    context,
-                                    deviceId!,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 12),
 
-                          // NEW: Small debug panel showing native unlock info and progStatus controls
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            color: AppColors.cardBackground,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: _NativeDebugPanel(
-                                deviceId: deviceId!,
-                              ),
-                            ),
-                          ),
+                          // Collapsible developer/native block (restored)
+                          _buildDeveloperPanel(deviceId!),
                         ],
                       ],
                     );
                   },
-                ),
-
-                const SizedBox(height: 12),
-
-                // Developer test buttons: immer sichtbar, unabhängig von Devices
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Testprogramm hochladen (NATIVE / shared)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: () async {
-                          try {
-                            final svc = CureDeviceUnlockService.instance;
-
-                            // Resolve a connected device at runtime (avoid using local 'devices' here)
-                            final connected = await FlutterBluePlus.connectedDevices;
-                            if (connected.isEmpty) throw Exception('No connected device');
-                            final String deviceId = connected.first.remoteId.toString();
-
-                            // ensure native shared connection
-                            if (!(svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId)) {
-                              await svc.nativeConnect(deviceId);
-                            }
-
-                            // build and compile test program to bytes
-                            final programModel = buildSimpleTestProgram();
-                            final program = CureProgramCompiler().compile(programModel);
-                            final ok = await svc.uploadProgramBytes(program);
-
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    ok ? 'Testprogramm übertragen (ohne Start)' : 'Upload FAILED (kein OK)',
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Upload failed: ${e.toString()}'),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('Testprogramm hochladen'),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Programm starten (NATIVE / shared)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: () async {
-                          try {
-                            final deviceId = await _getConnectedDeviceIdOrThrow();
-                            await _ensureNativeConnected(deviceId);
-
-                            final svc = CureDeviceUnlockService.instance;
-                            final ok = await svc.progStart();
-
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)',
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Start failed: ${e.toString()}',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('Programm starten'),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // progClear testen (NATIVE / shared)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: () async {
-                          try {
-                            final deviceId = await _getConnectedDeviceIdOrThrow();
-                            await _ensureNativeConnected(deviceId);
-
-                            final svc = CureDeviceUnlockService.instance;
-                            final ok = await svc.progClear();
-
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'progClear failed: ${e.toString()}',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('progClear testen'),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Unlock via Native Unlock Service
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: _unlockInProgressLocal
-                            ? null
-                            : () async {
-                          if (!mounted) return;
-                          try {
-                            final connected =
-                            await FlutterBluePlus.connectedDevices;
-                            final has = connected.any((d) {
-                              final n =
-                              (d.platformName ?? '').toLowerCase();
-                              final id = (d.remoteId.str ??
-                                  d.remoteId.toString())
-                                  .toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-                            if (!has) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                    Text('Keine CureBase verbunden'),
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            final device = connected.firstWhere((d) {
-                              final n =
-                              (d.platformName ?? '').toLowerCase();
-                              final id = (d.remoteId.str ??
-                                  d.remoteId.toString())
-                                  .toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Unlock gestartet...'),
-                                ),
-                              );
-                            }
-
-                            final result =
-                            await CureDeviceUnlockService.instance
-                                .unlockDevice(
-                              device.remoteId.toString(),
-                              onStatus: (s) => debugPrint(
-                                'HBDBG ensureUnlocked status: $s',
-                              ),
-                            );
-
-                            if (result.success) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Unlock OK'),
-                                  ),
-                                );
-                              }
-                            } else {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Unlock failed: ${result.errorMessage}',
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Unlock failed: ${e.toString()}',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('Unlock'),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Reactive BLE Unlock-Test
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: () async {
-                          try {
-                            final connected =
-                            await FlutterBluePlus.connectedDevices;
-                            final has = connected.any((d) {
-                              final n =
-                              (d.platformName ?? '').toLowerCase();
-                              final id =
-                              (d.remoteId.str ?? d.remoteId.toString())
-                                  .toLowerCase();
-                              return n.contains('curebase') ||
-                                  id.contains('curebase');
-                            });
-                            if (!has) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                    Text('Keine CureBase verbunden'),
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Reactive BLE Unlock-Test gestartet'),
-                                ),
-                              );
-                            }
-                            ReactiveBleCureTest.instance.startUnlockTest();
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Reactive BLE Test failed: ${e.toString()}',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('ReactiveBLE Unlock-Test'),
-                      ),
-                    ],
-                  ),
                 ),
 
                 const SizedBox(height: 12),
@@ -791,7 +818,6 @@ class _NativeDebugPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final svc = CureDeviceUnlockService.instance;
 
-    // Hardware- und Build-Informationen als Textzeilen
     final infoLines = <String>[
       'Device ID: $deviceId',
       'Native connected: ${svc.isNativeConnected} (${svc.nativeConnectedDeviceId ?? "-"})',
@@ -825,9 +851,7 @@ class _NativeDebugPanel extends StatelessWidget {
               fontSize: 14,
             ),
           ),
-
         const SizedBox(height: 12),
-
         Text(
           'Programmstatus Aktionen',
           style: TextStyle(
@@ -837,13 +861,11 @@ class _NativeDebugPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-
         Wrap(
           alignment: WrapAlignment.spaceEvenly,
           spacing: 8,
           runSpacing: 8,
           children: [
-            // Button: progStart (native/shared)
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -864,19 +886,13 @@ class _NativeDebugPanel extends StatelessWidget {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Start failed: ${e.toString()}'),
-                      ),
+                      SnackBar(content: Text('Start failed: ${e.toString()}')),
                     );
                   }
                 }
               },
               child: const Text('Start Program'),
             ),
-
-            const SizedBox(height: 8),
-
-            // Button: progClear (native/shared)
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -897,18 +913,13 @@ class _NativeDebugPanel extends StatelessWidget {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('progClear failed: ${e.toString()}'),
-                      ),
+                      SnackBar(content: Text('progClear failed: ${e.toString()}')),
                     );
                   }
                 }
               },
               child: const Text('progClear'),
             ),
-
-
-            // Button: Prog Status
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -917,22 +928,23 @@ class _NativeDebugPanel extends StatelessWidget {
               ),
               onPressed: () async {
                 try {
-                  final svc = CureDeviceUnlockService.instance;
                   final st = await svc.fetchProgStatus(timeout: const Duration(seconds: 5));
-                  final msg = (st == null) ? 'progStatus: (no data)' : 'progStatus: ${st.rawLine ?? st.toString()}';
+                  final msg = (st == null)
+                      ? 'progStatus: (no data)'
+                      : 'progStatus: ${st.rawLine ?? st.toString()}';
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('progStatus failed: $e')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('progStatus failed: $e')),
+                    );
                   }
                 }
               },
               child: const Text('Prog Status'),
             ),
-
-            // DEBUG: Minimal Program Start
             ElevatedButton(
               onPressed: () async {
                 final svc = CureDeviceUnlockService.instance;
@@ -941,13 +953,12 @@ class _NativeDebugPanel extends StatelessWidget {
                   try {
                     await _ensureNativeConnected();
 
-                    // Example program
                     final uuid16 = Uint8List.fromList(List.generate(16, (i) => i + 1));
                     final name = "Test 1kHz 60s";
                     final eIntensity = 5;
                     final hIntensity = 3;
-                    final eWaveForm = 0x00; // sine
-                    final hWaveForm = 0x02; // rectangular
+                    final eWaveForm = 0x00;
+                    final hWaveForm = 0x02;
                     final steps = [
                       (freqHz: 1000.0, dwellSec: 60),
                     ];
@@ -965,7 +976,6 @@ class _NativeDebugPanel extends StatelessWidget {
                     await svc.uploadProgramBytes(programBytes);
                     await svc.progStart();
 
-                    // Optional: Poll progStatus
                     for (int i = 0; i < 3; i++) {
                       final status = await svc.fetchProgStatus();
                       debugPrint('Prog Status: ${status?.rawLine ?? status.toString()}');
@@ -988,8 +998,6 @@ class _NativeDebugPanel extends StatelessWidget {
               },
               child: const Text('DEBUG: Minimal Program Start'),
             ),
-
-            // NEW: Upload+Start Testprogramm (1 kHz, 60s)
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
