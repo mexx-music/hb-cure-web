@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
 import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
+import 'package:hbcure/ui/pages/clients_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -31,7 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     // AppLocalizations may be unavailable during early init; avoid force-unwrapping to prevent
     // "Null check operator used on a null value" crashes. Use localizations only where needed.
-    final t = AppLocalizations.of(context);
+    // final t = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -93,6 +94,23 @@ class _SettingsPageState extends State<SettingsPage> {
           Text('Client management will be added later.',
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
+          // Clients navigation
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              leading: const Icon(Icons.person, color: AppColors.textPrimary),
+              title: Text(Localizations.localeOf(context).languageCode == 'de' ? 'Klienten' : 'Clients',
+                  style: const TextStyle(color: AppColors.textPrimary)),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ClientsPage()),
+                );
+              },
+            ),
+          ),
+
           // Return to Start Page - resets navigation stack
           Material(
             color: Colors.transparent,

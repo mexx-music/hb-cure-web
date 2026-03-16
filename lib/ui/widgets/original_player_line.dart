@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
+import 'dart:math' as math;
 
 class OriginalPlayerLine extends StatelessWidget {
   final List<num> values; // echte Frequenzen
@@ -36,6 +36,13 @@ class _OriginalPlayerLinePainter extends CustomPainter {
   final Color baseColor;
   final Color activeColor;
 
+  // 🔧 SCHALTER
+  static const bool useLogScale = true;
+
+  // absolute Domain (UX-freundlich, unabhängig vom Programm)
+  static const double absMin = 1.0;     // 0 vermeiden (log!)
+  static const double absMax = 20000.0; // sinnvoller Oberwert
+
   _OriginalPlayerLinePainter({
     required this.values,
     required this.progress,
@@ -61,6 +68,7 @@ class _OriginalPlayerLinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true;
 
+    // Achsen
     canvas.drawLine(
       Offset(plotLeft, plotTop),
       Offset(plotLeft, plotBottom),
@@ -76,36 +84,32 @@ class _OriginalPlayerLinePainter extends CustomPainter {
 
     final v = _downsampleToMax(values, 240);
 
-    double minV = v.first;
-    double maxV = v.first;
-    for (final x in v) {
-      if (x < minV) minV = x;
-      if (x > maxV) maxV = x;
-    }
-
-    // ⭐ WICHTIGER FIX
-    var range = (maxV - minV).abs();
-    if (range < 1e-6) {
-      // quasi konstante Frequenz → mittig anzeigen
-      minV -= 1.0;
-      maxV += 1.0;
-      range = maxV - minV;
-    } else {
-      // optische Luft wie in Original-App
-      final pad = range * 0.10;
-      minV -= pad;
-      maxV += pad;
-      range = maxV - minV;
-    }
-
     final w = plotRight - plotLeft;
     final h = plotBottom - plotTop;
 
+    // ---- Skalierung vorbereiten
+    double mapY(double value) {
+      final clamped = value.clamp(absMin, absMax);
+
+      if (useLogScale) {
+        // ⭐ LOG-SKALA → 800, 900, 10000 klar unterscheidbar
+        final logMin = math.log(absMin);
+        final logMax = math.log(absMax);
+        final logV = math.log(clamped);
+        final yNorm = (logV - logMin) / (logMax - logMin);
+        return plotBottom - (yNorm.clamp(0.0, 1.0) * h);
+      } else {
+        // Linear (Fallback)
+        final yNorm = (clamped - absMin) / (absMax - absMin);
+        return plotBottom - (yNorm.clamp(0.0, 1.0) * h);
+      }
+    }
+
+    // ---- Pfad bauen
     final fullPath = Path();
     for (int i = 0; i < v.length; i++) {
       final x = plotLeft + (i / (v.length - 1)) * w;
-      final yNorm = (v[i] - minV) / range;
-      final y = plotBottom - (yNorm * h);
+      final y = mapY(v[i].toDouble());
       if (i == 0) {
         fullPath.moveTo(x, y);
       } else {
@@ -127,6 +131,7 @@ class _OriginalPlayerLinePainter extends CustomPainter {
 
     canvas.drawPath(fullPath, grey);
 
+    // ---- Progress-Overlay
     final metrics = fullPath.computeMetrics().toList();
     if (metrics.isEmpty) return;
 

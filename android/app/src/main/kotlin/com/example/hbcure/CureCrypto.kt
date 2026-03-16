@@ -1,4 +1,4 @@
-package com.example.hbcure
+package com.catlabstudios.hbcure
 
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.crypto.signers.ECDSASigner
@@ -50,6 +50,8 @@ object CureCrypto {
         val sBytes = toFixedLength(s, 32)
 
         Log.d("CureCrypto", "buildUnlockResponse: challenge=$cleaned sig=${(rBytes + sBytes).toHexString()} (len=${(rBytes + sBytes).toHexString().length})")
+        // EXTRA debug line for easy extraction/comparison
+        Log.d("CureCrypto", "ANDROID_DEBUG_SIG=${(rBytes + sBytes).toHexString()}")
 
         return (rBytes + sBytes).toHexString()
     }

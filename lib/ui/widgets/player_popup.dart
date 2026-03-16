@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:hbcure/services/player_service.dart';
 import 'package:hbcure/services/program_catalog.dart';
 import 'package:hbcure/services/cube_device_service.dart';
+import 'package:hbcure/services/program_language_controller.dart';
+import 'package:hbcure/services/custom_frequencies_store.dart';
+
 import 'package:hbcure/ui/widgets/original_player_line.dart';
 
 class PlayerPopup extends StatefulWidget {
@@ -26,30 +30,38 @@ class PlayerPopup extends StatefulWidget {
 }
 
 class _PlayerPopupState extends State<PlayerPopup> {
-  // ---- Visual Fill (like original app): fixed 50 seconds to full black
+  // ---- Visual fill: fixed 50 seconds to full black (like original)
   static const Duration _tickDur = Duration(seconds: 1);
-  static const int _fillSeconds = 50; // 50s fill cycle
+  static const int _fillSeconds = 50;
 
   Timer? _tick;
   int _fillIndex = 0; // 0..49
 
-  // ---- decoded JSON root (ONLY for fallback title search; ProgramCatalog remains primary)
+  // ---- decoded JSON root (ONLY for fallback title search)
   dynamic _decodedRoot;
 
-  // ---- slug -> keys map (built from assets/programs.json raw JSON)
-  // slug -> (uuid/internalId)
+  // ---- slug -> keys (uuid/internalId) from assets/programs.json
   final Map<String, ({String? uuid, int? internalId})> _slugKeys = {};
   bool _slugKeysLoaded = false;
   bool _slugKeysLoading = false;
 
-  // ---- Frequency cache (prevents jumping)
+  // ---- custom_<id> -> Hz cache
+  final Map<String, double> _customHzById = {};
+  bool _customLoading = false;
+  bool _customLoaded = false;
+
+  // ---- frequency cache (prevents jumping)
   String? _cachedProgramId;
   List<num> _cachedFreqs = const <num>[];
 
-  // ---- detect queue changes (so My Programs updates propagate)
+  // ---- detect queue changes
   int _lastQueueHash = 0;
 
-  // ---- Cycle state for 50s window rotation (line refresh every cycle)
+  // ---- catalog load state
+  bool _catalogLoaded = false;
+  bool _catalogLoading = false;
+
+  // ---- 50s window rotation (line refresh every cycle)
   int _cycleNo = 0;
   static const int _cycleWindowSize = 240;
   List<num> _cycleFreqs = const <num>[];
@@ -58,24 +70,20 @@ class _PlayerPopupState extends State<PlayerPopup> {
   void initState() {
     super.initState();
 
-    // Ensure ProgramCatalog is loading in background (source of truth)
+    // fire-and-forget background loads
     ProgramCatalog.instance.ensureLoaded();
+    _loadDecodedFallback();
+    _loadSlugKeysFromProgramsJson();
+    _loadCustomFreqs();
 
-    // Load helpers in background
-    _loadDecodedFallback(); // optional
-    _loadSlugKeysFromProgramsJson(); // critical: slug -> (uuid/internalId)
-
-    // timer for visual fill + curve rotation
     _tick = Timer.periodic(_tickDur, (_) {
       if (!mounted) return;
-      final running = widget.player.state.isPlaying;
-      if (!running) return;
+      if (!widget.player.state.isPlaying) return;
 
       setState(() {
         if (_fillIndex < (_fillSeconds - 1)) {
           _fillIndex += 1;
         } else {
-          // reset visual fill and rotate to next cycle curve
           _fillIndex = 0;
           _cycleNo += 1;
           _rebuildCycleCurve();
@@ -84,24 +92,51 @@ class _PlayerPopupState extends State<PlayerPopup> {
     });
   }
 
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  // ----------------------------
+  // Loaders
+  // ----------------------------
+
   Future<void> _loadDecodedFallback() async {
     try {
-      final raw = await rootBundle.loadString(
-        'assets/programs/Programs_decoded_full.json',
-      );
+      final raw = await rootBundle.loadString('assets/programs/Programs_decoded_full.json');
       final decoded = jsonDecode(raw);
       if (!mounted) return;
       setState(() {
         _decodedRoot = decoded;
-        // allow re-resolve
-        _cachedProgramId = null;
-        _cachedFreqs = const <num>[];
-        _cycleNo = 0;
-        _cycleFreqs = const <num>[];
-        _fillIndex = 0;
+        _invalidateSeriesCache();
       });
     } catch (_) {
-      // ignore; fallback not mandatory
+      // optional
+    }
+  }
+
+  Future<void> _loadCustomFreqs() async {
+    if (_customLoading) return;
+    _customLoading = true;
+    try {
+      final all = await CustomFrequenciesStore.instance.loadAll();
+      _customHzById.clear();
+      for (final e in all) {
+        _customHzById[e.id] = e.frequencyHz;
+      }
+      if (!mounted) return;
+      setState(() {
+        _customLoaded = true;
+        _customLoading = false;
+        _invalidateSeriesCache();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _customLoaded = true;
+        _customLoading = false;
+      });
     }
   }
 
@@ -143,21 +178,15 @@ class _PlayerPopupState extends State<PlayerPopup> {
       if (!mounted) return;
       setState(() {
         _slugKeysLoaded = true;
-
-        // slug map now available -> force re-resolve
-        _cachedProgramId = null;
-        _cachedFreqs = const <num>[];
-        _cycleNo = 0;
-        _cycleFreqs = const <num>[];
-        _fillIndex = 0;
+        _slugKeysLoading = false;
+        _invalidateSeriesCache();
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _slugKeysLoaded = true; // stop retry loops
+        _slugKeysLoading = false;
       });
-    } finally {
-      _slugKeysLoading = false;
     }
   }
 
@@ -200,32 +229,35 @@ class _PlayerPopupState extends State<PlayerPopup> {
     return null;
   }
 
-  @override
-  void dispose() {
-    _tick?.cancel();
-    super.dispose();
+  // ----------------------------
+  // Helpers
+  // ----------------------------
+
+  void _invalidateSeriesCache() {
+    _cachedProgramId = null;
+    _cachedFreqs = const <num>[];
+    _cycleFreqs = const <num>[];
+    _fillIndex = 0;
+    _cycleNo = 0;
   }
 
-  String _fmt(Duration d) {
-    final s = d.inSeconds;
-    final h = s ~/ 3600;
-    final m = (s % 3600) ~/ 60;
-    final sec = s % 60;
-    return '${h}h ${m}m ${sec}s';
-  }
-
-  String? _normalizeProgramId(String? raw) {
+  // Two-mode normalization:
+  // - keysId must match EXACT ids in assets/programs.json (incl. legacy typos like "energey")
+  // - uiId may be "beautified" for title/localizer
+  String? _normalizeProgramId(String? raw, {bool fixEnergyTypo = true}) {
     if (raw == null) return null;
     final s = raw.trim();
     if (s.isEmpty) return null;
-    if (s.contains(':')) return s.split(':').last.trim();
-    return s;
+
+    // normalize colon forms like "uuid:..."
+    final cleaned = s.contains(':') ? s.split(':').last.trim() : s;
+
+    if (!fixEnergyTypo) return cleaned;
+    return cleaned.replaceAll('energey', 'energy');
   }
 
   bool _looksLikeUuid(String s) {
-    return RegExp(
-      r'^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
-    ).hasMatch(s);
+    return RegExp(r'^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$').hasMatch(s);
   }
 
   int? _extractTrailingInt(String id) {
@@ -269,11 +301,10 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
       if (nde.isEmpty && nen.isEmpty) continue;
 
-      final match =
-          nde == nt ||
-              nen == nt ||
-              (nde.isNotEmpty && (nde.contains(nt) || nt.contains(nde))) ||
-              (nen.isNotEmpty && (nen.contains(nt) || nt.contains(nen)));
+      final match = nde == nt ||
+          nen == nt ||
+          (nde.isNotEmpty && (nde.contains(nt) || nt.contains(nde))) ||
+          (nen.isNotEmpty && (nen.contains(nt) || nt.contains(nen)));
 
       if (!match) continue;
 
@@ -281,52 +312,113 @@ class _PlayerPopupState extends State<PlayerPopup> {
       if (f is List) {
         final out = <num>[];
         for (final e in f) {
-          if (e is num) out.add(e);
+          if (e is num && e.isFinite) out.add(e);
           if (e is String) {
             final v = num.tryParse(e.trim());
-            if (v != null) out.add(v);
+            if (v != null && v.isFinite) out.add(v);
           }
         }
         return out;
       }
       return const <num>[];
     }
+
     return const <num>[];
   }
 
+  // Extract frequencies from:
+  // - typed catalog entry: rec.steps[*].frequencyHz
+  // - map catalog entry: steps list or Frequencies list
   List<num> _extractFrequenciesFromRec(dynamic rec) {
-    if (rec is! Map) return const <num>[];
+    if (rec == null) return const <num>[];
 
-    dynamic freqs = rec['Frequencies'] ?? rec['frequencies'] ?? rec['FREQUENCIES'];
-    if (freqs == null && rec['data'] is Map) {
-      final m = rec['data'] as Map;
-      freqs = m['Frequencies'] ?? m['frequencies'];
-    }
-
-    if (freqs is List) {
-      final out = <num>[];
-      for (final e in freqs) {
-        if (e is num) out.add(e);
-        if (e is String) {
-          final v = num.tryParse(e.trim());
-          if (v != null) out.add(v);
+    // typed entry
+    try {
+      final dynamic steps = (rec as dynamic).steps;
+      if (steps is List) {
+        final out = <num>[];
+        for (final st in steps) {
+          try {
+            final v = (st as dynamic).frequencyHz;
+            if (v is num && v.isFinite) out.add(v);
+          } catch (_) {}
         }
+        if (out.isNotEmpty) return out;
       }
-      return out;
+    } catch (_) {
+      // fall through
     }
+
+    if (rec is Map) {
+      // steps array inside map
+      final stepsVal = rec['steps'] ?? rec['Steps'];
+      if (stepsVal is List) {
+        final out = <num>[];
+        for (final st in stepsVal) {
+          if (st is Map) {
+            final v = st['frequencyHz'] ?? st['freqHz'] ?? st['frequency'] ?? st['freq'];
+            if (v is num && v.isFinite) out.add(v);
+            if (v is String) {
+              final n = num.tryParse(v.trim());
+              if (n != null && n.isFinite) out.add(n);
+            }
+          } else {
+            try {
+              final v = (st as dynamic).frequencyHz;
+              if (v is num && v.isFinite) out.add(v);
+            } catch (_) {}
+          }
+        }
+        if (out.isNotEmpty) return out;
+      }
+
+      // frequencies array inside map
+      dynamic freqs = rec['Frequencies'] ?? rec['frequencies'] ?? rec['FREQUENCIES'];
+      if (freqs == null && rec['data'] is Map) {
+        final m = rec['data'] as Map;
+        freqs = m['Frequencies'] ?? m['frequencies'];
+      }
+      if (freqs is List) {
+        final out = <num>[];
+        for (final e in freqs) {
+          if (e is num && e.isFinite) out.add(e);
+          if (e is String) {
+            final v = num.tryParse(e.trim());
+            if (v != null && v.isFinite) out.add(v);
+          }
+        }
+        if (out.isNotEmpty) return out;
+      }
+    }
+
     return const <num>[];
   }
 
   List<num> _freqsForProgramId(String programId) {
-    // 1) if already UUID
+    // Custom: always return real stored Hz
+    if (programId.startsWith('custom_')) {
+      final hz = _customHzById[programId];
+      if (hz != null && hz.isFinite) return <num>[hz];
+
+      // if not loaded yet, trigger load once
+      if (!_customLoaded && !_customLoading) {
+        _loadCustomFreqs();
+      }
+      return const <num>[];
+    }
+
+    if (!_catalogLoaded) return const <num>[];
+
+    // 1) direct uuid in id string
     if (_looksLikeUuid(programId)) {
       try {
         final rec = ProgramCatalog.instance.byUuid(programId);
-        return _extractFrequenciesFromRec(rec);
+        final f = _extractFrequenciesFromRec(rec);
+        if (f.isNotEmpty) return f;
       } catch (_) {}
     }
 
-    // 2) try slug map
+    // 2) slug keys (assets/programs.json)
     final keys = _slugKeys[programId];
     if (keys != null) {
       final uuid = keys.uuid;
@@ -349,7 +441,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
       }
     }
 
-    // 3) trailing internalId
+    // 3) trailing internalId like "..._21807"
     final trailing = _extractTrailingInt(programId);
     if (trailing != null && trailing >= 1000) {
       try {
@@ -359,11 +451,25 @@ class _PlayerPopupState extends State<PlayerPopup> {
       } catch (_) {}
     }
 
-    // 4) optional decoded title fallback
+    // 4) same fallbacks as sendProgram()
+    try {
+      final rec = ProgramCatalog.instance.byUuid(programId);
+      final f = _extractFrequenciesFromRec(rec);
+      if (f.isNotEmpty) return f;
+    } catch (_) {}
+
+    final asInt = int.tryParse(programId);
+    if (asInt != null) {
+      try {
+        final rec = ProgramCatalog.instance.byInternalId(asInt);
+        final f = _extractFrequenciesFromRec(rec);
+        if (f.isNotEmpty) return f;
+      } catch (_) {}
+    }
+
+    // 5) decoded title fallback (optional)
     final title = widget.resolveTitle(programId);
-    final byTitle = (_decodedRoot != null)
-        ? _freqsFromDecodedByTitle(_decodedRoot, title)
-        : const <num>[];
+    final byTitle = (_decodedRoot != null) ? _freqsFromDecodedByTitle(_decodedRoot, title) : const <num>[];
     if (byTitle.isNotEmpty) return byTitle;
 
     return const <num>[];
@@ -379,7 +485,16 @@ class _PlayerPopupState extends State<PlayerPopup> {
     if (_cachedProgramId == currentId) return;
 
     _cachedProgramId = currentId;
-    final series = _freqsForProgramId(currentId);
+
+    var series = _freqsForProgramId(currentId);
+    series = series.where((v) => v is num && (v as num).isFinite).toList(growable: false);
+
+    // ensure something drawable
+    if (series.length == 1) {
+      series = List<num>.filled(_cycleWindowSize, series.first);
+    } else if (series.length == 2) {
+      series = List<num>.generate(_cycleWindowSize, (i) => series[i % 2]);
+    }
 
     _cachedFreqs = series.isNotEmpty ? series : const <num>[100, 100, 100, 100, 100];
 
@@ -413,12 +528,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
     if (newHash == _lastQueueHash) return;
 
     _lastQueueHash = newHash;
-
-    _cachedProgramId = null;
-    _cachedFreqs = const <num>[];
-    _cycleFreqs = const <num>[];
-    _fillIndex = 0;
-    _cycleNo = 0;
+    _invalidateSeriesCache();
   }
 
   @override
@@ -444,17 +554,84 @@ class _PlayerPopupState extends State<PlayerPopup> {
                 _loadSlugKeysFromProgramsJson();
               }
 
-              final currentId = _normalizeProgramId(st.currentProgramId);
-              _ensureCachedSeries(currentId);
+              // Ensure ProgramCatalog is loaded once from the popup (safety)
+              if (!_catalogLoaded && !_catalogLoading) {
+                _catalogLoading = true;
+                ProgramCatalog.instance.ensureLoaded().then((_) {
+                  if (!mounted) return;
+                  setState(() {
+                    _catalogLoaded = true;
+                    _catalogLoading = false;
+                    _cachedProgramId = null;
+                    _cachedFreqs = const <num>[];
+                  });
+                }).catchError((_) {
+                  if (!mounted) return;
+                  setState(() => _catalogLoading = false);
+                });
+              }
 
-              final title = currentId == null ? 'Playlist leer' : widget.resolveTitle(currentId);
+              // Queue-aware raw id
+              String? rawId;
+              if (st.queueIds.isNotEmpty &&
+                  st.currentIndex >= 0 &&
+                  st.currentIndex < st.queueIds.length) {
+                rawId = st.queueIds[st.currentIndex];
+              } else {
+                rawId = st.currentProgramId;
+              }
+
+              // keysId must match EXACT ids in assets/programs.json (incl legacy typos)
+              final keysId = _normalizeProgramId(rawId, fixEnergyTypo: false);
+              // uiId can be prettified for title/localizer
+              final uiId = _normalizeProgramId(rawId, fixEnergyTypo: true);
+
+              if (kDebugMode) {
+                // keep this one-liner while stabilizing; remove later if you want
+                debugPrint('POPUP rawId=$rawId keysId=$keysId uiId=$uiId');
+              }
+
+              // Frequencies: always resolve using keysId
+              _ensureCachedSeries(keysId);
+
+              // Title: prefer uiId, fallback to keysId
+              final titleId = uiId ?? keysId;
+              final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+
+              final title = titleId == null
+                  ? (isDe ? 'Playlist leer' : 'Playlist empty')
+                  : widget.resolveTitle(titleId);
 
               final bool isRunning = st.isPlaying;
-              final double visualProgress = isRunning
-                  ? (_fillIndex / (_fillSeconds - 1)).clamp(0.0, 1.0)
-                  : 0.0;
+              final double visualProgress =
+              isRunning ? (_fillIndex / (_fillSeconds - 1)).clamp(0.0, 1.0) : 0.0;
 
               final bool uploading = widget.player.isUploading;
+
+              // --- Segment + Gesamtzeit (UI-only) ---
+              final queue = st.queueIds;
+              final idx = st.currentIndex;
+
+              Duration sumAll = Duration.zero;
+              Duration sumAfter = Duration.zero;
+
+              for (int i = 0; i < queue.length; i++) {
+                try {
+                  final m = widget.player.settingsFor(queue[i]).durationMinutes;
+                  final d = Duration(minutes: m);
+                  sumAll += d;
+                  if (i > idx) sumAfter += d;
+                } catch (_) {}
+              }
+
+              final remainingTotal = st.remaining + sumAfter;
+
+              String fmt(Duration d) {
+                final s = d.inSeconds.clamp(0, 24 * 3600);
+                final mm = (s ~/ 60).toString().padLeft(2, '0');
+                final ss = (s % 60).toString().padLeft(2, '0');
+                return '$mm:$ss';
+              }
 
               return SingleChildScrollView(
                 child: Padding(
@@ -462,7 +639,6 @@ class _PlayerPopupState extends State<PlayerPopup> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Centered, animated title with smooth fade transition
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 250),
                         switchInCurve: Curves.easeInOut,
@@ -517,7 +693,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       const SizedBox(height: 12),
 
-                      // Controls: Stop (Cube) only (UI is display-only)
+                      // Controls: Stop (Cube) only
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -539,14 +715,16 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                 return;
                               }
 
-                              // Stop UI timer and reset fill
                               try {
                                 widget.player.stop();
                               } catch (_) {}
-                              if (mounted) setState(() {
-                                _fillIndex = 0;
-                                _cycleNo = 0;
-                              });
+
+                              if (mounted) {
+                                setState(() {
+                                  _fillIndex = 0;
+                                  _cycleNo = 0;
+                                });
+                              }
                             },
                           ),
                         ],
@@ -554,11 +732,29 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       const SizedBox(height: 12),
 
+                      // Segment timer
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Fortschritt', style: Theme.of(context).textTheme.bodyMedium),
-                          Text(_fmt(st.remaining)),
+                          Text(isDe ? 'Restzeit' : 'Remaining',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text('${fmt(st.remaining)} / ${fmt(st.total)}',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Total timer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(isDe ? 'Gesamt' : 'Total',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            '${fmt(remainingTotal)} / ${fmt(sumAll)}  •  ${(queue.isEmpty ? 0 : (idx + 1))}/${queue.length}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ),
 
@@ -568,7 +764,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
                           onPressed: () {
-                            if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            }
                           },
                           child: const Text('Close'),
                         ),

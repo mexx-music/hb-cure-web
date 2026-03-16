@@ -14,8 +14,11 @@ import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'program_detail_page.dart';
 import '../../services/program_catalog.dart';
+import 'package:hbcure/services/custom_frequency_name_store.dart';
 import '../widgets/playlist_item_setup.dart';
 import '../../services/cube_device_service.dart';
+import 'package:hbcure/services/custom_frequencies_store.dart';
+import 'package:hbcure/services/clients_store.dart';
 
 class MyProgramsPage extends StatefulWidget {
   const MyProgramsPage({super.key});
@@ -25,10 +28,9 @@ class MyProgramsPage extends StatefulWidget {
 }
 
 class _MyProgramsPageState extends State<MyProgramsPage> {
-  final _service = MyProgramsService();
+  late final MyProgramsService _mySvc;
+  VoidCallback? _myListener;
   final _repo = ProgramRepository();
-
-  StreamSubscription<void>? _myProgramsSub;
 
   bool _isLoading = false;
   bool _pendingReload = false;
@@ -38,17 +40,42 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
   // name enrichment cache: programId -> display name (from asset catalog)
   final Map<String, String> _displayNameById = {};
+  String? _activeClientName;
+
+  Future<void> _refreshActiveClientName() async {
+    try {
+      final activeId = await ClientsStore.instance.loadActiveClientId();
+      if (activeId == null) {
+        if (!mounted) return;
+        setState(() => _activeClientName = null);
+        return;
+      }
+      final clients = await ClientsStore.instance.loadClients();
+      final found = clients.firstWhere((c) => c.id == activeId, orElse: () => ClientProfile(id: activeId, name: ''));
+      if (!mounted) return;
+      setState(() => _activeClientName = (found.name.isNotEmpty ? found.name : null));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _activeClientName = null);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _mySvc = MyProgramsService.instance;
+    _myListener = () => _loadPrograms();
+    _mySvc.addListener(_myListener!);
     _loadPrograms();
-    _myProgramsSub = _service.onChange.listen((_) => _loadPrograms());
+    _refreshActiveClientName();
   }
 
   @override
   void dispose() {
-    _myProgramsSub?.cancel();
+    if (_myListener != null) {
+      _mySvc.removeListener(_myListener!);
+      _myListener = null;
+    }
     super.dispose();
   }
 
@@ -62,7 +89,15 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     setState(() => _loading = true);
 
     try {
-      final ids = await _service.loadIds();
+      // Ensure custom frequencies store is loaded so we can resolve custom_ IDs
+      // Use loadAll() which is available on the store; this mirrors an ensureLoaded() call.
+      try {
+        await CustomFrequenciesStore.instance.loadAll();
+      } catch (_) {
+        // best-effort: continue even if store not present or fails
+      }
+
+      final ids = await _mySvc.loadIds();
 
       final categories = await _repo.loadCategories();
       final Map<String, ProgramItem> map = {};
@@ -78,49 +113,103 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       }
 
       final programs = <ProgramItem>[];
+      final nextDisplay = <String, String>{};
+      final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+
       for (final id in ids) {
+        // custom user-created entries (persisted as custom_<ts>)
+        if (id.startsWith('custom_')) {
+          // try to load persisted custom entry and use its name for display
+          final e = await CustomFrequenciesStore.instance.getById(id);
+          final displayName = (e?.name ?? '').trim();
+
+          programs.add(ProgramItem(
+            id: id,
+            name: displayName.isNotEmpty ? displayName : (isDe ? 'Eigene Frequenz' : 'Custom Frequency'),
+            uuid: null,
+            internalId: null,
+            level: 1,
+          ));
+
+          nextDisplay[id] = displayName.isNotEmpty ? displayName : (isDe ? 'Eigene Frequenz' : 'Custom Frequency');
+          continue;
+        }
+
         final p = map[id];
-        if (p != null) programs.add(p);
+        if (p != null) {
+          programs.add(p);
+          // leave display name to enrichment below (or set immediately if name present)
+          continue;
+        }
+
+        // unknown id: keep it visible as placeholder so user can spot missing entries
+        programs.add(ProgramItem(
+          id: id,
+          name: isDe ? 'Unbekanntes Programm' : 'Unknown Program',
+          uuid: null,
+          internalId: null,
+          level: 1,
+        ));
+        nextDisplay[id] = isDe ? 'Unbekanntes Programm' : 'Unknown Program';
       }
 
       // ---- name enrichment from Programs_decoded_full.json (optional) ----
       try {
         await ProgramCatalog.instance.ensureLoaded();
         _displayNameById.clear();
+
         for (final program in programs) {
+          // if we already set a display name (for custom_/unknown) keep it
+          if (nextDisplay.containsKey(program.id)) {
+            _displayNameById[program.id] = nextDisplay[program.id]!;
+            continue;
+          }
+
           final current = program.name.trim();
-          final isPlaceholder =
-              current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
+          final isPlaceholder = current.isEmpty || current == '-' || current.toLowerCase() == 'placeholder';
 
           if (!isPlaceholder) {
             _displayNameById[program.id] = program.name;
             continue;
           }
 
-          final byUuid = ProgramCatalog.instance.byUuid(program.id);
-          if (byUuid != null) {
-            _displayNameById[program.id] = ProgramCatalog.instance.name(byUuid, lang: 'EN');
-            continue;
+          // prefer explicit uuid/internalId fields on ProgramItem
+          if (program.uuid != null && program.uuid!.isNotEmpty) {
+            final byUuid = ProgramCatalog.instance.byUuid(program.uuid!);
+            if (byUuid != null) {
+              _displayNameById[program.id] = ProgramCatalog.instance.name(byUuid, lang: 'EN');
+              continue;
+            }
           }
 
-          final intId = int.tryParse(program.id);
-          if (intId != null) {
-            final byInt = ProgramCatalog.instance.byInternalId(intId);
+          if (program.internalId != null) {
+            final byInt = ProgramCatalog.instance.byInternalId(program.internalId!);
             if (byInt != null) {
               _displayNameById[program.id] = ProgramCatalog.instance.name(byInt, lang: 'EN');
               continue;
             }
           }
 
+          // fallback to stored name
           _displayNameById[program.id] = program.name;
         }
       } catch (_) {
-        // ignore
+        // best-effort: if catalog missing, keep any earlier nextDisplay entries
+        if (_displayNameById.isEmpty) {
+          _displayNameById.addAll(nextDisplay);
+        }
       }
-      // -------------------------------------------------------------------
 
       if (!mounted) return;
-      setState(() => _programs = programs);
+      // merge enriched display names with nextDisplay placeholders (custom/unknown)
+      final mergedDisplay = Map<String, String>.from(_displayNameById);
+      mergedDisplay.addAll(nextDisplay);
+      setState(() {
+        _programs = programs;
+        _displayNameById
+          ..clear()
+          ..addAll(mergedDisplay);
+      });
     } finally {
       if (!mounted) return;
       _isLoading = false;
@@ -134,7 +223,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   }
 
   Future<void> _remove(String id) async {
-    await _service.remove(id);
+    await _mySvc.remove(id);
     _loadPrograms();
   }
 
@@ -150,7 +239,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     });
 
     final ids = _programs.map((p) => p.id).toList(growable: false);
-    await _service.saveIds(ids);
+    await _mySvc.saveIds(ids);
   }
 
   void _openPlayerPopup(BuildContext context) {
@@ -175,6 +264,60 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _pickClient(BuildContext context) async {
+    final clients = await ClientsStore.instance.loadClients();
+    final activeId = await ClientsStore.instance.loadActiveClientId();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+        return SafeArea(
+          child: Material(
+            color: AppColors.cardBackground,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    isDe ? 'Klient wählen' : 'Choose client',
+                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...clients.map((c) {
+                  final selected = c.id == activeId;
+                  return ListTile(
+                    leading: Icon(
+                      selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: selected ? AppColors.accentGreen : AppColors.textSecondary,
+                    ),
+                    title: Text(c.name, style: const TextStyle(color: AppColors.textPrimary)),
+                    onTap: () async {
+                      await ClientsStore.instance.setActiveClientId(c.id);
+                      if (!mounted) return;
+                      Navigator.pop(ctx);
+                      setState(() {}); // refresh header label
+                      await _loadPrograms(); // load My Programs for the newly selected client
+                    },
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -208,24 +351,21 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       }
     }
 
-    // UI queue + timer (sum of durations)
-    playerService.setQueueUiOnly(
+    // Start playback via PlayerService (single call) so the service owns queue/start behavior
+    playerService.playQueue(
       ids,
-      startIndex: index,
+      index,
       titleKeyEnById: keyEnMap,
     );
-    if (playerService.state.total > Duration.zero) {
-      playerService.markStarted();
-    }
 
-    // Open popup immediately
+    // Popup öffnen wie bisher
     if (!context.mounted) return;
     _openPlayerPopup(context);
 
     // Upload banner in popup (PlayerPopup reads playerService.isUploading)
     playerService.setUploading(true);
     try {
-      await CubeDeviceService.instance.sendMyProgramsCompositeFromIds(
+      await CubeDeviceService.instance.sendMyProgramsAsMergedSingleFromIds(
         ids: ids,
         powerMode: true,
         settingsForId: (id) => playerService.settingsFor(id),
@@ -247,8 +387,17 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     // UI: only this program in the queue
     final ids = <String>[program.id];
 
+    // Use enriched display name, but prefer stored custom name for custom_ entries
+    String uiName = (_displayNameById[program.id] ?? program.name);
+    if (program.id.startsWith('custom_')) {
+      final e = await CustomFrequenciesStore.instance.getById(program.id);
+      if (e != null && e.name.trim().isNotEmpty) {
+        uiName = e.name.trim();
+      }
+    }
+
     final keyEnMap = <String, String>{
-      program.id: (_displayNameById[program.id] ?? program.name),
+      program.id: uiName,
     };
 
     playerService.setQueueUiOnly(
@@ -285,6 +434,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   @override
   Widget build(BuildContext context) {
     final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+    final isDe = langCode == 'de';
 
     return GradientBackground(
       child: Padding(
@@ -292,12 +442,43 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 12.0),
           children: [
-            Text(
-              'My Programs',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isDe ? 'Meine Programme' : 'My Programs',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FutureBuilder<List<ClientProfile>>(
+                  future: ClientsStore.instance.loadClients(),
+                  builder: (context, snap) {
+                    final clients = snap.data ?? const [];
+                    if (clients.isEmpty) return const SizedBox.shrink();
+
+                    return TextButton.icon(
+                      onPressed: () => _pickClient(context),
+                      icon: const Icon(Icons.person, color: AppColors.textPrimary, size: 18),
+                      label: FutureBuilder<String?>(
+                        future: ClientsStore.instance.loadActiveClientId(),
+                        builder: (context, aSnap) {
+                          final activeId = aSnap.data;
+                          final active = clients.where((c) => c.id == activeId).cast<ClientProfile?>().firstWhere(
+                                (x) => x != null,
+                                orElse: () => null,
+                              );
+                          final name = active?.name ?? (isDe ? 'Kein Klient' : 'No client');
+                          return Text(name, style: const TextStyle(color: AppColors.textPrimary));
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 6),
 

@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:pointycastle/export.dart' as pc;
@@ -15,6 +16,7 @@ import 'package:hbcure/core/cure_protocol/cure_program_model.dart';
 import 'package:hbcure/services/cure_protocol.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
+import 'cure_ble_transport_native.dart';
 
 // UUIDs for CureBase (Nordic UART-like)
 final Guid cureUartServiceUuid =
@@ -156,7 +158,7 @@ class BleCureDeviceService {
     return _errorCtrl!.stream;
   }
 
-  Future<void> startScan() async {
+    Future<void> startScan() async {
     if (_isScanning) return;
     _found.clear();
     _devicesCtrl?.add([]);
@@ -165,13 +167,43 @@ class BleCureDeviceService {
     if (!supported) throw Exception('BLE not supported on this platform');
 
     _isScanning = true;
+
+    // Ensure native central is powered on when using native transport
+    if (kCureTransportMode == CureTransportMode.native) {
+      // Only perform native central wait on iOS — Android plugin may not implement getCentralState
+      if (Platform.isIOS) {
+       try {
+         if (kDebugMode) debugPrint('HBDBG startScan: waiting for native central poweredOn...');
+         await CureBleTransportNative().waitForCentralPoweredOn();
+         if (kDebugMode) debugPrint('HBDBG startScan: native central poweredOn, proceeding to scan');
+       } catch (e) {
+         // If the native transport did not report poweredOn in time, log and
+         // DO NOT call FlutterBluePlus.startScan() because CoreBluetooth may be
+         // in an unknown state and startScan would fail with CBManagerStateUnknown.
+         final msg = 'Scan blocked: native central not powered on (wait timed out): $e';
+         _errorCtrl?.add(msg);
+         if (kDebugMode) debugPrint('HBDBG startScan: $msg');
+         // Stop scanning attempt and return early to avoid dual scan paths.
+         _isScanning = false;
+         return;
+       }
+      } else {
+        if (kDebugMode) debugPrint('HBDBG startScan: skipping native central wait on non-iOS platform');
+      }
+     }
+
     await FlutterBluePlus.startScan();
+    if (kDebugMode) debugPrint('HBDBG startScan: flutterBluePlus.startScan invoked');
+
+    // Log discovered peripherals in detail to aid debugging when iOS scanning
+    // appears to miss devices (compare with nRF Connect behavior).
     _scanSub = FlutterBluePlus.scanResults.listen((results) {
       for (final sr in results) {
-        final name = (sr.device.name).isNotEmpty
-            ? sr.device.name
-            : (sr.advertisementData.advName ?? '');
+        final advName = sr.advertisementData.advName ?? '';
+        final name = (sr.device.name).isNotEmpty ? sr.device.name : advName;
         final id = sr.device.id.id;
+        final rssi = sr.rssi;
+        if (kDebugMode) debugPrint('HBDBG scanResult: name="$name" advName="$advName" id=$id rssi=$rssi');
         final combined = (name + ' ' + id).toLowerCase();
         if (combined.contains('curebase')) {
           _found[id] = sr.device;
@@ -181,7 +213,7 @@ class BleCureDeviceService {
     }, onError: (e, st) {
       _errorCtrl?.add(e?.toString());
     });
-  }
+    }
 
   Future<void> stopScan() async {
     if (!_isScanning) return;

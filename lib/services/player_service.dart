@@ -141,7 +141,12 @@ class PlayerService extends ChangeNotifier {
     }
 
     // store provided title map (EN keys) for later resolving in UI
-    _titleKeyEnById = titleKeyEnById ?? _titleKeyEnById;
+    if (titleKeyEnById != null) {
+      _titleKeyEnById = {
+        ..._titleKeyEnById,
+        ...titleKeyEnById,
+      };
+    }
 
     _state = PlayerState(
       isPlaying: true,
@@ -179,7 +184,12 @@ class PlayerService extends ChangeNotifier {
     final idx = startIndex.clamp(0, queueIds.length - 1).toInt();
 
     // store provided title map (EN keys) for UI resolving
-    _titleKeyEnById = titleKeyEnById ?? _titleKeyEnById;
+    if (titleKeyEnById != null) {
+      _titleKeyEnById = {
+        ..._titleKeyEnById,
+        ...titleKeyEnById,
+      };
+    }
 
     // sum durations from per-item settings
     final totalMinutes = queueIds

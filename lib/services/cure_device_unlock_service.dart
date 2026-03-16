@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io' show Platform;
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
@@ -9,6 +10,8 @@ import 'cure_ble_transport_native.dart';
 import 'cure_crypto.dart';
 import 'cure_program_compiler.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_model.dart';
+import 'package:hbcure/core/cure_protocol/cure_program_factory.dart';
+import 'package:hbcure/services/cure_crypto_dart.dart';
 
 enum CureUnlockStatus {
   connecting,
@@ -170,18 +173,20 @@ class CureDeviceUnlockService {
 
       onStatus?.call(CureUnlockStatus.challengeReceived);
 
+      // ---- building response ----
       onStatus?.call(CureUnlockStatus.buildingResponse);
-      final sigHex = await _method.invokeMethod<String>(
-        'buildUnlockResponse',
-        {'challengeHex': challengeHex},
-      );
+      // Use native buildUnlockResponse when available, fallback to Dart implementation
+      final String sigHex = await CureCryptoDart.buildUnlockResponseNative(challengeHex);
 
-      if (sigHex == null || sigHex.isEmpty) {
+      if (sigHex.isEmpty) {
         return const CureUnlockResult(
             success: false, errorMessage: 'Signature build failed');
       }
 
       onStatus?.call(CureUnlockStatus.sendingResponse);
+      // Mini-safety delay: some devices/iOS need a short pause before sending the response
+      // (helps avoid race conditions where the device is not yet ready to parse the long response)
+      await Future.delayed(const Duration(milliseconds: 200));
       final respLines = await transport.sendCommandAndWaitLines(
         'response=$sigHex',
         timeout: const Duration(seconds: 20),
@@ -322,7 +327,7 @@ class CureDeviceUnlockService {
 
   Future<bool> progAppendHex(String hex) async {
     final cleaned = hex.replaceAll(RegExp(r'\s+'), '');
-    if (cleaned.isEmpty || cleaned.length.isOdd || !RegExp(r'^[0-9A-Fa-f]+$').hasMatch(cleaned)) {
+    if (cleaned.isEmpty || cleaned.length.isOdd || !RegExp(r'^[0-9-A-Fa-f]+$').hasMatch(cleaned)) {
       return false;
     }
     return _sendAndCheckOk('progAppend=$cleaned', timeout: const Duration(seconds: 10));
@@ -341,6 +346,23 @@ class CureDeviceUnlockService {
       final hex = slice
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
+      if (!await progAppendHex(hex)) return false;
+      await Future.delayed(const Duration(milliseconds: 80));
+      offset = end;
+    }
+    return true;
+  }
+
+  /// Append raw program bytes (already encoded) in chunks by calling progAppendHex
+  /// This does NOT call progClear() — caller must clear explicitly when needed.
+  Future<bool> appendProgramBytes(Uint8List bytes, {int chunkSize = 64}) async {
+    if (_sharedDeviceId == null || bytes.isEmpty) return false;
+
+    int offset = 0;
+    while (offset < bytes.length) {
+      final end = (offset + chunkSize).clamp(0, bytes.length);
+      final slice = bytes.sublist(offset, end);
+      final hex = slice.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
       if (!await progAppendHex(hex)) return false;
       await Future.delayed(const Duration(milliseconds: 80));
       offset = end;
@@ -403,6 +425,63 @@ class CureDeviceUnlockService {
       return false;
     } catch (e) {
       debugPrint('[CureDeviceUnlockService] uploadProgramAndStart failed: $e');
+      return false;
+    }
+  }
+
+  // Upload a single-frequency custom program (built from simple parameters)
+  // NOTE: removed duplicate simple delegate implementation because a full
+  // implementation (with deterministic uuid16 and checks) exists later in this file.
+
+  /// Upload a single-frequency program built from simple parameters and start it.
+  /// This is a minimal helper used for 'custom_' programs stored locally.
+  Future<bool> uploadCustomSingleFrequencyAndStart({
+    required double frequencyHz,
+    required Duration duration,
+    required int intensityPct,
+    required bool powerMode,
+    required bool useElectric,
+    required String electricWaveform,
+    required bool useMagnetic,
+    required String magneticWaveform,
+  }) async {
+    if (_sharedDeviceId == null) {
+      debugPrint('[CureDeviceUnlockService] No native connection available.');
+      return false;
+    }
+
+    try {
+      // Build deterministic 16-byte id from frequency + duration to avoid empty UUID
+      final bd = ByteData(16);
+      bd.setFloat64(0, frequencyHz);
+      bd.setUint64(8, duration.inSeconds.toUnsigned(64));
+      final uuid16 = bd.buffer.asUint8List();
+
+      // intensity 0..100 -> nibble 0..10
+      final nibble = (intensityPct / 10.0).round().clamp(0, 10);
+      final eNib = useElectric ? nibble : 0;
+      final hNib = useMagnetic ? nibble : 0;
+
+      CureWaveForm wfFrom(String s) {
+        final x = s.trim().toLowerCase();
+        if (x.contains('sine')) return CureWaveForm.sine;
+        if (x.contains('triangle')) return CureWaveForm.triangle;
+        if (x.contains('square') || x.contains('rect')) return CureWaveForm.square;
+        if (x.contains('saw')) return CureWaveForm.sawtooth;
+        return CureWaveForm.sine;
+      }
+
+      final program = CureProgram(
+        programUuid16: uuid16,
+        name: 'Custom ${frequencyHz.toStringAsFixed(0)}Hz',
+        intensity: CureIntensity(eNibble: eNib, hNibble: hNib),
+        waveForms: CureWaveForms(e: wfFrom(electricWaveform), h: wfFrom(magneticWaveform)),
+        steps: [CureFrequencyStep(frequencyHz: frequencyHz, dwellSeconds: duration.inSeconds)],
+      );
+
+      return await uploadProgramAndStart(program);
+    } catch (e) {
+      debugPrint('[CureDeviceUnlockService] uploadCustomSingleFrequencyAndStart failed: $e');
       return false;
     }
   }
@@ -521,7 +600,7 @@ class CureDeviceUnlockService {
     }
 
     // Sanitize: allow only 0-9, A-F, a-f
-    final cleaned = challengeHex.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
+    final cleaned = challengeHex.replaceAll(RegExp(r'[^0-9-A-Fa-f]'), '');
     if (cleaned.length != 64) {
       throw ArgumentError('challengeHex must be exactly 64 hex chars');
     }

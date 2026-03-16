@@ -13,35 +13,64 @@ class CureBleTransportNative implements CureBleTransport {
   static const EventChannel _notifyChannel =
       EventChannel('cure_ble_native/notify');
 
+  // Singleton instance (minimal change so all callers share one EventChannel subscription)
+  static final CureBleTransportNative _instance = CureBleTransportNative._internal();
+  factory CureBleTransportNative() => _instance;
+
   final StreamController<String> _notifyCtrl =
       StreamController<String>.broadcast();
   StreamSubscription<dynamic>? _eventSub;
 
-  CureBleTransportNative() {
+  // Cached latest central state (from native plugin). Possible values: null or strings like "poweredOn" etc.
+  String? _latestCentralState;
+  Completer<void>? _poweredOnCompleter;
+
+  CureBleTransportNative._internal() {
+    // single subscription to native notify channel — updates _latestCentralState
     _eventSub = _notifyChannel.receiveBroadcastStream().listen((event) {
       try {
+        // Log every incoming BLE event
+        if (kDebugMode) debugPrint('[NativeTransport] raw event: $event');
+
         // Variante: Native sendet Maps: { type: "line", data: "..." }
         if (event is Map) {
-          final type = event['type'];
-          if (type == 'line') {
-            final data = event['data'];
-            if (data is String) {
-              _notifyCtrl.add(data.trim());
+          // Support multiple shapes emitted by native plugin
+          final type = event['type'] ?? event['event'] ?? event['kind'];
+          final data = event['data'] ?? event['line'] ?? event['message'] ?? event['text'];
+          final state = event['state'] ?? event['centralState'] ?? event['name'];
+
+          if (type == 'line' && data is String) {
+            if (kDebugMode) debugPrint('[NativeTransport] line event: $data');
+            _notifyCtrl.add(data.trim());
+
+            // If native emits a central state as a line, detect and cache it
+            if (data.startsWith('IOS_CENTRAL_STATE') || data.startsWith('IOS_CENTRAL_CREATED')) {
+              _updateCachedStateFromLine(data);
             }
-          } else if (type == 'state') {
-            final state = event['state'];
-            final deviceId = event['deviceId'];
-            if (kDebugMode) {
-              debugPrint('[NativeTransport] state event: state=$state deviceId=$deviceId');
+          } else if (state is String) {
+            // direct state map
+            if (kDebugMode) debugPrint('[NativeTransport] state event: $state');
+            _updateCachedState(state);
+          } else if (data is String) {
+            // fallback: treat as a line
+            if (kDebugMode) debugPrint('[NativeTransport] fallback line event: $data');
+            _notifyCtrl.add(data.trim());
+            if (data.startsWith('IOS_CENTRAL_STATE') || data.startsWith('IOS_CENTRAL_CREATED')) {
+              _updateCachedStateFromLine(data);
             }
-          } else if (type == 'error') {
-            final msg = event['message'];
-            if (kDebugMode) debugPrint('[NativeTransport] native error: $msg');
+          } else {
+            if (kDebugMode) debugPrint('[NativeTransport] unknown map event shape: $event');
           }
         }
         // Fallback: Native sendet direkt Strings
         else if (event is String) {
+          if (kDebugMode) debugPrint('[NativeTransport] string event: $event');
           _notifyCtrl.add(event.trim());
+          if (event.startsWith('IOS_CENTRAL_STATE') || event.startsWith('IOS_CENTRAL_CREATED')) {
+            _updateCachedStateFromLine(event);
+          }
+        } else {
+          if (kDebugMode) debugPrint('[NativeTransport] unexpected event type: ${event.runtimeType}');
         }
       } catch (e, st) {
         if (kDebugMode) debugPrint('CureBleTransportNative: notify event parse error: $e\n$st');
@@ -49,6 +78,72 @@ class CureBleTransportNative implements CureBleTransport {
     }, onError: (e) {
       if (kDebugMode) debugPrint('CureBleTransportNative: notify stream error: $e');
     });
+
+    // Probe native plugin for current central state in case it was emitted before we subscribed.
+    Future.microtask(() async {
+      try {
+        final raw = await _method.invokeMethod<dynamic>('getCentralState');
+        if (kDebugMode) debugPrint('[NativeTransport] probe getCentralState -> $raw');
+        if (raw is String) {
+          // native might return a line-like string
+          if (raw.startsWith('IOS_CENTRAL_STATE') || raw.startsWith('IOS_CENTRAL_CREATED')) {
+            _updateCachedStateFromLine(raw);
+          } else {
+            _updateCachedState(raw);
+          }
+        } else if (raw is Map) {
+          final state = raw['state'] ?? raw['name'] ?? raw['centralState'];
+          if (state is String) _updateCachedState(state);
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[NativeTransport] getCentralState probe failed: $e');
+      }
+    });
+  }
+
+  // Helper to parse native line messages like: IOS_CENTRAL_STATE name=poweredOn raw=5
+  void _updateCachedStateFromLine(String line) {
+    try {
+      final lower = line.toLowerCase();
+      if (lower.contains('poweredon') || lower.contains('powered_on') || lower.contains('powered_on')) {
+        _updateCachedState('poweredOn');
+      } else if (lower.contains('poweredoff') || lower.contains('powered_off')) {
+        _updateCachedState('poweredOff');
+      } else if (lower.contains('unknown')) {
+        _updateCachedState('unknown');
+      } else if (lower.contains('unauthorized')) {
+        _updateCachedState('unauthorized');
+      } else if (lower.contains('unsupported')) {
+        _updateCachedState('unsupported');
+      } else if (lower.contains('resetting')) {
+        _updateCachedState('resetting');
+      }
+    } catch (_) {}
+  }
+
+  void _updateCachedState(String s) {
+    final prev = _latestCentralState;
+    _latestCentralState = s;
+    if (kDebugMode) debugPrint('[NativeTransport] cached central state: $prev -> $_latestCentralState');
+    if (_latestCentralState == 'poweredOn') {
+      if (_poweredOnCompleter != null && !_poweredOnCompleter!.isCompleted) {
+        _poweredOnCompleter!.complete();
+        _poweredOnCompleter = null;
+      }
+    }
+  }
+
+  /// Wait until native central reports poweredOn. Resolves immediately if cached state already poweredOn.
+  Future<void> waitForCentralPoweredOn({Duration timeout = const Duration(seconds: 8)}) async {
+    if (_latestCentralState == 'poweredOn') return;
+    _poweredOnCompleter ??= Completer<void>();
+    final comp = _poweredOnCompleter!;
+    try {
+      await comp.future.timeout(timeout);
+    } catch (e) {
+      // timeout -> rethrow as informative exception
+      throw Exception('Native central not powered on (timeout)');
+    }
   }
 
   @override

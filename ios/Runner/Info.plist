@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string></string>
+	<key>NSHumanReadableCopyright</key>
+	<string></string>
+	<key>LSFileQuarantineEnabled</key>
+	<false/>
+	<key>CFBundleGetInfoString</key>
+	<dict/>
+	<key>LSApplicationCategoryType</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -45,10 +55,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<!-- Bluetooth usage descriptions for BLE scanning/connection -->
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Required to scan and connect to Cure devices.</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Required to connect to Cure peripherals.</string>
 </dict>
 </plist>
