@@ -16,6 +16,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
   late Future<List<ClientProfile>> _future;
   String? _activeId; // newly added: currently active client id
+  bool _changed = false; // tracks whether any client data was mutated
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _ClientsPageState extends State<ClientsPage> {
     await ClientsStore.instance.setActiveClientId(id);
 
     if (!mounted) return;
+    _changed = true;
     _reload();
   }
 
@@ -153,6 +155,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
     await ClientsStore.instance.upsertClient(ClientProfile(id: c.id, name: v));
     if (!mounted) return;
+    _changed = true;
     _reload();
   }
 
@@ -185,6 +188,7 @@ class _ClientsPageState extends State<ClientsPage> {
     if (!mounted) return;
 
     // activeId könnte sich durch removeClient ändern (Store setzt ggf. neues active)
+    _changed = true;
     _reload();
   }
 
@@ -208,7 +212,7 @@ class _ClientsPageState extends State<ClientsPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context, _changed),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -275,6 +279,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             onTap: () async {
                               await ClientsStore.instance.setActiveClientId(c.id);
                               if (!mounted) return;
+                              _changed = true;
                               setState(() => _activeId = c.id);
                             },
                             // add long-press handler to show actions

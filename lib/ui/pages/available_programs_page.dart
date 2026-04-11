@@ -31,7 +31,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
   void initState() {
     super.initState();
     _langListener = () {
-      if (mounted) setState(() {});
+      if (mounted) _load();
     };
     ProgramLangController.instance.addListener(_langListener);
     _load();

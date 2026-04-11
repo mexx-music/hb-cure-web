@@ -72,18 +72,28 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   }
 
 
+  late final VoidCallback _clientsListener;
+
   @override
   void initState() {
     super.initState();
     _mySvc = MyProgramsService.instance;
     _myListener = () => _loadPrograms();
     _mySvc.addListener(_myListener!);
+    _clientsListener = () {
+      if (mounted) {
+        _loadPrograms();
+        _refreshActiveClientName();
+      }
+    };
+    ClientsStore.instance.addListener(_clientsListener);
     _loadPrograms();
     _refreshActiveClientName();
   }
 
   @override
   void dispose() {
+    ClientsStore.instance.removeListener(_clientsListener);
     if (_myListener != null) {
       _mySvc.removeListener(_myListener!);
       _myListener = null;

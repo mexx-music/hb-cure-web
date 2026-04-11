@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ClientProfile {
@@ -13,7 +14,7 @@ class ClientProfile {
       ClientProfile(id: j["id"] as String, name: j["name"] as String);
 }
 
-class ClientsStore {
+class ClientsStore extends ChangeNotifier {
   static const _kClients = 'clients_v1';
   static const _kActive = 'clients_active_id_v1';
 
@@ -46,6 +47,7 @@ class ClientsStore {
     } else {
       await prefs.setString(_kActive, id);
     }
+    notifyListeners();
   }
 
   Future<void> upsertClient(ClientProfile c) async {
@@ -57,6 +59,7 @@ class ClientsStore {
       list.insert(0, c);
     }
     await saveClients(list);
+    notifyListeners();
   }
 
   Future<void> removeClient(String id) async {
@@ -67,6 +70,8 @@ class ClientsStore {
     final active = await loadActiveClientId();
     if (active == id) {
       await setActiveClientId(list.isNotEmpty ? list.first.id : null);
+    } else {
+      notifyListeners();
     }
   }
 

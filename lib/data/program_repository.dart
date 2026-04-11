@@ -19,11 +19,27 @@ import 'package:hbcure/i18n/program_name_localizer.dart';
 class ProgramRepository {
   ProgramRepository();
 
+  // Language-neutral normalized data (unsorted, titles may be stale but structure is stable)
+  static List<ProgramCategory>? _normalizedBase;
+  // Per-language sorted cache
+  static String? _cachedLangCode;
   static List<ProgramCategory>? _cachedCategories;
 
   Future<List<ProgramCategory>> loadCategories() async {
-    // Return cached result if available
-    if (_cachedCategories != null) return _cachedCategories!;
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+
+    // Return cached result if available and language matches
+    if (_cachedCategories != null && _cachedLangCode == langCode) {
+      return _cachedCategories!;
+    }
+
+    // If we already have the normalized base, just re-sort for current language
+    if (_normalizedBase != null) {
+      final sorted = _sortCategoriesAZ(_normalizedBase!, langCode);
+      _cachedCategories = sorted;
+      _cachedLangCode = langCode;
+      return sorted;
+    }
 
     try {
       final jsonString = await rootBundle.loadString('assets/programs.json');
@@ -83,8 +99,13 @@ class ProgramRepository {
       final energy = categories.where((c) => c.id == "general_energy_vitalisation").toList();
       debugPrint("CATS_DEBUG energy_found=${energy.isNotEmpty} energy_programs=${energy.isNotEmpty ? energy.first.programs.length : -1} energy_subcats=${energy.isNotEmpty ? energy.first.subcategories.length : -1}");
 
-      _cachedCategories = normalized;
-      return normalized;
+      // --- Sort all visible levels A-Z by display name ---
+      final sorted = _sortCategoriesAZ(normalized, langCode);
+
+      _normalizedBase = normalized;
+      _cachedCategories = sorted;
+      _cachedLangCode = langCode;
+      return sorted;
     } catch (e, st) {
       // TODO: better error handling/logging; for now print and return empty list
       print('Error loading assets/programs.json: $e\n$st');
@@ -250,6 +271,45 @@ class ProgramRepository {
 
     // 3) Fallback: original raw title
     return rawTitle;
+  }
+
+  /// Sort all visible menu levels A-Z by their user-visible display name.
+  List<ProgramCategory> _sortCategoriesAZ(
+      List<ProgramCategory> cats, String langCode) {
+    String displayName(String keyEn) =>
+        ProgramNameLocalizer.instance.displayName(
+          keyEn: keyEn, langCode: langCode,
+        ).toLowerCase();
+
+    // Sort programs inside a list
+    List<ProgramItem> sortProgs(List<ProgramItem> progs) {
+      final copy = progs.toList();
+      copy.sort((a, b) => displayName(a.name).compareTo(displayName(b.name)));
+      return copy;
+    }
+
+    // Sort subcategories and their programs
+    List<ProgramSubcategory> sortSubs(List<ProgramSubcategory> subs) {
+      final copy = subs.map((s) => ProgramSubcategory(
+        id: s.id,
+        title: s.title,
+        color: s.color,
+        programs: sortProgs(s.programs),
+      )).toList();
+      copy.sort((a, b) => displayName(a.title).compareTo(displayName(b.title)));
+      return copy;
+    }
+
+    // Sort top-level categories and their children
+    final sorted = cats.map((c) => ProgramCategory(
+      id: c.id,
+      title: c.title,
+      color: c.color,
+      programs: sortProgs(c.programs),
+      subcategories: sortSubs(c.subcategories),
+    )).toList();
+    sorted.sort((a, b) => displayName(a.title).compareTo(displayName(b.title)));
+    return sorted;
   }
 
    /// If a UI category is empty (programs/subcategories empty), but has raw["internalId"],

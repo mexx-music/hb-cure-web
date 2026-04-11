@@ -97,11 +97,12 @@ class _SettingsPageState extends State<SettingsPage> {
               title: Text(l10n.settingsClients,
                   style: const TextStyle(color: AppColors.textPrimary)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                final changed = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(builder: (_) => const ClientsPage()),
                 );
+                if (changed == true && mounted) setState(() {});
               },
             ),
           ),
