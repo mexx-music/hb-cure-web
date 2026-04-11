@@ -50,6 +50,23 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
   // Target characteristic for the current burst (we always use RX for writes)
   private var writeTargetChar: CBCharacteristic? = nil
 
+  // Response burst tracking
+  private var isResponseBurst: Bool = false
+  /// Set for commands that must use the ungated timer-driven WNR path (like response=)
+  /// but do NOT trigger the synthetic-OK fallback timer.
+  /// Currently used for: progClear, getHardware, getBuild (unlock verification / post-unlock info)
+  private var isUngatedWnrBurst: Bool = false
+  private var burstChunkIndex: Int = 0
+  private var burstTotalChunks: Int = 0
+  private var burstStartTimeMs: UInt64 = 0
+  /// Set to true once ALL chunks of a response= burst have been physically written.
+  /// Used by completePendingOnDisconnect to treat a silent disconnect as a successful unlock.
+  private var responseBurstFullySent: Bool = false
+
+  private func currentTimeMs() -> UInt64 {
+    return UInt64(DispatchTime.now().uptimeNanoseconds / 1_000_000)
+  }
+
   // Debug: capture last 64-hex challenge seen on wire
   private var lastChallengeFromWire: String?
 
@@ -236,24 +253,22 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
       result(nil)
 
     case "buildUnlockResponse":
-      guard let challengeHex = extractString(call.arguments, key: "challengeHex") else {
-        result(FlutterError(code: "bad_args", message: "buildUnlockResponse requires {challengeHex:String}", details: nil))
+      guard let args = call.arguments as? [String: Any],
+            let challengeHex = args["challengeHex"] as? String else {
+        result(FlutterError(code: "ARG", message: "Missing challengeHex", details: nil))
         return
       }
-      do {
-        let sig = try CureCryptoIos.buildUnlockResponse(challengeHex: challengeHex)
-        emitLine("IOS_SIG challenge=\(challengeHex) sig=\(sig)")
 
-        let sigRaw = sig.trimmingCharacters(in: .whitespacesAndNewlines)
-        var fixed = sigRaw.lowercased()
-        if fixed.count == 130 {
-          fixed = String(fixed.dropFirst(2))
-        }
-        emitLine("IOS_SIG_LEN hex=\(sigRaw.count)->\(fixed.count) bytes=\(sigRaw.count/2)->\(fixed.count/2)")
-        result(fixed)
+      // Always delegate to CureCryptoIos for signing so the signing path and
+      // its debug logs are consistently executed. Removed temporary hardcoded
+      // parity override that returned signatures early and bypassed logging.
+      do {
+        let sigHex = try CureCryptoIos.buildUnlockResponse(challengeHex: challengeHex)
+        emitLine("IOS_PLUGIN_SIG_RETURN challenge=\(challengeHex) sig=\(sigHex) len=\(sigHex.count)")
+        result(sigHex)
       } catch {
-        emitLine("IOS_SIG_ERROR \(error)")
-        result(FlutterError(code: "CRYPTO_ERROR", message: "buildUnlockResponse failed: \(error)", details: nil))
+        emitLine("IOS_PLUGIN_SIG_ERROR challenge=\(challengeHex) error=\(error)")
+        result(FlutterError(code: "CRYPTO", message: "buildUnlockResponse failed", details: "\(error)"))
       }
 
     case "verifyDeviceSignature":
@@ -366,6 +381,7 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
     let pr = PendingRequest(line: line, timeoutMs: timeoutMs, result: result)
     pending = pr
+    responseBurstFullySent = false  // reset for new command
 
     let tw = DispatchWorkItem { [weak self] in
       guard let self = self else { return }
@@ -377,13 +393,50 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     pr.timeoutWork = tw
     DispatchQueue.main.asyncAfter(deadline: .now() + Double(timeoutMs)/1000.0, execute: tw)
 
-    // Minimal change: remove the old two-line response hack and send the full line as one logical command
+    // Single-line protocol: always send "response=<sig>\r\n" as one logical line (Android parity)
     enqueueWrite(line: line)
+  }
+
+  /// Called after a response= burst is fully sent.
+  /// If the firmware does not reply (it disconnects silently after a valid unlock),
+  /// we complete the pending request optimistically with ["OK"] after `delayMs`.
+  /// If the device sends a real OK before the timer fires, `onIncomingLine` already
+  /// completed the pending and this no-ops.
+  private func completePendingWithOkIfSilent(delayMs: Int) {
+    guard let pr = pending, !pr.completed else { return }
+    emitLine("IOS_RESPONSE_PENDING_OK_TIMER scheduled delayMs=\(delayMs)")
+    let capturedPr = pr
+    DispatchQueue.main.asyncAfter(deadline: .now() + Double(delayMs) / 1000.0) { [weak self] in
+      guard let self = self else { return }
+      guard capturedPr === self.pending, !capturedPr.completed else {
+        self.emitLine("IOS_RESPONSE_PENDING_OK_TIMER noop (already completed)")
+        return
+      }
+      self.emitLine("IOS_RESPONSE_PENDING_OK_TIMER fired — completing with synthetic OK (device silent after unlock)")
+      capturedPr.timeoutWork?.cancel()
+      capturedPr.completed = true
+      self.pending = nil
+      // Use SYNTHETIC_OK so Dart can distinguish from a real device OK
+      capturedPr.result(["SYNTHETIC_OK"])
+    }
   }
 
   private func completePendingOnDisconnect() {
     if let pr = pending, !pr.completed {
       pr.timeoutWork?.cancel()
+
+      // If we fully sent a response= burst and the device disconnects silently,
+      // this is the firmware's way of signalling a successful unlock.
+      // Return ["OK"] instead of an empty list so the Dart layer recognises success.
+      if responseBurstFullySent {
+        emitLine("IOS_DISCONNECT_AFTER_RESPONSE_BURST — treating as OK (silent unlock disconnect)")
+        responseBurstFullySent = false
+        pr.completed = true
+        pending = nil
+        // Use SYNTHETIC_OK so Dart can distinguish from a real device OK
+        pr.result(["SYNTHETIC_OK"])
+        return
+      }
 
       if !rxBytesBuffer.isEmpty {
         while let lfRange = rxBytesBuffer.firstRange(of: Data([0x0A])) {
@@ -435,10 +488,47 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     // Determine if this is a response=<sig> command
     let isResponse = line.hasPrefix("response=")
 
-    // Force response to use withResponse (WR) to match Android parity
+    // iOS-STABILISATION (2026-04-02):
+    // After unlock the firmware triggers a BLE connection-parameter update.
+    // Sending getHardware / getBuild as ATT Write Request (.withResponse) causes
+    // an ACK round-trip that races with the parameter update and often leads to
+    // a disconnect on iOS. Force .withoutResponse (ATT Write Command) for these
+    // two commands — same as Android — to avoid the race condition.
+    //
+    // progClear is the unlock verification command. It must also use .withoutResponse
+    // AND the ungated timer-driven WNR path (no canSendWriteWithoutResponse gate),
+    // because the peripheral does not advertise WNR in its characteristic properties.
+    let isInfoCommand = (line == "getHardware" || line == "getBuild")
+    let isProgClear   = (line == "progClear")
+
+    // Determine write type:
+    // ANDROID PARITY FIX (2026-03-30):
+    // Android sends response= with WRITE_TYPE_NO_RESPONSE (ATT Write Command, no ACK expected).
+    // The firmware expects ATT Write Commands and does NOT send an ATT Write Response.
+    // When iOS uses .withResponse (ATT Write Request), the firmware never ACKs it → disconnect.
+    //
+    // CoreBluetooth DOES send .withoutResponse writes even if WNR is not in the property bits.
+    // The property check in the iOS stack does not block the actual BLE packet — it only blocks
+    // if you use the canSendWriteWithoutResponse API. Direct writeValue(...type:.withoutResponse)
+    // always sends the ATT Write Command regardless of the advertised properties.
+    //
+    // Therefore: for response=, ALWAYS use .withoutResponse (Android parity).
+    // For getHardware/getBuild: FORCE .withoutResponse (iOS post-unlock stabilisation).
+    // For all other commands: use .withResponse if WNR not advertised (safe default).
     let candidateWriteType: CBCharacteristicWriteType
     if isResponse {
-      candidateWriteType = .withResponse
+      // FORCE WNR for response= — matches Android WRITE_TYPE_NO_RESPONSE behavior exactly.
+      candidateWriteType = .withoutResponse
+      emitLine("IOS_RESPONSE_MODE WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — forcing WNR to match Android ATT Write Command)")
+    } else if isProgClear {
+      // FORCE WNR for progClear — unlock verification command, uses ungated WNR path (Android parity).
+      candidateWriteType = .withoutResponse
+      emitLine("IOS_PROGCLEAR_WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — forcing ungated WNR for progClear)")
+      emitLine("IOS_FORCE_WNR_FOR_CMD progClear")
+    } else if isInfoCommand {
+      // FORCE WNR for getHardware/getBuild — post-unlock iOS stabilisation.
+      candidateWriteType = .withoutResponse
+      emitLine("IOS_FORCE_WNR_FOR_CMD \(line)")
     } else if hasWR {
       candidateWriteType = .withResponse
     } else if hasWNR {
@@ -457,13 +547,13 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     let maxLenWNR = p.maximumWriteValueLength(for: .withoutResponse)
     emitLine("IOS_WR_MAXLEN_WR \(maxLenWR) WNR \(maxLenWNR)")
 
-    // For response payloads we always chunk to 20 bytes (conservative Android-like behavior)
-    let isResponseLine = isResponse
-    pendingDelayMs = isResponseLine ? 250 : 10
-    let delayMs = pendingDelayMs
-
     var chunks: [Data] = []
-    if isResponseLine {
+    let delayMs: Int
+
+    if isResponse {
+      // ANDROID PARITY: split into 20-byte chunks, 45ms inter-chunk delay.
+      // Android: 7 chunks × 20 bytes (last chunk 19 bytes + CRLF), delayMs=45.
+      // No canSendWriteWithoutResponse gating — pure timer-based pacing like Android.
       let chunkSize = 20
       var offset = 0
       while offset < payloadData.count {
@@ -471,7 +561,8 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
         chunks.append(payloadData.subdata(in: offset..<end))
         offset = end
       }
-      emitLine("IOS_WRITE_CHUNKING_RESPONSE chunkSize=\(chunkSize) total=\(chunks.count) delayMs=\(delayMs)")
+      delayMs = 45
+      emitLine("IOS_RESPONSE_WRITE_META totalBytes=\(payloadData.count) totalChunks=\(chunks.count) writeType=WNR chunkSize=\(chunkSize) delayMs=\(delayMs) mode=WNR_ANDROID_PARITY")
     } else {
       let maxLen = (candidateWriteType == .withResponse) ? maxLenWR : maxLenWNR
       if maxLen > 0 && payloadData.count <= maxLen {
@@ -485,7 +576,9 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
           offset = end
         }
       }
+      delayMs = 10
     }
+    pendingDelayMs = delayMs
 
     emitLine("IOS_WRITE_SPLIT chunks=\(chunks.count) delayMs=\(delayMs)")
 
@@ -495,14 +588,19 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     peripheral?.delegate = self
     emitLine("IOS_SET_DELEGATE_BEFORE_BURST delegate=\(String(describing: peripheral?.delegate)) self=\(type(of: self))")
 
-    startBurst(chunks: chunks, writeType: candidateWriteType, delayMs: delayMs)
+    // Start burst immediately (didWrite callbacks handle inter-chunk pacing)
+    // isInfoCommand (getHardware/getBuild) must also use the ungated WNR path so they
+    // are not blocked by canSendWriteWithoutResponse after a post-unlock connection
+    // parameter update — same reason as progClear.
+    startBurst(chunks: chunks, writeType: candidateWriteType, delayMs: delayMs, isResponseBurst: isResponse, isUngatedWnrBurst: isProgClear || isInfoCommand)
   }
 
   // MARK: - Burst sender
 
   private func sendNextChunk(token: Int) {
     let wtLabel = (pendingWriteType == .withResponse) ? "WR" : "WNR"
-    emitLine("IOS_BUILD_MARKER_2026_02_19 sendNextChunk entered writeType=\(wtLabel)")
+    let ts = currentTimeMs() - burstStartTimeMs
+    emitLine("IOS_BUILD_MARKER_2026_03_29 sendNextChunk entered writeType=\(wtLabel) chunkIdx=\(burstChunkIndex) ts=\(ts)ms")
 
     guard sending else { return }
     guard token == burstToken else { return }
@@ -510,11 +608,87 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
     if pendingChunks.isEmpty {
       sending = false
-      emitLine("IOS_WRITE_DONE")
+      let finishTs = currentTimeMs() - burstStartTimeMs
+      emitLine("IOS_WRITE_DONE ts=\(finishTs)ms")
+      if isResponseBurst {
+        emitLine("IOS_RESPONSE_BURST_FINISHED awaiting_device_reply=true totalChunks=\(burstTotalChunks) elapsed=\(finishTs)ms")
+        isResponseBurst = false
+        responseBurstFullySent = true
+        // Firmware may disconnect silently after a valid unlock (no explicit OK).
+        // Optimistically complete pending with OK after 2s if the device hasn't replied yet.
+        completePendingWithOkIfSilent(delayMs: 2000)
+      } else if isUngatedWnrBurst {
+        // ungated WNR burst (e.g. progClear) finished — no synthetic-OK timer, device reply expected normally
+        isUngatedWnrBurst = false
+        emitLine("IOS_UNGATED_WNR_BURST_DONE totalChunks=\(burstTotalChunks) elapsed=\(finishTs)ms awaiting_device_reply=true")
+      }
       return
     }
 
     if pendingWriteType == .withoutResponse {
+      if isResponseBurst || isUngatedWnrBurst {
+        // Ungated WNR path (response=, progClear, getHardware, getBuild):
+        //
+        // Android sends these commands using WRITE_TYPE_NO_RESPONSE (ATT Write Command)
+        // with a fixed inter-chunk delay. It does NOT gate on canSendWriteWithoutResponse.
+        //
+        // Fix (2026-03-30/04-02): Do NOT check canSendWriteWithoutResponse for these bursts.
+        // getHardware/getBuild are also added here (2026-04-02) because after a post-unlock
+        // connection parameter update, canSendWriteWithoutResponse stays false and blocks them.
+        // Write each chunk directly (CoreBluetooth sends ATT Write Command regardless of
+        // advertised properties), paced by the timer — exactly matching Android.
+        guard !pendingChunks.isEmpty else {
+          let ts0 = currentTimeMs() - burstStartTimeMs
+          emitLine("IOS_RESPONSE_WNR_ALREADY_DONE ts=\(ts0)ms (concurrent guard)")
+          return
+        }
+
+        let chunk = pendingChunks.removeFirst()
+        let idx = burstChunkIndex
+        burstChunkIndex += 1
+        let sendTs = currentTimeMs() - burstStartTimeMs
+        let totalForHasCrlf = burstTotalChunks
+        let hasCRLF = (pendingChunks.isEmpty) // last chunk contains \r\n
+        if isResponseBurst {
+          emitLine("IOS_RESPONSE_CHUNK idx=\(idx + 1)/\(totalForHasCrlf) len=\(chunk.count) hasCRLF=\(hasCRLF) tsMs=\(sendTs)")
+        } else {
+          emitLine("IOS_UNGATED_WNR_CHUNK idx=\(idx + 1)/\(totalForHasCrlf) len=\(chunk.count) hasCRLF=\(hasCRLF) tsMs=\(sendTs)")
+        }
+        emitLine("IOS_WRITE_CHUNK len=\(chunk.count) type=WNR remaining=\(pendingChunks.count)")
+        emitLine("IOS_WRITE_TO uuid=\(target.uuid.uuidString) expected=\(UART_RX_UUID.uuidString)")
+        p.delegate = self
+        p.writeValue(chunk, for: target, type: .withoutResponse)
+        if pendingChunks.isEmpty {
+          sending = false
+          let finishTs = currentTimeMs() - burstStartTimeMs
+          if isResponseBurst {
+            emitLine("IOS_RESPONSE_DONE totalChunks=\(burstTotalChunks) elapsedMs=\(finishTs)")
+            emitLine("IOS_WRITE_DONE ts=\(finishTs)ms")
+            emitLine("IOS_RESPONSE_BURST_FINISHED awaiting_device_reply=true totalChunks=\(burstTotalChunks) elapsed=\(finishTs)ms")
+            isResponseBurst = false
+            responseBurstFullySent = true
+            // Firmware may disconnect silently after a valid unlock (no explicit OK).
+            // Optimistically complete pending with OK after 2s if the device hasn't replied yet.
+            completePendingWithOkIfSilent(delayMs: 2000)
+          } else {
+            emitLine("IOS_WRITE_DONE ts=\(finishTs)ms")
+            emitLine("IOS_UNGATED_WNR_BURST_DONE totalChunks=\(burstTotalChunks) elapsed=\(finishTs)ms awaiting_device_reply=true")
+            isUngatedWnrBurst = false
+          }
+          return
+        }
+        // Schedule next chunk after delay (no canSendWriteWithoutResponse gating — Android parity).
+        let myToken = token
+        let chunkDelayMs = pendingDelayMs
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(chunkDelayMs) / 1000.0) { [weak self] in
+          guard let self = self else { return }
+          guard self.sending, self.burstToken == myToken else { return }
+          self.sendNextChunk(token: myToken)
+        }
+        return
+      }
+
+      // Normal WNR path (non-response): use canSendWriteWithoutResponse
       var sentNow = 0
       while !pendingChunks.isEmpty && p.canSendWriteWithoutResponse {
         let chunk = pendingChunks.removeFirst()
@@ -533,26 +707,48 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
 
     if pendingWriteType == .withResponse {
-      // WR: send one chunk and strictly wait for didWriteValueFor to advance.
-      // Schedule a watchdog that will ADVANCE the burst (fallback) if no ACK arrives
-      // (we avoid an immediate abort because some iOS/firmware combos never deliver
-      // didWrite callbacks reliably; fallback preserves progress and mirrors older behavior).
+      // If still awaiting didWrite for previous chunk, do NOT send next chunk yet
+      if awaitingDidWrite {
+        emitLine("IOS_WR_SKIP_AWAITING_DIDWRITE chunkIdx=\(burstChunkIndex) remaining=\(pendingChunks.count)")
+        return
+      }
+
       let chunk = pendingChunks.removeFirst()
+      let idx = burstChunkIndex
+      burstChunkIndex += 1
       awaitingDidWrite = true
+      let sendTs = currentTimeMs() - burstStartTimeMs
+      emitLine("IOS_WR_CHUNK_SENT_AT index=\(idx) remaining=\(pendingChunks.count) len=\(chunk.count) ts=\(sendTs)ms")
+      if isResponseBurst {
+        let hasCRLF = pendingChunks.isEmpty
+        emitLine("IOS_RESPONSE_CHUNK idx=\(idx + 1)/\(burstTotalChunks) len=\(chunk.count) hasCRLF=\(hasCRLF) tsMs=\(sendTs)")
+      }
       emitLine("IOS_WRITE_CHUNK len=\(chunk.count) type=WR remaining=\(pendingChunks.count)")
+
+      // Ensure delegate is set and log BEFORE the actual writeValue call
       p.delegate = self
+      let targetUuid = target.uuid.uuidString
+      let rxUuid = rxChar?.uuid.uuidString ?? "nil"
+      let targetPtr = Unmanaged.passUnretained(target).toOpaque()
+      let rxPtr = rxChar.map { Unmanaged.passUnretained($0).toOpaque() }
+      emitLine("IOS_WRITE_CALL uuid=\(targetUuid) type=WR token=\(token) chunkIdx=\(idx) len=\(chunk.count) targetPtr=\(targetPtr) rxPtr=\(String(describing: rxPtr)) sameObj=\(target === rxChar)")
+      emitLine("IOS_WRITE_TO uuid=\(targetUuid) expected=\(UART_RX_UUID.uuidString)")
       p.writeValue(chunk, for: target, type: .withResponse)
 
-      // Watchdog: if no didWrite callback arrives within timeout, advance the burst (do not abort).
+      // Watchdog fallback: if no didWrite arrives within timeout, log clearly and advance
       let myToken = token
-      let delaySec = Double(max(10, pendingDelayMs)) / 1000.0
+      // For response burst: single WR write, firmware needs time to verify signature.
+      // Use generous watchdog (5000ms) — if didWrite never arrives, advance anyway.
+      // For other WR commands: use max(200, pendingDelayMs).
+      let watchdogMs = isResponseBurst ? 5000 : max(200, pendingDelayMs)
+      let delaySec = Double(watchdogMs) / 1000.0
       DispatchQueue.main.asyncAfter(deadline: .now() + delaySec) { [weak self] in
         guard let self = self else { return }
         guard self.sending, self.burstToken == myToken else { return }
         guard self.awaitingDidWrite else { return }
 
-        // Fallback-advance: log and continue with next chunk (do not abort entire burst).
-        self.emitLine("IOS_WR_WATCHDOG_ADVANCE token=\(myToken) remaining=\(self.pendingChunks.count)")
+        let wdTs = self.currentTimeMs() - self.burstStartTimeMs
+        self.emitLine("IOS_WR_FALLBACK_NO_DIDWRITE index=\(idx) remaining=\(self.pendingChunks.count) ts=\(wdTs)ms delaySec=\(delaySec)")
         self.awaitingDidWrite = false
         self.sendNextChunk(token: myToken)
       }
@@ -563,7 +759,26 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
   public func peripheral(_ peripheral: CBPeripheral,
                          didWriteValueFor characteristic: CBCharacteristic,
                          error: Error?) {
-    emitLine("IOS_DIDWRITE uuid=\(characteristic.uuid.uuidString) err=\(String(describing: error))")
+    let ts = currentTimeMs() - burstStartTimeMs
+    let idx = burstChunkIndex - 1  // last sent index
+    let charUuid = characteristic.uuid.uuidString
+    let rxUuid = rxChar?.uuid.uuidString ?? "nil"
+    let targetUuid = writeTargetChar?.uuid.uuidString ?? "nil"
+    let uuidMatchRx = (characteristic.uuid == rxChar?.uuid)
+    let uuidMatchTarget = (characteristic.uuid == writeTargetChar?.uuid)
+    let objMatchRx = (characteristic === rxChar)
+    let objMatchTarget = (characteristic === writeTargetChar)
+    let charPtr = Unmanaged.passUnretained(characteristic).toOpaque()
+    let rxPtr = rxChar.map { Unmanaged.passUnretained($0).toOpaque() }
+    let targetPtr = writeTargetChar.map { Unmanaged.passUnretained($0).toOpaque() }
+    let peripheralId = peripheral.identifier.uuidString
+
+    emitLine("IOS_DID_WRITE uuid=\(charUuid) err=\(error == nil ? "nil" : error!.localizedDescription) status=\(error == nil ? "ok" : "fail")")
+    emitLine("IOS_DID_WRITE_MATCH_RX=\(uuidMatchRx) objMatchRx=\(objMatchRx) rxUuid=\(rxUuid)")
+    emitLine("IOS_DID_WRITE_MATCH_TARGET=\(uuidMatchTarget) objMatchTarget=\(objMatchTarget) targetUuid=\(targetUuid)")
+    emitLine("IOS_DID_WRITE_SENDING=\(sending) awaitingDidWrite=\(awaitingDidWrite)")
+    emitLine("IOS_DID_WRITE_TOKEN=\(burstToken) chunkIdx=\(idx) remaining=\(pendingChunks.count) ts=\(ts)ms")
+    emitLine("IOS_DID_WRITE_PTRS charPtr=\(charPtr) rxPtr=\(String(describing: rxPtr)) targetPtr=\(String(describing: targetPtr)) peripheral=\(peripheralId)")
 
     if let e = error {
       emitError("write error: \(e.localizedDescription)")
@@ -571,7 +786,32 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
       return
     }
 
+    // Accept callback if UUID matches either rxChar or writeTargetChar
+    guard uuidMatchRx || uuidMatchTarget else {
+      emitLine("IOS_DID_WRITE_IGNORED_UUID_MISMATCH char=\(charUuid) rx=\(rxUuid) target=\(targetUuid)")
+      return
+    }
+
+    guard sending else {
+      emitLine("IOS_DID_WRITE_IGNORED_NOT_SENDING")
+      return
+    }
+
     awaitingDidWrite = false
+    let token = burstToken
+    DispatchQueue.main.async { [weak self] in
+      self?.sendNextChunk(token: token)
+    }
+  }
+
+  /// Called by iOS BLE stack when peripheral is ready to accept another WNR write.
+  public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+    let ts = currentTimeMs() - burstStartTimeMs
+    emitLine("IOS_PERIPHERAL_IS_READY_WNR ts=\(ts)ms sending=\(sending) isResponseBurst=\(isResponseBurst) remaining=\(pendingChunks.count)")
+    // For response bursts: this is the primary flow-control signal.
+    // When canSendWriteWithoutResponse becomes true, peripheralIsReady fires and
+    // we continue sending the next chunk (same for normal WNR bursts).
+    guard sending else { return }
     let token = burstToken
     DispatchQueue.main.async { [weak self] in
       self?.sendNextChunk(token: token)
@@ -738,7 +978,7 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
   }
 
-  private func startBurst(chunks: [Data], writeType: CBCharacteristicWriteType, delayMs: Int) {
+  private func startBurst(chunks: [Data], writeType: CBCharacteristicWriteType, delayMs: Int, isResponseBurst: Bool = false, isUngatedWnrBurst: Bool = false) {
     burstToken &+= 1
     let myToken = burstToken
 
@@ -748,6 +988,14 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     sending = true
     awaitingDidWrite = false
     writeTargetChar = rxChar
+
+    // isResponseBurst is passed in from enqueueWrite based on line prefix "response="
+    self.isResponseBurst = isResponseBurst
+    // isUngatedWnrBurst: uses same ungated timer-driven WNR path as response=, but no synthetic-OK timer
+    self.isUngatedWnrBurst = isUngatedWnrBurst
+    burstChunkIndex = 0
+    burstTotalChunks = chunks.count
+    burstStartTimeMs = currentTimeMs()
 
     guard writeTargetChar != nil else {
       emitLine("IOS_START_BURST_ABORT rxChar=nil")

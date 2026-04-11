@@ -30,9 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // AppLocalizations may be unavailable during early init; avoid force-unwrapping to prevent
-    // "Null check operator used on a null value" crashes. Use localizations only where needed.
-    // final t = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -45,13 +43,13 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 16),
           // -------------------------------------------------------------
 
-          Text('Program Filter', style: TextStyle(color: AppColors.textPrimary)),
+          Text(l10n.settingsProgramFilter, style: TextStyle(color: AppColors.textPrimary)),
           DropdownButton<ProgramMode>(
             value: _mode,
-            items: const [
-              DropdownMenuItem(value: ProgramMode.beginner, child: Text('Novice')),
-              DropdownMenuItem(value: ProgramMode.advanced, child: Text('Standard')),
-              DropdownMenuItem(value: ProgramMode.expert, child: Text('Expert')),
+            items: [
+              DropdownMenuItem(value: ProgramMode.beginner, child: Text(l10n.settingsNovice)),
+              DropdownMenuItem(value: ProgramMode.advanced, child: Text(l10n.settingsStandard)),
+              DropdownMenuItem(value: ProgramMode.expert, child: Text(l10n.settingsExpert)),
             ],
             onChanged: (v) {
               final newMode = v ?? ProgramMode.beginner;
@@ -69,14 +67,14 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 12),
           CheckboxListTile(
-            title: Text('Reconnect to last Cure Device',
+            title: Text(l10n.settingsReconnect,
                 style: TextStyle(color: AppColors.textPrimary)),
             value: _reconnect,
             onChanged: (v) => setState(() => _reconnect = v ?? false),
             activeColor: AppColors.primary,
           ),
           CheckboxListTile(
-            title: Text('Switch view after adding a program',
+            title: Text(l10n.settingsSwitchAfterAdd,
                 style: TextStyle(color: AppColors.textPrimary)),
             value: _switchAfterAdd,
             onChanged: (v) => setState(() => _switchAfterAdd = v ?? false),
@@ -84,22 +82,19 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Clients',
+            l10n.settingsClients,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
                 ?.copyWith(color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 8),
-          Text('Client management will be added later.',
-              style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           // Clients navigation
           Material(
             color: Colors.transparent,
             child: ListTile(
               leading: const Icon(Icons.person, color: AppColors.textPrimary),
-              title: Text(Localizations.localeOf(context).languageCode == 'de' ? 'Klienten' : 'Clients',
+              title: Text(l10n.settingsClients,
                   style: const TextStyle(color: AppColors.textPrimary)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
               onTap: () {
@@ -117,8 +112,8 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ListTile(
               leading:
               const Icon(Icons.restart_alt, color: AppColors.textPrimary),
-              title: const Text('Return to Start Page'),
-              subtitle: const Text('Show the start screen again'),
+              title: Text(l10n.settingsReturnToStart),
+              subtitle: Text(l10n.settingsReturnToStartSub),
               onTap: () {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const StartPage()),
@@ -138,6 +133,7 @@ class _CureBaseInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final svc = CureDeviceUnlockService.instance;
 
     final hw = (svc.hardwareInfo ?? '').trim();
@@ -152,7 +148,7 @@ class _CureBaseInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'CureBase Info',
+              l10n.settingsCureBaseInfo,
               style: Theme.of(context)
                   .textTheme
                   .titleMedium

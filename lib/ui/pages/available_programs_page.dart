@@ -12,6 +12,7 @@ import 'package:hbcure/models/program_item.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/ui/pages/program_detail_page.dart';
 import 'package:hbcure/services/my_programs_service.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
 
 class AvailableProgramsPage extends StatefulWidget {
   const AvailableProgramsPage({super.key});
@@ -24,11 +25,22 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
   final ProgramRepository _repo = ProgramRepository();
   List<ProgramCategory> _categories = [];
   bool _loading = true;
+  late final VoidCallback _langListener;
 
   @override
   void initState() {
     super.initState();
+    _langListener = () {
+      if (mounted) setState(() {});
+    };
+    ProgramLangController.instance.addListener(_langListener);
     _load();
+  }
+
+  @override
+  void dispose() {
+    ProgramLangController.instance.removeListener(_langListener);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -111,9 +123,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     final controller = TextEditingController();
     String query = ''; // <-- MUSS ausserhalb vom StatefulBuilder liegen
 
-    // local i18n helpers for the search action sheet
-    bool isDe() => ProgramLangController.instance.lang == ProgramLang.de;
-    String t(String de, String en) => isDe() ? de : en;
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet<void>(
       context: context,
@@ -160,9 +170,9 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 child: TextField(
                                   controller: controller,
                                   autofocus: true,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Search programs',
-                                    border: OutlineInputBorder(),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.searchPrograms,
+                                    border: const OutlineInputBorder(),
                                   ),
                                   onChanged: (v) {
                                     query = v;
@@ -184,7 +194,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         const Divider(height: 1),
                         Expanded(
                           child: list.isEmpty
-                              ? const Center(child: Text('No results'))
+                              ? Center(child: Text(l10n.noResults))
                               : ListView.separated(
                                   itemCount: list.length,
                                   separatorBuilder: (_, __) => const Divider(height: 1),
@@ -220,7 +230,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                     const SizedBox(height: 8),
                                                     ListTile(
                                                       leading: const Icon(Icons.play_arrow, color: AppColors.textPrimary),
-                                                      title: Text(t('Jetzt abspielen', 'Play now'), style: const TextStyle(color: AppColors.textPrimary)),
+                                                      title: Text(l10n.playNow, style: const TextStyle(color: AppColors.textPrimary)),
                                                       onTap: () {
                                                         Navigator.of(actionCtx).pop(); // close actions
                                                         Navigator.of(ctx).pop(); // close search sheet
@@ -235,20 +245,20 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                     ),
                                                     ListTile(
                                                       leading: const Icon(Icons.favorite_border, color: AppColors.textPrimary),
-                                                      title: Text(t('Zu My Programs hinzufügen', 'Add to My Programs'), style: const TextStyle(color: AppColors.textPrimary)),
+                                                      title: Text(l10n.addToMyPrograms, style: const TextStyle(color: AppColors.textPrimary)),
                                                       onTap: () async {
                                                         final svc = MyProgramsService();
                                                         await svc.add(p.id);
                                                         if (!context.mounted) return;
                                                         Navigator.of(actionCtx).pop(); // close actions
                                                         ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(content: Text(t('Hinzugefügt zu My Programs', 'Added to My Programs'))),
+                                                          SnackBar(content: Text(l10n.addedToMyPrograms)),
                                                         );
                                                       },
                                                     ),
                                                     ListTile(
                                                       leading: const Icon(Icons.info_outline, color: AppColors.textPrimary),
-                                                      title: Text(t('Details öffnen', 'Open details'), style: const TextStyle(color: AppColors.textPrimary)),
+                                                      title: Text(l10n.openDetails, style: const TextStyle(color: AppColors.textPrimary)),
                                                       onTap: () {
                                                         Navigator.of(actionCtx).pop(); // close actions
                                                         Navigator.of(ctx).pop(); // close search sheet
@@ -288,6 +298,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final langCode =
     (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
@@ -313,10 +324,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  ProgramNameLocalizer.instance.displayName(
-                    keyEn: 'Available Programs',
-                    langCode: langCode,
-                  ),
+                  l10n.availableProgramsTitle,
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge
@@ -372,13 +380,9 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                           ),
                           title: Builder(builder: (_) {
                             // HOTFIX: special-case the known 'seven_chakras' top-folder id
-                            final isDe = ProgramLangController.instance.lang ==
-                                ProgramLang.de;
                             final id = fixedCategory.id;
                             final titleText = (id == 'seven_chakras')
-                                ? (isDe
-                                ? '7 Chakra Frequenzen'
-                                : '7 Chakra Frequencies')
+                                ? l10n.sevenChakraFrequencies
                                 : ProgramNameLocalizer.instance.displayName(
                               keyEn: fixedCategory.title,
                               langCode: langCode,
@@ -409,17 +413,16 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
 
                             if (isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Diese Kategorie ist aktuell leer.')),
+                                SnackBar(
+                                    content: Text(l10n.categoryEmpty)),
                               );
                               return;
                             }
 
                             if (modeNow == ProgramMode.beginner && isYellow) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Diese Kategorie erscheint erst im Standard-Modus.')),
+                                SnackBar(
+                                    content: Text(l10n.categoryNotAvailableInMode)),
                               );
                               return;
                             }

@@ -136,6 +136,33 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Intensity'**
   String get intensity;
+
+  // --- Devices page ---
+  String get devicesTitle;
+  String get devicesScan;
+  String get devicesScanning;
+  String get devicesAdapter;
+  String get devicesBluetoothOff;
+  String get devicesBluetoothUnauthorized;
+  String get devicesBluetoothUnknown;
+  String get devicesScanError;
+  String get devicesAvailableDevices;
+  String get devicesCureDevice;
+  String get devicesNoDeviceConnected;
+  String get devicesTipScan;
+  String devicesFoundCount(int count);
+  String get devicesNoDevicesDiscovered;
+  String get devicesScanFailed;
+  String get devicesConnected;
+  String get devicesDisconnect;
+  String get devicesConnect;
+  // adapter state labels
+  String get btStateOn;
+  String get btStateOff;
+  String get btStateUnauthorized;
+  String get btStateTurningOn;
+  String get btStateTurningOff;
+  String get btStateUnknown;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

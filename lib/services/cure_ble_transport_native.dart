@@ -133,6 +133,14 @@ class CureBleTransportNative implements CureBleTransport {
     }
   }
 
+  /// Returns true if the native transport currently has an active BLE connection.
+  /// The native plugin emits state events like "READY", "CONNECTED", "DISCONNECTED".
+  bool get isConnected {
+    final s = _latestCentralState?.toUpperCase();
+    if (s == null) return false;
+    return s == 'READY' || s == 'CONNECTED';
+  }
+
   /// Wait until native central reports poweredOn. Resolves immediately if cached state already poweredOn.
   Future<void> waitForCentralPoweredOn({Duration timeout = const Duration(seconds: 8)}) async {
     if (_latestCentralState == 'poweredOn') return;

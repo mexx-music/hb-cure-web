@@ -205,8 +205,18 @@ class BleCureDeviceService {
         final rssi = sr.rssi;
         if (kDebugMode) debugPrint('HBDBG scanResult: name="$name" advName="$advName" id=$id rssi=$rssi');
         final combined = (name + ' ' + id).toLowerCase();
-        if (combined.contains('curebase')) {
+        if (kDebugMode) {
+          // In debug builds accept all discovered devices to test whether the
+          // original filter was too narrow (only 'curebase'). In release builds
+          // keep the original filter logic.
           _found[id] = sr.device;
+        } else {
+          if (combined.contains('curebase')) {
+            _found[id] = sr.device;
+          }
+        }
+        if (kDebugMode) {
+          debugPrint('HBDBG scanFilter: accepted id=$id name="$name" advName="$advName" combined="$combined"');
         }
       }
       _devicesCtrl?.add(_found.values.toList());

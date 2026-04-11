@@ -52,6 +52,8 @@ class MainActivity : FlutterActivity() {
         private var ANDROID_CHALL_2650_LOGGED: Boolean = false
         // One-time log for the exact runtime challenge requested for parity test
         private var ANDROID_RUNTIME_SIG_LOGGED: Boolean = false
+        // One-time log for challenge 014781... (iOS parity check)
+        private var ANDROID_SIG_014781_LOGGED: Boolean = false
     }
 
     private lateinit var methodChannel: MethodChannel
@@ -177,6 +179,28 @@ class MainActivity : FlutterActivity() {
                                     Log.w("CureCrypto", "ANDROID_SIG_2650 failed", e)
                                 }
                                 ANDROID_CHALL_2650_LOGGED = true
+                            }
+                            // One-time log for the newly requested runtime challenge (from QA)
+                            if (!ANDROID_RUNTIME_SIG_LOGGED) {
+                                val requested = "592F63ABB40870DB06733F7683BCA1B564578F2AD39BB9D59B20A27D63972EE7"
+                                try {
+                                    val sigRuntime2 = CureCrypto.buildUnlockResponse(requested)
+                                    Log.d("CureCrypto", "ANDROID_SIG_RUNTIME=$sigRuntime2")
+                                } catch (e: Exception) {
+                                    Log.w("CureCrypto", "ANDROID_SIG_RUNTIME failed", e)
+                                }
+                                ANDROID_RUNTIME_SIG_LOGGED = true
+                            }
+                            // One-time log for challenge 014781... (iOS parity check)
+                            if (!ANDROID_SIG_014781_LOGGED) {
+                                val chall014781 = "014781D97C2D01F522E6E4CD4574622C8641F7D27F7333EAE4F768B475BA2977"
+                                try {
+                                    val sig014781 = CureCrypto.buildUnlockResponse(chall014781)
+                                    Log.d("CureCrypto", "ANDROID_SIG_014781=$sig014781")
+                                } catch (e: Exception) {
+                                    Log.w("CureCrypto", "ANDROID_SIG_014781 failed", e)
+                                }
+                                ANDROID_SIG_014781_LOGGED = true
                             }
                         } catch (e: Exception) {
                             Log.w(TAG, "TEMP DEBUG signature log failed", e)
@@ -313,6 +337,8 @@ class MainActivity : FlutterActivity() {
         private var writeInFlight: Boolean = false
         // Flag: waiting for CCC descriptor write to finish before completing connect
         private var awaitingCccd: Boolean = false
+        // Diagnostic: track whether last sent command was response= (for ANDROID_RESPONSE_RESULT logging)
+        private var awaitingResponseOk: Boolean = false
 
         private fun completePendingConnectSuccess() {
             val pending = pendingConnectResult ?: return
@@ -509,10 +535,26 @@ class MainActivity : FlutterActivity() {
                 else -> 20L
             }
 
+            // ANDROID_RESPONSE diagnostic: log meta for response= commands only
+            val isResponseCmd = line.startsWith("response=")
+            val writeTypeLabel = if (rx.writeType == WRITE_TYPE_NO_RESPONSE) "WRITE_TYPE_NO_RESPONSE" else "WRITE_TYPE_DEFAULT"
+            if (isResponseCmd) {
+                Log.d(TAG, "ANDROID_RESPONSE_WRITE_META totalBytes=${full.size} totalChunks=${chunks.size} writeType=$writeTypeLabel chunkSize=$chunkSize delayMs=$perChunkDelayMs")
+                val lastChunkHex = chunks.lastOrNull()?.joinToString(" ") { String.format("%02X", it) } ?: ""
+                val hasCrlfInLast = full.size >= 2 && full[full.size - 2] == 0x0D.toByte() && full[full.size - 1] == 0x0A.toByte()
+                Log.d(TAG, "ANDROID_RESPONSE_CRLF appendedCRLF=$hasCrlfInLast lastChunkHex=$lastChunkHex")
+                awaitingResponseOk = true
+            }
+            val burstStartMs = if (isResponseCmd) System.currentTimeMillis() else 0L
+
             fun sendChunk(i: Int) {
                 if (burstToken != token) return // cancelled
                 if (i >= chunks.size) {
                     Log.d(TAG, "enqueueWrite: burst done (chunks=${chunks.size})")
+                    if (isResponseCmd) {
+                        val elapsed = System.currentTimeMillis() - burstStartMs
+                        Log.d(TAG, "ANDROID_RESPONSE_DONE totalChunks=${chunks.size} elapsedMs=$elapsed")
+                    }
                     return
                 }
                 if (writeInFlight) {
@@ -525,9 +567,24 @@ class MainActivity : FlutterActivity() {
 
                 Log.d(TAG, "burst: write chunk ${i + 1}/${chunks.size}, len=${chunk.size}")
 
+                // ANDROID_RESPONSE diagnostic per chunk
+                if (isResponseCmd) {
+                    val hexStr = chunk.joinToString(" ") { String.format("%02X", it) }
+                    val asciiStr = chunk.map { b ->
+                        val c = b.toInt() and 0xFF
+                        if (c in 32..126) c.toChar() else '.'
+                    }.joinToString("")
+                    val hasCrlf = chunk.size >= 2 &&
+                        chunk[chunk.size - 2] == 0x0D.toByte() &&
+                        chunk[chunk.size - 1] == 0x0A.toByte()
+                    val tsMs = System.currentTimeMillis() - burstStartMs
+                    Log.d(TAG, "ANDROID_RESPONSE_CHUNK idx=${i + 1}/${chunks.size} len=${chunk.size} type=$writeTypeLabel hasCRLF=$hasCrlf tsMs=$tsMs ascii=\"$asciiStr\" hex=$hexStr")
+                }
+
                 val ok = gatt.writeCharacteristic(rx)
                 if (!ok) {
                     Log.w(TAG, "burst: writeCharacteristic returned false at chunk ${i + 1}/${chunks.size} -> disconnect for recovery")
+                    if (isResponseCmd) Log.w(TAG, "ANDROID_RESPONSE_RESULT writeCharacteristic=false at chunk ${i + 1}")
                     try { gatt.disconnect() } catch (_: Exception) {}
                     return
                 }
@@ -578,6 +635,11 @@ class MainActivity : FlutterActivity() {
                 pr.collected.add(trimmed)
                 val token = trimmed.split(Regex("\\s+")).firstOrNull()?.uppercase() ?: ""
                 if (token == "OK" || token == "ERROR") {
+                    // Diagnostic: if this OK/ERROR closes a response= command, log it
+                    if (awaitingResponseOk) {
+                        awaitingResponseOk = false
+                        Log.d(TAG, "ANDROID_RESPONSE_RESULT result=$token forCommand=response=")
+                    }
                     pr.completed = true
                     pendingRequest = null
                     try {

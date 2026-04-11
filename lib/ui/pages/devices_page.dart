@@ -11,6 +11,7 @@ import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_compiler.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'package:hbcure/services/qt_remote_program_encoder.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -163,7 +164,7 @@ class _DevicesPageState extends State<DevicesPage> {
                 ElevatedButton(
                   style: connectedBlueStyle,
                   onPressed: null,
-                  child: const Text('Connected'),
+                  child: Text(AppLocalizations.of(context)!.devicesConnected),
                 ),
                 const SizedBox(width: 8),
                 Row(
@@ -177,7 +178,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         });
                         _ble.disconnect(d);
                       },
-                      child: const Text('Disconnect'),
+                      child: Text(AppLocalizations.of(context)!.devicesDisconnect),
                     ),
                     const SizedBox(width: 6),
                     IconButton(
@@ -233,7 +234,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         });
                         _ble.connect(d);
                       },
-                      child: const Text('Connect'),
+                      child: Text(AppLocalizations.of(context)!.devicesConnect),
                     ),
                     const SizedBox(width: 6),
                     IconButton(
@@ -586,7 +587,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Devices',
+                      AppLocalizations.of(context)!.devicesTitle,
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge
@@ -609,7 +610,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           final msg = e.toString();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Scan failed: $msg')),
+                              SnackBar(content: Text('${AppLocalizations.of(context)!.devicesScanFailed}: $msg')),
                             );
                           }
                           if (mounted) {
@@ -629,7 +630,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         }
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Scan'),
+                      label: Text(AppLocalizations.of(context)!.devicesScan),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                       ),
@@ -649,7 +650,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Scanning...',
+                          AppLocalizations.of(context)!.devicesScanning,
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
@@ -660,25 +661,36 @@ class _DevicesPageState extends State<DevicesPage> {
                 StreamBuilder<BluetoothAdapterState>(
                   stream: FlutterBluePlus.adapterState,
                   builder: (context, snap) {
-                    final stateStr =
-                    snap.hasData ? snap.data.toString() : 'unknown';
+                    final t = AppLocalizations.of(context)!;
+                    final state = snap.data;
+                    final String stateLabel;
                     String hint = '';
-                    if (snap.hasData) {
-                      final s = stateStr.toLowerCase();
-                      if (s.contains('off')) {
-                        hint = 'Bluetooth ist deaktiviert. Bitte einschalten.';
-                      } else if (s.contains('unauthorized')) {
-                        hint =
-                        'Bluetooth Berechtigung verweigert. Einstellungen → Bluetooth prüfen.';
-                      } else if (s.contains('unknown')) {
-                        hint = 'Bluetooth Status unbekannt.';
+                    if (state == null) {
+                      stateLabel = t.btStateUnknown;
+                    } else {
+                      switch (state) {
+                        case BluetoothAdapterState.on:
+                          stateLabel = t.btStateOn;
+                        case BluetoothAdapterState.off:
+                          stateLabel = t.btStateOff;
+                          hint = t.devicesBluetoothOff;
+                        case BluetoothAdapterState.unauthorized:
+                          stateLabel = t.btStateUnauthorized;
+                          hint = t.devicesBluetoothUnauthorized;
+                        case BluetoothAdapterState.turningOn:
+                          stateLabel = t.btStateTurningOn;
+                        case BluetoothAdapterState.turningOff:
+                          stateLabel = t.btStateTurningOff;
+                        default:
+                          stateLabel = t.btStateUnknown;
+                          hint = t.devicesBluetoothUnknown;
                       }
                     }
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Adapter: $stateStr',
+                          '${t.devicesAdapter}: $stateLabel',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -694,7 +706,7 @@ class _DevicesPageState extends State<DevicesPage> {
                           ),
                         if (_scanError != null)
                           Text(
-                            'Scan error: $_scanError',
+                            '${t.devicesScanError}: $_scanError',
                             style: const TextStyle(
                               color: Colors.orange,
                               fontSize: 12,
@@ -707,7 +719,7 @@ class _DevicesPageState extends State<DevicesPage> {
 
                 const SizedBox(height: 8),
                 Text(
-                  'Available Cure Devices',
+                  AppLocalizations.of(context)!.devicesAvailableDevices,
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -738,7 +750,7 @@ class _DevicesPageState extends State<DevicesPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Cure Device',
+                                AppLocalizations.of(context)!.devicesCureDevice,
                                 style: TextStyle(
                                   color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w700,
@@ -746,7 +758,7 @@ class _DevicesPageState extends State<DevicesPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'No device connected',
+                                AppLocalizations.of(context)!.devicesNoDeviceConnected,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                 ),
@@ -754,14 +766,14 @@ class _DevicesPageState extends State<DevicesPage> {
                               const SizedBox(height: 6),
                               if (devices.isEmpty)
                                 Text(
-                                  'Tip: Press Scan to look for CureBase devices',
+                                  AppLocalizations.of(context)!.devicesTipScan,
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
                                 )
                               else
                                 Text(
-                                  '${devices.length} device(s) found',
+                                  AppLocalizations.of(context)!.devicesFoundCount(devices.length),
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
@@ -777,7 +789,7 @@ class _DevicesPageState extends State<DevicesPage> {
                             padding: const EdgeInsets.only(top: 18),
                             child: Center(
                               child: Text(
-                                'No CureBase devices discovered',
+                                AppLocalizations.of(context)!.devicesNoDevicesDiscovered,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                 ),

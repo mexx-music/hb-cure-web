@@ -1,4 +1,5 @@
 import Foundation
+import CommonCrypto
 
 /// Minimal safe stub for CureCrypto on iOS.
 /// Purpose: keep the same API surface but avoid requiring the native C secp256k1 module
@@ -17,9 +18,9 @@ final class CureCryptoIos {
     private static let privHex = "E40783F681A5BB852CAB1E106B6641EFB43C1923C1EBE25CA36865CDFAB06548"
 
     // Toggle which signature variant to return: false = raw r||s, true = normalized (low-S) r||s
-    // Use this flag to quickly switch parity testing between raw and normalized outputs.
-    // We set true to match Android's s-handling for parity testing (low-S normalization).
-    private static let useNormalizedSignature: Bool = true
+    // Android/Python use raw (non-normalized) secp256k1 signature and the firmware expects that.
+    // Do NOT normalize — the firmware rejects low-S normalized signatures.
+    private static let useNormalizedSignature: Bool = false
 
     /// Returns the private key hex to use for signing. Priority:
     /// 1) Environment variable CURE_PRIV_HEX (useful for CI / debug)
@@ -54,11 +55,29 @@ final class CureCryptoIos {
         // Debug: emit challenge and msg bytes (hex) to device log (do NOT reveal private key)
         NSLog("IOS_DEBUG_CHALLENGE=%@", cleaned)
         let msgHex = msgData.map { String(format: "%02x", $0) }.joined()
-        NSLog("IOS_DEBUG_MSG=%@", msgHex)
+        NSLog("IOS_DEBUG_MSG_RAW=%@", msgHex)
+        NSLog("IOS_DEBUG_MSG_RAW_LEN=%d", msgData.count)
+
+        // CRITICAL: Android BouncyCastle ECDSASigner(HMacDSAKCalculator(SHA256Digest()))
+        // internally hashes the message with SHA-256 before signing.
+        // libsecp256k1 secp256k1_ecdsa_sign() expects ALREADY-HASHED 32 bytes.
+        // Therefore we must SHA-256 the challenge bytes first to match Android.
+        var sha256out = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        msgData.withUnsafeBytes { buf in
+            _ = CC_SHA256(buf.baseAddress, CC_LONG(msgData.count), &sha256out)
+        }
+        let hashedData = Data(sha256out)
+        let hashedHex = sha256out.map { String(format: "%02x", $0) }.joined()
+        NSLog("IOS_DEBUG_MSG_SHA256=%@", hashedHex)
+        NSLog("IOS_DEBUG_MSG_SHA256_LEN=%d", hashedData.count)
 
         // Private key bytes - obtain via getter (env / userdefaults / embedded)
         let keyHex = getPrivateKeyHex()
         guard let privData = Data(hex: keyHex), privData.count == 32 else { throw CureCryptoError.badPrivLen }
+
+        // Log key fingerprint (first 8 + last 8 hex chars only, NEVER full key)
+        NSLog("IOS_DEBUG_KEY_FINGERPRINT first8=%@ last8=%@ len=%d", String(keyHex.prefix(8)), String(keyHex.suffix(8)), privData.count)
+        NSLog("IOS_DEBUG_SIGNING_API=libsecp256k1_C_API_secp256k1_ecdsa_sign")
 
         // Create secp256k1 context
         guard let ctx = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN)) else { throw CureCryptoError.secpCreateContext }
@@ -71,11 +90,12 @@ final class CureCryptoIos {
         }
         if okKey != 1 { throw CureCryptoError.badPrivLen }
 
-        // Prepare buffers
+        // Prepare buffers — use SHA-256 hashed challenge (Android parity)
         var sig = secp256k1_ecdsa_signature()
-        var msg32 = [UInt8](msgData)
+        var msg32 = [UInt8](hashedData)
 
         // Sign (RFC6979 deterministic nonce when noncefp is nil)
+        // NOTE: msg32 is SHA256(challenge), matching Android BouncyCastle behavior
         let signOk = msg32.withUnsafeMutableBufferPointer { msgPtr -> Int32 in
             seckey.withUnsafeMutableBufferPointer { skPtr -> Int32 in
                 secp256k1_ecdsa_sign(ctx, &sig, msgPtr.baseAddress!, skPtr.baseAddress!, nil, nil)
@@ -122,6 +142,8 @@ final class CureCryptoIos {
         NSLog("IOS_DEBUG_SIG_RAW_REVHALVES=%@", rawRev)
         NSLog("IOS_DEBUG_SIG_NORM_REVHALVES=%@", normRev)
 
+        let sigSource = useNormalizedSignature ? "normalized_low_s" : "raw_secp256k1_signature"
+        NSLog("IOS_SIG_SOURCE=%@", sigSource)
         var result = useNormalizedSignature ? normHex : rawHex
 
         // If the signer accidentally produced a 65-byte compact (130 hex) signature
@@ -139,20 +161,8 @@ final class CureCryptoIos {
         // Additional explicit debug line required by request
         NSLog("IOS_DEBUG_SIG=%@", result)
 
-        // Parity test for known challenge: if this specific challenge is requested, log expected Android sig and actual
-        let parityChallenge = "202ED6CB1D7161FEA22CDD84A162FE7C34640BDB4AE10822816FE4762F9D6086".lowercased()
-        let expectedAndroidSig = "c9aa1076c29b1006073cc0c568768b47c73b7649786617a649a1ad49f25a7445fef90bbe38ec2724ca1442e1f0d11a5aeaea37edd3f47fc4ecc6446bee6e7574"
-        if cleaned.lowercased() == parityChallenge {
-            NSLog("IOS_PARITY_CHECK challenge=%@ expected=%@ produced=%@", cleaned, expectedAndroidSig, result)
-        }
-
-        // Temporary parity override for challenge 2650F8...: return exact Android signature to verify parity quickly.
-        let overrideChallenge = "2650F820DB423D9C9EC70872B16306F2C2C74F31F4794FBE0C879BC1C950961F".lowercased()
-        let androidSig2650 = "c4fe389461c35b3ad5b006a5bb4945bc7b792a912134cba34015384f601760ea66e8f3276aad80c25e4255e00b6b6cfa88f8cf0ffe4f18c4521f5ff4cca9266f"
-        if cleaned.lowercased() == overrideChallenge {
-            NSLog("IOS_PARITY_OVERRIDE challenge=%@ returning expected Android sig", cleaned)
-            result = androidSig2650
-        }
+        // No hardcoded parity overrides remain in this build. All requests will
+        // use the above signing path which logs produced signatures.
 
         NSLog("IOS_DEBUG_SIG_RETURNING=%@", String(result.prefix(16))) // log only prefix to avoid huge repeated logs
         return result.lowercased()

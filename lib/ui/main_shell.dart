@@ -17,6 +17,7 @@ import 'package:hbcure/services/program_catalog.dart';
 import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
 import 'package:hbcure/ui/pages/custom_frequencies_page.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -95,11 +96,11 @@ class _MainShellState extends State<MainShell> {
       // 3) Fallback: if still null -> use id itself
       keyEn ??= programId;
 
-      _keyEnByProgramId[programId] = keyEn!;
+      _keyEnByProgramId[programId] = keyEn;
     }
 
     return ProgramNameLocalizer.instance.displayName(
-      keyEn: keyEn!,
+      keyEn: keyEn,
       langCode: langCode,
     );
   }
@@ -136,6 +137,8 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     // Determine whether Expert mode is active (affects tabs/pages)
     final isExpert = AppMemory.instance.programMode == ProgramMode.expert;
 
@@ -152,9 +155,6 @@ class _MainShellState extends State<MainShell> {
     if (_currentIndex >= pages.length) {
       _currentIndex = pages.length - 1;
     }
-
-    // Bind bottom-nav labels to ProgramLangController
-    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -244,33 +244,32 @@ class _MainShellState extends State<MainShell> {
                 child: Row(
                   children: [
                     _NavTextTab(
-                      label: isDe ? 'Meine\nProgramme' : 'My\nPrograms',
+                      label: l10n.navMyPrograms,
                       selected: _currentIndex == 0,
                       onTap: () => setState(() => _currentIndex = 0),
                     ),
                     _NavTextTab(
-                      label:
-                      isDe ? 'Verfügbare\nProgramme' : 'Available\nPrograms',
+                      label: l10n.navAvailable,
                       selected: _currentIndex == 1,
                       onTap: () => setState(() => _currentIndex = 1),
                     ),
-
                     if (isExpert)
                       _NavTextTab(
-                        label: isDe ? 'Eigene\nFrequenzen' : 'Custom\nFrequencies',
+                        label: l10n.navCustomFrequencies,
                         selected: _currentIndex == 2,
                         onTap: () => setState(() => _currentIndex = 2),
                       ),
-
                     _NavTextTab(
-                      label: isDe ? 'Geräte' : 'Devices',
+                      label: l10n.navDevices,
                       selected: _currentIndex == (isExpert ? 3 : 2),
-                      onTap: () => setState(() => _currentIndex = (isExpert ? 3 : 2)),
+                      onTap: () =>
+                          setState(() => _currentIndex = (isExpert ? 3 : 2)),
                     ),
                     _NavTextTab(
-                      label: isDe ? 'Einstellungen' : 'Settings',
+                      label: l10n.navSettings,
                       selected: _currentIndex == (isExpert ? 4 : 3),
-                      onTap: () => setState(() => _currentIndex = (isExpert ? 4 : 3)),
+                      onTap: () =>
+                          setState(() => _currentIndex = (isExpert ? 4 : 3)),
                     ),
                   ],
                 ),
@@ -283,20 +282,22 @@ class _MainShellState extends State<MainShell> {
   }
 
   String _appBarTitle(BuildContext context) {
-    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
     final isExpert = AppMemory.instance.programMode == ProgramMode.expert;
+    final l10n = AppLocalizations.of(context)!;
 
     switch (_currentIndex) {
       case 0:
-        return isDe ? 'Meine Programme' : 'My Programs';
+        return l10n.myProgramsTitle;
       case 1:
-        return isDe ? 'Verfügbare Programme' : 'Available Programs';
+        return l10n.availableProgramsTitle;
       case 2:
-        return isExpert ? (isDe ? 'Eigene Frequenzen' : 'Custom Frequencies') : (isDe ? 'Geräte' : 'Devices');
+        return isExpert
+            ? l10n.customFrequenciesTitle
+            : l10n.devicesTitle;
       case 3:
-        return isExpert ? (isDe ? 'Geräte' : 'Devices') : (isDe ? 'Einstellungen' : 'Settings');
+        return isExpert ? l10n.devicesTitle : l10n.navSettings;
       case 4:
-        return isDe ? 'Einstellungen' : 'Settings';
+        return l10n.navSettings;
       default:
         return '';
     }

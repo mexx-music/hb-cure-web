@@ -181,6 +181,94 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Available Programs'**
   String get availableProgramsTitle;
+
+  // --- My Programs page ---
+  String get playPlaylist;
+  String get noClient;
+  String get settingsSaved;
+  String get chooseClient;
+  String get customFrequency;
+  String get unknownProgram;
+  String get playlistUploadFailed;
+  String get singleStartFailed;
+
+  // --- Custom Frequencies nav/title ---
+  String get navCustomFrequencies;
+  String get customFrequenciesTitle;
+
+  // --- Custom Frequencies page ---
+  String get cfExpertOnly;
+  String get cfNoEntries;
+  String get cfNoEntriesHint;
+  String get cfFrequency;
+  String get cfNote;
+  String get cfInfoText;
+  String get cfRemoveFromMyPrograms;
+  String get cfRemovedFromMyPrograms;
+  String get cfStart;
+  String get cfStartFlowNext;
+  String get cfEdit;
+  String get cfDelete;
+  String get cfDeleted;
+  String get cfDefaultName;
+  String get cfFreqHint;
+  String get cfElectricFields;
+  String get cfMagneticFields;
+  String get cfCancel;
+  String get cfSave;
+  String get cfErrorName;
+  String get cfErrorFrequency;
+
+  // --- Available Programs page ---
+  String get searchPrograms;
+  String get noResults;
+  String get playNow;
+  String get addToMyPrograms;
+  String get addedToMyPrograms;
+  String get openDetails;
+  String get sevenChakraFrequencies;
+  String get categoryEmpty;
+  String get categoryNotAvailableInMode;
+
+  // --- Settings page ---
+  String get settingsProgramFilter;
+  String get settingsNovice;
+  String get settingsStandard;
+  String get settingsExpert;
+  String get settingsReconnect;
+  String get settingsSwitchAfterAdd;
+  String get settingsClients;
+  String get settingsClientsMgmt;
+  String get settingsReturnToStart;
+  String get settingsReturnToStartSub;
+  String get settingsCureBaseInfo;
+
+  // --- Devices page ---
+  String get devicesTitle;
+  String get devicesScan;
+  String get devicesScanning;
+  String get devicesAdapter;
+  String get devicesBluetoothOff;
+  String get devicesBluetoothUnauthorized;
+  String get devicesBluetoothUnknown;
+  String get devicesScanError;
+  String get devicesAvailableDevices;
+  String get devicesCureDevice;
+  String get devicesNoDeviceConnected;
+  String get devicesTipScan;
+  String devicesFoundCount(int count);
+  String get devicesNoDevicesDiscovered;
+  String get devicesScanFailed;
+  String get devicesConnected;
+  String get devicesDisconnect;
+  String get devicesConnect;
+  // adapter state labels
+  String get btStateOn;
+  String get btStateOff;
+  String get btStateUnauthorized;
+  String get btStateTurningOn;
+  String get btStateTurningOff;
+  String get btStateUnknown;
 }
 
 class _AppLocalizationsDelegate

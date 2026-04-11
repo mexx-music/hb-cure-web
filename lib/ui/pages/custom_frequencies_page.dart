@@ -8,6 +8,7 @@ import 'package:hbcure/services/custom_frequencies_service.dart';
 import 'package:hbcure/services/custom_frequencies_store.dart' as store;
 import 'package:hbcure/services/my_programs_service.dart';
 import 'package:hbcure/services/custom_frequency_name_store.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
 
 class CustomFrequenciesPage extends StatefulWidget {
   const CustomFrequenciesPage({super.key});
@@ -20,18 +21,33 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   // Use the central service storage
   List<CustomFrequencyEntry> get _entries => CustomFrequenciesService.instance.items;
   final _myPrograms = MyProgramsService.instance;
+  late final VoidCallback _langListener;
 
-  bool get _isDe => ProgramLangController.instance.lang == ProgramLang.de;
+  @override
+  void initState() {
+    super.initState();
+    _langListener = () {
+      if (mounted) setState(() {});
+    };
+    ProgramLangController.instance.addListener(_langListener);
+  }
+
+  @override
+  void dispose() {
+    ProgramLangController.instance.removeListener(_langListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isExpert = AppMemory.instance.programMode == ProgramMode.expert;
 
     if (!isExpert) {
       return GradientBackground(
         child: Center(
           child: Text(
-            _isDe ? 'Nur im Expertenmodus verfügbar.' : 'Only available in Expert mode.',
+            l10n.cfExpertOnly,
             style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
           ),
         ),
@@ -56,14 +72,14 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _isDe ? 'Eigene Frequenzen' : 'Custom Frequencies',
+                    l10n.customFrequenciesTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.textPrimary,
                           fontSize: 18,
                         ),
                   ),
                   IconButton(
-                    tooltip: _isDe ? 'Info' : 'Info',
+                    tooltip: l10n.cfNote,
                     icon: const Icon(Icons.info_outline, color: AppColors.textPrimary),
                     onPressed: _showInfoDialog,
                   ),
@@ -94,6 +110,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   }
 
   Widget _emptyCard() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -112,7 +129,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isDe ? 'Noch keine Einträge' : 'No entries yet',
+                  l10n.cfNoEntries,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -120,9 +137,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _isDe
-                      ? 'Tippe auf +, um eine eigene Frequenz anzulegen.'
-                      : 'Tap + to create a custom frequency.',
+                  l10n.cfNoEntriesHint,
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ],
@@ -134,6 +149,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   }
 
   Widget _entryTile(CustomFrequencyEntry e, int index) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
@@ -146,9 +162,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
           style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          '${_isDe ? 'Frequenz' : 'Frequency'}: ${e.frequencyHz.toStringAsFixed(_needsDecimals(e.frequencyHz) ? 2 : 0)} Hz • '
-          '${_isDe ? 'Dauer' : 'Duration'}: ${e.durationMin}m • '
-          '${_isDe ? 'Intensität' : 'Intensity'}: ${e.intensityPct}%',
+          '${l10n.cfFrequency}: ${e.frequencyHz.toStringAsFixed(_needsDecimals(e.frequencyHz) ? 2 : 0)} Hz • '
+          '${l10n.duration}: ${e.durationMin}m • '
+          '${l10n.intensity}: ${e.intensityPct}%',
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
@@ -160,28 +176,25 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   bool _needsDecimals(double v) => (v - v.roundToDouble()).abs() > 0.000001;
 
   void _showInfoDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.cardBackground,
         title: Text(
-          _isDe ? 'Hinweis' : 'Note',
+          l10n.cfNote,
           style: const TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
-          _isDe
-              ? 'Hier kannst du im Expertenmodus eigene Frequenzen (eine Zahl) speichern und starten. '
-                'Diese Einträge sind experimentell und nicht Teil der kuratierten Programmliste.'
-              : 'In Expert mode you can save and start custom frequencies (a single number). '
-                'These entries are experimental and not part of the curated program list.',
+          l10n.cfInfoText,
           style: const TextStyle(color: AppColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              _isDe ? 'OK' : 'OK',
-              style: const TextStyle(color: AppColors.accentGreen),
+            child: const Text(
+              'OK',
+              style: TextStyle(color: AppColors.accentGreen),
             ),
           ),
         ],
@@ -193,7 +206,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
     final created = await showDialog<CustomFrequencyEntry>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _CustomFrequencyDialog(isDe: _isDe),
+      builder: (_) => const _CustomFrequencyDialog(),
     );
 
     if (created == null) return;
@@ -222,6 +235,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   }
 
   void _openEntryActions(CustomFrequencyEntry e, int index) async {
+    final l10n = AppLocalizations.of(context)!;
     final inMy = await _myPrograms.contains(e.id);
     if (!mounted) return;
 
@@ -246,8 +260,8 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                   ),
                   title: Text(
                     inMy
-                        ? (_isDe ? 'Aus Meine Programme entfernen' : 'Remove from My Programs')
-                        : (_isDe ? 'Zu Meine Programme hinzufügen' : 'Add to My Programs'),
+                        ? l10n.cfRemoveFromMyPrograms
+                        : l10n.addToMyPrograms,
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                   onTap: () async {
@@ -262,8 +276,8 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                       SnackBar(
                         content: Text(
                           inMy
-                              ? (_isDe ? 'Entfernt aus Meine Programme.' : 'Removed from My Programs.')
-                              : (_isDe ? 'Hinzugefügt zu Meine Programme.' : 'Added to My Programs.'),
+                              ? l10n.cfRemovedFromMyPrograms
+                              : l10n.addedToMyPrograms,
                         ),
                       ),
                     );
@@ -271,23 +285,23 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.play_arrow, color: AppColors.textPrimary),
-                  title: Text(_isDe ? 'Starten' : 'Start', style: const TextStyle(color: AppColors.textPrimary)),
+                  title: Text(l10n.cfStart, style: const TextStyle(color: AppColors.textPrimary)),
                   onTap: () {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(_isDe ? 'Start kommt als nächstes.' : 'Start flow is next.')),
+                      SnackBar(content: Text(l10n.cfStartFlowNext)),
                     );
                   },
                 ),
                 ListTile(
                   leading: const Icon(Icons.edit, color: AppColors.textPrimary),
-                  title: Text(_isDe ? 'Bearbeiten' : 'Edit', style: const TextStyle(color: AppColors.textPrimary)),
+                  title: Text(l10n.cfEdit, style: const TextStyle(color: AppColors.textPrimary)),
                   onTap: () async {
                     Navigator.pop(ctx);
                     final updated = await showDialog<CustomFrequencyEntry>(
                       context: context,
                       barrierDismissible: false,
-                      builder: (_) => _CustomFrequencyDialog(isDe: _isDe, initial: e),
+                      builder: (_) => _CustomFrequencyDialog(initial: e),
                     );
                     if (updated == null) return;
                     CustomFrequenciesService.instance.upsert(updated);
@@ -299,7 +313,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete, color: AppColors.accentRed),
-                  title: Text(_isDe ? 'Löschen' : 'Delete', style: const TextStyle(color: AppColors.accentRed)),
+                  title: Text(l10n.cfDelete, style: const TextStyle(color: AppColors.accentRed)),
                   onTap: () async {
                     Navigator.pop(ctx);
                     CustomFrequenciesService.instance.removeById(e.id);
@@ -311,7 +325,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                     } catch (_) {}
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(_isDe ? 'Gelöscht.' : 'Deleted.')),
+                      SnackBar(content: Text(l10n.cfDeleted)),
                     );
                   },
                 ),
@@ -326,10 +340,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
 }
 
 class _CustomFrequencyDialog extends StatefulWidget {
-  final bool isDe;
   final CustomFrequencyEntry? initial;
 
-  const _CustomFrequencyDialog({required this.isDe, this.initial});
+  const _CustomFrequencyDialog({this.initial});
 
   @override
   State<_CustomFrequencyDialog> createState() => _CustomFrequencyDialogState();
@@ -349,15 +362,15 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
   String _magneticWaveform = 'sine';
 
   String? _error;
-
-  bool get _isDe => widget.isDe;
+  bool _defaultNameSet = false;
 
   @override
   void initState() {
     super.initState();
     final init = widget.initial;
-    _nameCtrl = TextEditingController(text: init?.name ?? (_isDe ? 'Mein Cure Programm' : 'My Cure Program'));
+    _nameCtrl = TextEditingController(text: init?.name ?? '');
     _freqCtrl = TextEditingController(text: init != null ? init.frequencyHz.toString() : '963');
+    _defaultNameSet = init != null;
 
     if (init != null) {
       _durationMin = init.durationMin;
@@ -378,30 +391,36 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isDe ? 'Eigene Frequenz' : 'Custom Frequency';
+    final l10n = AppLocalizations.of(context)!;
+
+    // Set localized default name once (only for new entries)
+    if (!_defaultNameSet) {
+      _nameCtrl.text = l10n.cfDefaultName;
+      _defaultNameSet = true;
+    }
 
     return AlertDialog(
       backgroundColor: AppColors.cardBackground,
-      title: Text(title, style: const TextStyle(color: AppColors.textPrimary)),
+      title: Text(l10n.customFrequency, style: const TextStyle(color: AppColors.textPrimary)),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _label(_isDe ? 'Name' : 'Name'),
+            _label('Name'), // identical in DE/EN
             const SizedBox(height: 6),
-            _textField(_nameCtrl, hint: _isDe ? 'Name' : 'Name', keyboard: TextInputType.text),
+            _textField(_nameCtrl, hint: 'Name', keyboard: TextInputType.text),
             const SizedBox(height: 12),
 
-            _label(_isDe ? 'Frequenz' : 'Frequency'),
+            _label(l10n.cfFrequency),
             const SizedBox(height: 6),
             _textField(
               _freqCtrl,
-              hint: _isDe ? 'z.B. 963' : 'e.g. 963',
+              hint: l10n.cfFreqHint,
               keyboard: const TextInputType.numberWithOptions(decimal: true),
             ),
 
             const SizedBox(height: 14),
-            _rowLabel(_isDe ? 'Dauer' : 'Duration', '${_durationMin}m'),
+            _rowLabel(l10n.duration, '${_durationMin}m'),
             Slider(
               value: _durationMin.toDouble(),
               min: 1,
@@ -411,7 +430,7 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
             ),
 
             const SizedBox(height: 8),
-            _rowLabel(_isDe ? 'Intensität' : 'Intensity', '$_intensity%'),
+            _rowLabel(l10n.intensity, '$_intensity%'),
             Slider(
               value: _intensity.toDouble(),
               min: 0,
@@ -421,7 +440,7 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
             ),
 
             const SizedBox(height: 14),
-            _label(_isDe ? 'Elektrische Felder' : 'Electric fields'),
+            _label(l10n.cfElectricFields),
             const SizedBox(height: 6),
             _waveRow(
               enabled: _useElectric,
@@ -431,7 +450,7 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
             ),
 
             const SizedBox(height: 14),
-            _label(_isDe ? 'Magnetische Felder' : 'Magnetic fields'),
+            _label(l10n.cfMagneticFields),
             const SizedBox(height: 6),
             _waveRow(
               enabled: _useMagnetic,
@@ -449,12 +468,12 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
       ),
       actions: [
         IconButton(
-          tooltip: _isDe ? 'Abbrechen' : 'Cancel',
+          tooltip: l10n.cfCancel,
           icon: const Icon(Icons.close, color: AppColors.textSecondary),
           onPressed: () => Navigator.pop(context),
         ),
         IconButton(
-          tooltip: _isDe ? 'Speichern' : 'Save',
+          tooltip: l10n.cfSave,
           icon: const Icon(Icons.check, color: AppColors.accentGreen),
           onPressed: _onSave,
         ),
@@ -527,16 +546,17 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
   }
 
   void _onSave() {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
     final freqRaw = _freqCtrl.text.trim().replaceAll(',', '.');
 
     final freq = double.tryParse(freqRaw);
     if (name.isEmpty) {
-      setState(() => _error = _isDe ? 'Bitte Name eingeben.' : 'Please enter a name.');
+      setState(() => _error = l10n.cfErrorName);
       return;
     }
     if (freq == null || freq <= 0) {
-      setState(() => _error = _isDe ? 'Bitte gültige Frequenz eingeben.' : 'Please enter a valid frequency.');
+      setState(() => _error = l10n.cfErrorFrequency);
       return;
     }
 

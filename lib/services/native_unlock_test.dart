@@ -20,8 +20,14 @@ class NativeUnlockTester {
   Future<void> testNativeUnlock(String deviceId) async {
     debugPrint('[NativeUnlockTester] Starting ONE-SHOT unlock test for $deviceId');
 
+    final svc = CureDeviceUnlockService.instance;
+    final alreadyReady = svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId;
+    if (alreadyReady) {
+      debugPrint('[NativeUnlockTester] one-shot: already READY, skipping reconnect');
+    }
+
     try {
-      final res = await CureDeviceUnlockService.instance.unlockDevice(
+      final res = await svc.unlockDevice(
         deviceId,
         onStatus: (s) =>
             debugPrint('[NativeUnlockTester] one-shot status=$s'),

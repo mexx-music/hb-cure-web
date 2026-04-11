@@ -8,6 +8,8 @@ import 'ui/theme/app_colors.dart';
 import 'dart:async';
 import 'services/app_memory.dart';
 import 'i18n/program_name_localizer.dart';
+import 'l10n/gen/app_localizations.dart';
+import 'services/program_language_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,12 +36,40 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final VoidCallback _langListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _langListener = () {
+      if (mounted) setState(() {});
+    };
+    ProgramLangController.instance.addListener(_langListener);
+  }
+
+  @override
+  void dispose() {
+    ProgramLangController.instance.removeListener(_langListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final base = ThemeData.light();
+    // Derive Flutter locale from ProgramLangController so that
+    // AppLocalizations.of(context) always matches the toggle state.
+    final locale = ProgramLangController.instance.lang == ProgramLang.de
+        ? const Locale('de')
+        : const Locale('en');
+
     return MaterialApp(
       title: 'Cure App',
       theme: base.copyWith(
@@ -55,6 +85,9 @@ class MyApp extends StatelessWidget {
           foregroundColor: AppColors.textPrimary,
         ),
       ),
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       home: const StartPage(),
     );
