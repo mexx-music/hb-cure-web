@@ -329,7 +329,7 @@ class PlayerService extends ChangeNotifier {
         ? queueIds
         : (_state.queueIds.isNotEmpty
             ? _state.queueIds
-            : const <String>['_reconnected_program']);
+            : const <String>['reconnected_program']);
 
     _stopTicker();
     _state = PlayerState(

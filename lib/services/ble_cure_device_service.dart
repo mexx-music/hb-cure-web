@@ -74,7 +74,9 @@ class BleCureDeviceService {
   bool get isUnlocked => _isUnlocked;
   int? _activeKeyIndex;
 
-  /// Mark the device as unlocked externally (e.g. after auto-reconnect).
+  /// Mark the device as unlocked externally.
+  /// Must only be called after a successful [CureDeviceUnlockService.unlockDevice]
+  /// call, e.g. during auto-reconnect flow.
   void markUnlocked() {
     _isUnlocked = true;
   }
