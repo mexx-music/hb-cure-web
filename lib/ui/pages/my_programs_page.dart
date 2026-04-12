@@ -401,11 +401,25 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     }
 
     // Start playback via PlayerService (single call) so the service owns queue/start behavior
+    // [PLAYLIST_TIME] log before playQueue
+    {
+      int sumMin = 0;
+      for (final id in ids) {
+        final s = playerService.settingsFor(id);
+        debugPrint('[PLAYLIST_TIME] PRE_PLAY id=$id durationMin=${s.durationMinutes} intensity=${s.intensity}');
+        sumMin += s.durationMinutes;
+      }
+      debugPrint('[PLAYLIST_TIME] PRE_PLAY queueSize=${ids.length} startIndex=$index summedDurationMin=$sumMin');
+    }
+
     playerService.playQueue(
       ids,
       index,
       titleKeyEnById: keyEnMap,
     );
+
+    // [PLAYLIST_TIME] log after playQueue
+    debugPrint('[PLAYLIST_TIME] POST_PLAY state.total=${playerService.state.total} state.remaining=${playerService.state.remaining} currentIndex=${playerService.state.currentIndex}');
 
     // Popup öffnen wie bisher
     if (!context.mounted) return;

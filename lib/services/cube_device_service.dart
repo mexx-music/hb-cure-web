@@ -352,6 +352,9 @@ class CubeDeviceService {
       final playlistDuration = Duration(minutes: playlistSettings.durationMinutes);
       final dwell = playlistDuration.inSeconds.clamp(1, 0xFFFF);
 
+      // [PLAYLIST_TIME] diagnostic: per-item upload values
+      debugPrint('[PLAYLIST_TIME] UPLOAD id=$id uiDurMin=${playlistSettings.durationMinutes} uiDurSec=${playlistDuration.inSeconds} clampedDwell=$dwell');
+
       if (id.startsWith('custom_')) {
         // Custom entry stored locally
         final ce = await CustomFrequenciesStore.instance.getById(id);
@@ -413,6 +416,8 @@ class CubeDeviceService {
       );
 
       final itemDwell = cureProgram.steps.fold<int>(0, (a, st) => a + st.dwellSeconds);
+      // [PLAYLIST_TIME] diagnostic: compare configured vs actual dwell
+      debugPrint('[PLAYLIST_TIME] UPLOAD_FACTORY id=${program.id} configuredDurSec=${duration.inSeconds} actualDwellSec=$itemDwell steps=${cureProgram.steps.length} delta=${itemDwell - duration.inSeconds}s');
       debugPrint('MERGED_ITEM: id=${program.id} steps=${cureProgram.steps.length} totalDwellSec=$itemDwell durMin=${s.durationMinutes}');
 
       mergedSteps.addAll(cureProgram.steps);
@@ -428,6 +433,15 @@ class CubeDeviceService {
 
     final totalDwell = mergedSteps.fold<int>(0, (a, st) => a + st.dwellSeconds);
     debugPrint('MERGED: totalSteps=${mergedSteps.length} totalDwellSec=$totalDwell');
+
+    // [PLAYLIST_TIME] diagnostic: final merged totals
+    {
+      int expectedSec = 0;
+      for (final id in ids) {
+        expectedSec += settingsForId(id).durationMinutes * 60;
+      }
+      debugPrint('[PLAYLIST_TIME] UPLOAD_FINAL expectedTotalSec=$expectedSec actualMergedDwellSec=$totalDwell deltaSec=${totalDwell - expectedSec}');
+    }
 
     // stable 16-byte id for merged program
     final mergedUuid = _uuid16FromString('merged:${ids.join(',')}');

@@ -140,6 +140,14 @@ class PlayerService extends ChangeNotifier {
       dur = Duration(minutes: s.durationMinutes);
     }
 
+    // [PLAYLIST_TIME] diagnostic: log what playQueue sets as total/remaining
+    debugPrint('[PLAYLIST_TIME] playQueue: queueSize=${queueIds.length} startIndex=$idx explicitDuration=$duration resolvedDur=$dur');
+    for (int i = 0; i < queueIds.length; i++) {
+      final s = settingsFor(queueIds[i]);
+      debugPrint('[PLAYLIST_TIME] playQueue item[$i] id=${queueIds[i]} settingsDurMin=${s.durationMinutes} settingsDur=${Duration(minutes: s.durationMinutes)}');
+    }
+    debugPrint('[PLAYLIST_TIME] playQueue: NOTE total/remaining set to SINGLE item dur=$dur (not summed!)');
+
     // store provided title map (EN keys) for later resolving in UI
     if (titleKeyEnById != null) {
       _titleKeyEnById = {
@@ -197,6 +205,13 @@ class PlayerService extends ChangeNotifier {
         .fold<int>(0, (a, b) => a + b);
 
     final total = Duration(minutes: totalMinutes);
+
+    // [PLAYLIST_TIME] diagnostic: setQueueUiOnly summed total
+    debugPrint('[PLAYLIST_TIME] setQueueUiOnly: queueSize=${queueIds.length} summedMin=$totalMinutes total=$total');
+    for (int i = 0; i < queueIds.length; i++) {
+      final s = settingsFor(queueIds[i]);
+      debugPrint('[PLAYLIST_TIME] setQueueUiOnly item[$i] id=${queueIds[i]} durMin=${s.durationMinutes}');
+    }
 
     // UI-only: stop any running ticker and set state without starting playback
     _stopTicker();
@@ -274,6 +289,9 @@ class PlayerService extends ChangeNotifier {
     final Duration dur = pid != null
         ? Duration(minutes: settingsFor(pid).durationMinutes)
         : defaultDuration;
+
+    // [PLAYLIST_TIME] diagnostic: program transition
+    debugPrint('[PLAYLIST_TIME] _jumpTo: newIndex=$newIndex pid=$pid dur=$dur autoplay=$autoplay queueSize=${_state.queueIds.length}');
 
     _stopTicker();
     _state = _state.copyWith(

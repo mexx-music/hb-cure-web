@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/playlist_item_settings.dart';
+import 'package:hbcure/l10n/gen/app_localizations.dart';
 
 class PlaylistItemSetupSheet extends StatefulWidget {
   final String programId;
@@ -32,6 +33,17 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    String waveformLabel(Waveform w) {
+      switch (w) {
+        case Waveform.sine: return l10n.waveformSine;
+        case Waveform.triangle: return l10n.waveformTriangle;
+        case Waveform.rectangle: return l10n.waveformRectangle;
+        case Waveform.sawtooth: return l10n.waveformSawtooth;
+      }
+    }
+
     return Padding(
       padding: MediaQuery.of(context).viewInsets,
       child: SafeArea(
@@ -39,14 +51,14 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Text('Setup', style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.setupTitle, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Duration (minutes)'),
+                  Text(l10n.setupDurationMinutes),
                   DropdownButton<int>(
                     value: _duration,
                     items: [5, 10, 15, 20, 30, 45, 60]
@@ -56,7 +68,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   ),
 
                   const SizedBox(height: 8),
-                  const Text('Intensity'),
+                  Text(l10n.intensity),
                   Slider(
                     min: 1,
                     max: 100,
@@ -70,7 +82,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Electric'),
+                      Text(l10n.setupElectric),
                       Switch(value: _electric, onChanged: (v) => setState(() => _electric = v)),
                     ],
                   ),
@@ -80,11 +92,11 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<Waveform>(
                       initialValue: _electricWaveform,
-                      decoration: const InputDecoration(labelText: 'Electric waveform'),
+                      decoration: InputDecoration(labelText: l10n.setupElectricWaveform),
                       items: Waveform.values.map((w) {
                         return DropdownMenuItem(
                           value: w,
-                          child: Text(w.name),
+                          child: Text(waveformLabel(w)),
                         );
                       }).toList(),
                       onChanged: (v) => setState(() => _electricWaveform = v ?? _electricWaveform),
@@ -94,7 +106,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Magnetic'),
+                      Text(l10n.setupMagnetic),
                       Switch(value: _magnetic, onChanged: (v) => setState(() => _magnetic = v)),
                     ],
                   ),
@@ -104,11 +116,11 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<Waveform>(
                       initialValue: _magneticWaveform,
-                      decoration: const InputDecoration(labelText: 'Magnetic waveform'),
+                      decoration: InputDecoration(labelText: l10n.setupMagneticWaveform),
                       items: Waveform.values.map((w) {
                         return DropdownMenuItem(
                           value: w,
-                          child: Text(w.name),
+                          child: Text(waveformLabel(w)),
                         );
                       }).toList(),
                       onChanged: (v) => setState(() => _magneticWaveform = v ?? _magneticWaveform),
@@ -119,7 +131,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text(l10n.setupCancel)),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: () {
@@ -133,7 +145,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                           );
                           Navigator.of(context).pop(settings);
                         },
-                        child: const Text('Save'),
+                        child: Text(l10n.setupSave),
                       ),
                     ],
                   ),

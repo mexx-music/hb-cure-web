@@ -243,6 +243,20 @@ abstract class AppLocalizations {
   String get settingsReturnToStartSub;
   String get settingsCureBaseInfo;
 
+  // --- Playlist item setup dialog ---
+  String get setupTitle;
+  String get setupDurationMinutes;
+  String get setupElectric;
+  String get setupElectricWaveform;
+  String get setupMagnetic;
+  String get setupMagneticWaveform;
+  String get setupCancel;
+  String get setupSave;
+  String get waveformSine;
+  String get waveformTriangle;
+  String get waveformRectangle;
+  String get waveformSawtooth;
+
   // --- Devices page ---
   String get devicesTitle;
   String get devicesScan;

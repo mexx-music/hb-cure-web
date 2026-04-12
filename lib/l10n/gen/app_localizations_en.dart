@@ -162,6 +162,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsCureBaseInfo => 'CureBase Info';
 
+  // --- Playlist item setup dialog ---
+  @override
+  String get setupTitle => 'Setup';
+  @override
+  String get setupDurationMinutes => 'Duration (minutes)';
+  @override
+  String get setupElectric => 'Electric';
+  @override
+  String get setupElectricWaveform => 'Electric waveform';
+  @override
+  String get setupMagnetic => 'Magnetic';
+  @override
+  String get setupMagneticWaveform => 'Magnetic waveform';
+  @override
+  String get setupCancel => 'Cancel';
+  @override
+  String get setupSave => 'Save';
+  @override
+  String get waveformSine => 'Sine';
+  @override
+  String get waveformTriangle => 'Triangle';
+  @override
+  String get waveformRectangle => 'Rectangle';
+  @override
+  String get waveformSawtooth => 'Sawtooth';
+
   // --- Devices page ---
   @override
   String get devicesTitle => 'Devices';

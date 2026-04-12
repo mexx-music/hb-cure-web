@@ -626,6 +626,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
               final remainingTotal = st.remaining + sumAfter;
 
+              // [PLAYLIST_TIME] diagnostic: popup time calculation
+              debugPrint('[PLAYLIST_TIME] POPUP idx=$idx queueLen=${queue.length} sumAll=$sumAll sumAfter=$sumAfter st.total=${st.total} st.remaining=${st.remaining} remainingTotal=$remainingTotal');
+
               String fmt(Duration d) {
                 final s = d.inSeconds.clamp(0, 24 * 3600);
                 final mm = (s ~/ 60).toString().padLeft(2, '0');

@@ -162,6 +162,32 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get settingsCureBaseInfo => 'CureBase-Info';
 
+  // --- Playlist item setup dialog ---
+  @override
+  String get setupTitle => 'Einstellungen';
+  @override
+  String get setupDurationMinutes => 'Dauer (Minuten)';
+  @override
+  String get setupElectric => 'Elektrisch';
+  @override
+  String get setupElectricWaveform => 'Elektrische Wellenform';
+  @override
+  String get setupMagnetic => 'Magnetisch';
+  @override
+  String get setupMagneticWaveform => 'Magnetische Wellenform';
+  @override
+  String get setupCancel => 'Abbrechen';
+  @override
+  String get setupSave => 'Speichern';
+  @override
+  String get waveformSine => 'Sinus';
+  @override
+  String get waveformTriangle => 'Dreieck';
+  @override
+  String get waveformRectangle => 'Rechteck';
+  @override
+  String get waveformSawtooth => 'Sägezahn';
+
   // --- Devices page ---
   @override
   String get devicesTitle => 'Geräte';

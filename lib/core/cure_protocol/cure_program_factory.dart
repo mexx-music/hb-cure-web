@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import 'cure_program_model.dart';
 
@@ -20,12 +21,18 @@ class CureProgramFactory {
     final rawFreqs = entry['Frequencies'];
     final List<dynamic> freqs = (rawFreqs is List) ? rawFreqs : <dynamic>[];
     final steps = <CureFrequencyStep>[];
+    int catalogSecondsUsed = 0; // [PLAYLIST_TIME] diagnostic counter
     if (freqs.isNotEmpty) {
       final perStepDwell = (duration.inSeconds / freqs.length).round().clamp(1, duration.inSeconds);
-      for (final f in freqs) {
+      debugPrint('[PLAYLIST_TIME] FACTORY uuid=$uuidHex requestedDurSec=${duration.inSeconds} freqCount=${freqs.length} perStepDwell=$perStepDwell');
+      for (int fi = 0; fi < freqs.length; fi++) {
+        final f = freqs[fi];
         if (f is Map) {
           final freqHz = (f['FrequencyHz'] as num?)?.toDouble() ?? (f['frequencyHz'] as num?)?.toDouble() ?? 0.0;
-          final dwell = (f['Seconds'] as num?)?.toInt() ?? (f['seconds'] as num?)?.toInt() ?? perStepDwell;
+          final catalogSec = (f['Seconds'] as num?)?.toInt() ?? (f['seconds'] as num?)?.toInt();
+          final dwell = catalogSec ?? perStepDwell;
+          if (catalogSec != null) catalogSecondsUsed++;
+          debugPrint('[PLAYLIST_TIME] FACTORY step[$fi] freqHz=$freqHz catalogSec=$catalogSec usedDwell=$dwell');
           steps.add(CureFrequencyStep(frequencyHz: freqHz, dwellSeconds: dwell));
         } else if (f is num) {
           steps.add(CureFrequencyStep(frequencyHz: f.toDouble(), dwellSeconds: perStepDwell));
@@ -33,6 +40,8 @@ class CureProgramFactory {
           // ignore unknown entry types
         }
       }
+      final actualTotal = steps.fold<int>(0, (a, s) => a + s.dwellSeconds);
+      debugPrint('[PLAYLIST_TIME] FACTORY RESULT steps=${steps.length} catalogSecondsUsed=$catalogSecondsUsed actualTotalSec=$actualTotal requestedSec=${duration.inSeconds} delta=${actualTotal - duration.inSeconds}s');
     } else {
       // Fallback: single step filling whole duration at 1 kHz
       steps.add(CureFrequencyStep(frequencyHz: 1000.0, dwellSeconds: duration.inSeconds));
