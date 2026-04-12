@@ -742,11 +742,17 @@ class CureDeviceUnlockService {
 
   // ===================== PROGRAM UPLOAD =====================
 
-  Future<bool> progClear() async =>
-      _sendAndCheckOk('progClear', timeout: const Duration(seconds: 10));
+  Future<bool> progClear() async {
+    debugPrint('[PLAYLIST_TIME] progClear() called');
+    debugPrint('[PLAYLIST_TIME] progClear stackTrace:\n${StackTrace.current.toString().split('\n').take(8).join('\n')}');
+    return _sendAndCheckOk('progClear', timeout: const Duration(seconds: 10));
+  }
 
-  Future<bool> progStart() async =>
-      _sendAndCheckOk('progStart', timeout: const Duration(seconds: 10));
+  Future<bool> progStart() async {
+    debugPrint('[PLAYLIST_TIME] progStart() called');
+    debugPrint('[PLAYLIST_TIME] progStart stackTrace:\n${StackTrace.current.toString().split('\n').take(8).join('\n')}');
+    return _sendAndCheckOk('progStart', timeout: const Duration(seconds: 10));
+  }
 
   Future<bool> progAppendHex(String hex) async {
     final cleaned = hex.replaceAll(RegExp(r'\s+'), '');

@@ -612,25 +612,35 @@ class _PlayerPopupState extends State<PlayerPopup> {
               final queue = st.queueIds;
               final idx = st.currentIndex;
 
-              Duration sumAll = Duration.zero;
-              Duration sumAfter = Duration.zero;
-
+              // st.total and st.remaining are now the MERGED totals.
+              // Compute segment-level remaining for the current program.
+              Duration cumulativeBefore = Duration.zero;
+              Duration currentSegDur = Duration.zero;
               for (int i = 0; i < queue.length; i++) {
-                try {
-                  final m = widget.player.settingsFor(queue[i]).durationMinutes;
-                  final d = Duration(minutes: m);
-                  sumAll += d;
-                  if (i > idx) sumAfter += d;
-                } catch (_) {}
+                final m = widget.player.settingsFor(queue[i]).durationMinutes;
+                final d = Duration(minutes: m);
+                if (i < idx) {
+                  cumulativeBefore += d;
+                } else if (i == idx) {
+                  currentSegDur = d;
+                }
               }
-
-              final remainingTotal = st.remaining + sumAfter;
+              final elapsed = st.total - st.remaining;
+              final segElapsed = elapsed - cumulativeBefore;
+              final rawSegRem = currentSegDur - segElapsed;
+              final segRemaining = rawSegRem < Duration.zero ? Duration.zero : (rawSegRem > currentSegDur ? currentSegDur : rawSegRem);
 
               // [PLAYLIST_TIME] diagnostic: popup time calculation
-              debugPrint('[PLAYLIST_TIME] POPUP idx=$idx queueLen=${queue.length} sumAll=$sumAll sumAfter=$sumAfter st.total=${st.total} st.remaining=${st.remaining} remainingTotal=$remainingTotal');
+              debugPrint('[PLAYLIST_TIME] POPUP idx=$idx queueLen=${queue.length} st.total=${st.total} st.remaining=${st.remaining} segRemaining=$segRemaining currentSegDur=$currentSegDur');
 
               String fmt(Duration d) {
                 final s = d.inSeconds.clamp(0, 24 * 3600);
+                if (s >= 3600) {
+                  final hh = (s ~/ 3600).toString();
+                  final mm = ((s % 3600) ~/ 60).toString().padLeft(2, '0');
+                  final ss = (s % 60).toString().padLeft(2, '0');
+                  return '$hh:$mm:$ss';
+                }
                 final mm = (s ~/ 60).toString().padLeft(2, '0');
                 final ss = (s % 60).toString().padLeft(2, '0');
                 return '$mm:$ss';
@@ -735,27 +745,27 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       const SizedBox(height: 12),
 
-                      // Segment timer
+                      // Segment timer (current program)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(isDe ? 'Restzeit' : 'Remaining',
+                          Text(isDe ? 'Programm' : 'Program',
                               style: Theme.of(context).textTheme.bodyMedium),
-                          Text('${fmt(st.remaining)} / ${fmt(st.total)}',
+                          Text('${fmt(segRemaining)} / ${fmt(currentSegDur)}  •  ${(queue.isEmpty ? 0 : (idx + 1))}/${queue.length}',
                               style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
 
                       const SizedBox(height: 8),
 
-                      // Total timer
+                      // Total timer (merged)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(isDe ? 'Gesamt' : 'Total',
                               style: Theme.of(context).textTheme.bodyMedium),
                           Text(
-                            '${fmt(remainingTotal)} / ${fmt(sumAll)}  •  ${(queue.isEmpty ? 0 : (idx + 1))}/${queue.length}',
+                            '${fmt(st.remaining)} / ${fmt(st.total)}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],

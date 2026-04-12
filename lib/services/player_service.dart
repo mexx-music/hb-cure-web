@@ -104,11 +104,32 @@ class PlayerService extends ChangeNotifier {
 
       final rem = _state.remaining - const Duration(seconds: 1);
       if (rem <= Duration.zero) {
-        _state = _state.copyWith(remaining: Duration.zero);
+        // Merged program finished — stop the app timer.
+        // The device stops autonomously; we just reflect it in the UI.
+        debugPrint('[PLAYLIST_TIME] TIMER_EXPIRED: merged total reached zero, stopping');
+        _stopTicker();
+        _state = _state.copyWith(isPlaying: false, remaining: Duration.zero);
         notifyListeners();
-        next(); // auto-advance
       } else {
-        _state = _state.copyWith(remaining: rem);
+        // Update remaining time; also advance currentIndex for UI display
+        // so the popup shows the correct program name for each segment.
+        final elapsed = _state.total - rem;
+        int newIdx = 0;
+        Duration cumulative = Duration.zero;
+        for (int i = 0; i < _state.queueIds.length; i++) {
+          final segDur = Duration(minutes: settingsFor(_state.queueIds[i]).durationMinutes);
+          if (elapsed < cumulative + segDur) {
+            newIdx = i;
+            break;
+          }
+          cumulative += segDur;
+          newIdx = i; // last segment
+        }
+
+        _state = _state.copyWith(
+          remaining: rem,
+          currentIndex: newIdx,
+        );
         notifyListeners();
       }
     });
@@ -130,23 +151,31 @@ class PlayerService extends ChangeNotifier {
 
     final idx = startIndex.clamp(0, queueIds.length - 1);
 
-    // If explicit duration passed -> use it; otherwise use settings for the first program
-    Duration dur;
+    // Sum durations across ALL programs — the device plays them as one merged block.
+    Duration totalDur;
     if (duration != null) {
-      dur = duration;
+      totalDur = duration;
     } else {
-      final pid = queueIds[idx];
-      final s = settingsFor(pid);
-      dur = Duration(minutes: s.durationMinutes);
+      int sumMin = 0;
+      for (final id in queueIds) {
+        sumMin += settingsFor(id).durationMinutes;
+      }
+      totalDur = Duration(minutes: sumMin);
     }
 
+    // Remaining = total minus already-elapsed segments before startIndex
+    Duration elapsedBefore = Duration.zero;
+    for (int i = 0; i < idx; i++) {
+      elapsedBefore += Duration(minutes: settingsFor(queueIds[i]).durationMinutes);
+    }
+    final remaining = totalDur - elapsedBefore;
+
     // [PLAYLIST_TIME] diagnostic: log what playQueue sets as total/remaining
-    debugPrint('[PLAYLIST_TIME] playQueue: queueSize=${queueIds.length} startIndex=$idx explicitDuration=$duration resolvedDur=$dur');
+    debugPrint('[PLAYLIST_TIME] playQueue: queueSize=${queueIds.length} startIndex=$idx totalDur=$totalDur remaining=$remaining');
     for (int i = 0; i < queueIds.length; i++) {
       final s = settingsFor(queueIds[i]);
       debugPrint('[PLAYLIST_TIME] playQueue item[$i] id=${queueIds[i]} settingsDurMin=${s.durationMinutes} settingsDur=${Duration(minutes: s.durationMinutes)}');
     }
-    debugPrint('[PLAYLIST_TIME] playQueue: NOTE total/remaining set to SINGLE item dur=$dur (not summed!)');
 
     // store provided title map (EN keys) for later resolving in UI
     if (titleKeyEnById != null) {
@@ -160,8 +189,8 @@ class PlayerService extends ChangeNotifier {
       isPlaying: true,
       queueIds: List.unmodifiable(queueIds),
       currentIndex: idx,
-      total: dur,
-      remaining: dur,
+      total: totalDur,
+      remaining: remaining,
     );
 
     _startTicker();
@@ -243,6 +272,45 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sync app timer with real device status after reconnect.
+  /// [deviceTotalMs] and [deviceElapsedMs] come from progStatus response.
+  void syncWithDeviceStatus({
+    required int deviceTotalMs,
+    required int deviceElapsedMs,
+    required bool deviceRunning,
+  }) {
+    if (_state.queueIds.isEmpty) return;
+
+    final deviceTotal = Duration(milliseconds: deviceTotalMs);
+    final deviceRemaining = Duration(milliseconds: (deviceTotalMs - deviceElapsedMs).clamp(0, deviceTotalMs));
+
+    debugPrint('[PLAYLIST_TIME] syncWithDeviceStatus: deviceTotal=$deviceTotal deviceRemaining=$deviceRemaining deviceRunning=$deviceRunning');
+
+    // Compute which segment index the device is currently in
+    final elapsed = Duration(milliseconds: deviceElapsedMs);
+    int newIdx = 0;
+    Duration cumulative = Duration.zero;
+    for (int i = 0; i < _state.queueIds.length; i++) {
+      final segDur = Duration(minutes: settingsFor(_state.queueIds[i]).durationMinutes);
+      if (elapsed < cumulative + segDur) {
+        newIdx = i;
+        break;
+      }
+      cumulative += segDur;
+      newIdx = i;
+    }
+
+    _stopTicker();
+    _state = _state.copyWith(
+      total: deviceTotal,
+      remaining: deviceRemaining,
+      currentIndex: newIdx,
+      isPlaying: deviceRunning,
+    );
+    if (deviceRunning) _startTicker();
+    notifyListeners();
+  }
+
   void pause() {
     if (!_state.isPlaying) return;
     _state = _state.copyWith(isPlaying: false);
@@ -277,27 +345,25 @@ class PlayerService extends ChangeNotifier {
   }
 
   void _jumpTo(int newIndex, {required bool autoplay}) {
-    // Determine program id at the target index (validate bounds)
-    String? pid;
-    if (_state.queueIds.isNotEmpty &&
-        newIndex >= 0 &&
-        newIndex < _state.queueIds.length) {
-      pid = _state.queueIds[newIndex];
-    }
+    if (_state.queueIds.isEmpty ||
+        newIndex < 0 ||
+        newIndex >= _state.queueIds.length) return;
 
-    // duration from per-item settings (fallback to defaultDuration)
-    final Duration dur = pid != null
-        ? Duration(minutes: settingsFor(pid).durationMinutes)
-        : defaultDuration;
+    // Compute remaining = total minus elapsed segments before newIndex
+    Duration elapsedBefore = Duration.zero;
+    for (int i = 0; i < newIndex; i++) {
+      elapsedBefore += Duration(minutes: settingsFor(_state.queueIds[i]).durationMinutes);
+    }
+    final raw = _state.total - elapsedBefore;
+    final remaining = raw < Duration.zero ? Duration.zero : (raw > _state.total ? _state.total : raw);
 
     // [PLAYLIST_TIME] diagnostic: program transition
-    debugPrint('[PLAYLIST_TIME] _jumpTo: newIndex=$newIndex pid=$pid dur=$dur autoplay=$autoplay queueSize=${_state.queueIds.length}');
+    debugPrint('[PLAYLIST_TIME] _jumpTo: newIndex=$newIndex elapsedBefore=$elapsedBefore remaining=$remaining autoplay=$autoplay');
 
     _stopTicker();
     _state = _state.copyWith(
       currentIndex: newIndex,
-      total: dur,
-      remaining: dur,
+      remaining: remaining,
       isPlaying: autoplay,
     );
     if (autoplay) _startTicker();
