@@ -1,8 +1,8 @@
 name: hbcure
-description: "A new Flutter project."
+description: "HB Cure application."
 publish_to: 'none'
 
-version: 1.0.1+7
+version: 1.0.1+9
 environment:
   sdk: ^3.9.2
 
@@ -29,6 +29,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -38,3 +39,9 @@ flutter:
     - assets/programs/Programs_decoded_full.json
     - doc/app_memory/40_ble_profiles.yaml
     - assets/program_names_DE_EN.csv
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+
