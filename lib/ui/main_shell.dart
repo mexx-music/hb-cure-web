@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:hbcure/ui/pages/my_programs_page.dart';
 import 'package:hbcure/ui/pages/available_programs_page.dart';
 import 'package:hbcure/ui/pages/devices_page.dart';
@@ -18,6 +20,8 @@ import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
 import 'package:hbcure/ui/pages/custom_frequencies_page.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/services/cure_device_unlock_service.dart';
+import 'package:hbcure/services/ble_cure_device_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -117,6 +121,9 @@ class _MainShellState extends State<MainShell> {
 
     // Listen to AppMemory.programMode changes so the shell rebuilds (tabs/pages)
     AppMemory.instance.addListener(_onModeChanged);
+
+    // Attempt auto-reconnect in background (does not block UI)
+    _attemptAutoReconnect();
   }
 
   @override
@@ -133,6 +140,62 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       // Rebuild to reflect mode-dependent pages / labels
     });
+  }
+
+  /// Attempt to reconnect to the last known device on app start.
+  /// Runs entirely in the background – never blocks the UI.
+  /// Key fix: waits for BLE adapter STATE_ON before connecting, so that
+  /// FlutterBluePlus flutterRestart has time to complete initialisation.
+  Future<void> _attemptAutoReconnect() async {
+    final mem = AppMemory.instance;
+    if (!mem.reconnectEnabled) return;
+    final lastId = mem.lastConnectedDeviceId;
+    if (lastId == null || lastId.isEmpty) return;
+
+    if (kDebugMode) debugPrint('[AutoReconnect] attempting reconnect to $lastId ...');
+
+    try {
+      // Wait for BLE adapter to be ON (lets FBP finish flutterRestart first).
+      await FlutterBluePlus.adapterState
+          .firstWhere((s) => s == BluetoothAdapterState.on)
+          .timeout(const Duration(seconds: 15));
+
+      // Small additional delay so the native plugin is fully ready.
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // unlockDevice with manageConnection:true handles the native connect internally.
+      final svc = CureDeviceUnlockService.instance;
+      final unlockResult = await svc.unlockDevice(
+        lastId,
+        onStatus: (s) {
+          if (kDebugMode) debugPrint('[AutoReconnect] unlock status: $s');
+        },
+      );
+
+      if (!unlockResult.success) {
+        if (kDebugMode) {
+          debugPrint('[AutoReconnect] unlock failed: ${unlockResult.errorMessage}');
+        }
+        return;
+      }
+
+      // Mark BleCureDeviceService as unlocked so UI reflects connected state.
+      BleCureDeviceService.instance.markUnlocked();
+
+      // Query device status and sync player if a program is running.
+      final status = await svc.fetchProgStatus();
+      if (status != null && status.running) {
+        playerService.syncWithDeviceStatus(
+          deviceTotalMs: status.totalSec,    // field is misleadingly named – value is ms
+          deviceElapsedMs: status.elapsedSec, // field is misleadingly named – value is ms
+          deviceRunning: true,
+        );
+      }
+
+      if (kDebugMode) debugPrint('[AutoReconnect] reconnected successfully to $lastId');
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[AutoReconnect] failed: $e\n$st');
+    }
   }
 
   @override

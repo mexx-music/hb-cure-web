@@ -26,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     // initialize _mode from AppMemory.programMode
     _mode = AppMemory.instance.programMode;
+    _reconnect = AppMemory.instance.reconnectEnabled;
   }
 
   @override
@@ -70,7 +71,11 @@ class _SettingsPageState extends State<SettingsPage> {
             title: Text(l10n.settingsReconnect,
                 style: TextStyle(color: AppColors.textPrimary)),
             value: _reconnect,
-            onChanged: (v) => setState(() => _reconnect = v ?? false),
+            onChanged: (v) {
+              final val = v ?? false;
+              setState(() => _reconnect = val);
+              AppMemory.instance.setReconnectEnabled(val);
+            },
             activeColor: AppColors.primary,
           ),
           CheckboxListTile(

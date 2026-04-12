@@ -18,12 +18,18 @@ class AppMemory extends ChangeNotifier {
   static final AppMemory instance = AppMemory._internal();
 
   static const String _kProgramModeKey = 'programMode';
+  static const String _kReconnectEnabledKey = 'reconnectEnabled';
+  static const String _kLastDeviceIdKey = 'lastDeviceId';
 
   // Example fields
   int appLaunchCount = 0;
   final Map<String, dynamic> deviceProfilesCache = {};
   String? lastConnectedDeviceId;
   final Map<String, bool> featureFlags = {};
+
+  // Auto-reconnect toggle
+  bool _reconnectEnabled = true;
+  bool get reconnectEnabled => _reconnectEnabled;
 
   // Program mode (beginner/advanced/expert)
   // Backed by a private field so we can notify listeners on change.
@@ -86,6 +92,17 @@ class AppMemory extends ChangeNotifier {
         programModeNotifier.value = loaded;
         // no notifyListeners here; init usually happens before UI
       }
+
+      // 1b) Load persisted reconnect settings
+      final reconnectRaw = prefs.getBool(_kReconnectEnabledKey);
+      if (reconnectRaw != null) {
+        _reconnectEnabled = reconnectRaw;
+      }
+
+      final lastDeviceRaw = prefs.getString(_kLastDeviceIdKey);
+      if (lastDeviceRaw != null && lastDeviceRaw.isNotEmpty) {
+        lastConnectedDeviceId = lastDeviceRaw;
+      }
     } catch (e) {
       debugPrint('AppMemory.init: could not load persisted mode: $e');
     }
@@ -126,9 +143,25 @@ class AppMemory extends ChangeNotifier {
     // TODO: persist
   }
 
-  void setLastDevice(String id) {
+  Future<void> setReconnectEnabled(bool v) async {
+    if (_reconnectEnabled == v) return;
+    _reconnectEnabled = v;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kReconnectEnabledKey, v);
+    } catch (e) {
+      debugPrint('AppMemory.setReconnectEnabled: could not persist: $e');
+    }
+  }
+
+  Future<void> setLastDevice(String id) async {
     lastConnectedDeviceId = id;
-    // TODO: persist
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kLastDeviceIdKey, id);
+    } catch (e) {
+      debugPrint('AppMemory.setLastDevice: could not persist: $e');
+    }
   }
 
   void setFeatureFlag(String key, bool value) {

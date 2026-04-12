@@ -309,4 +309,37 @@ class PlayerService extends ChangeNotifier {
     _stopTicker();
     super.dispose();
   }
+
+  /// Sync player state with live device status after reconnect.
+  /// [deviceTotalMs] and [deviceElapsedMs] are in milliseconds (despite the
+  /// field names in CureProgStatus being "elapsedSec"/"totalSec").
+  /// If no queue is active, inserts a synthetic placeholder id.
+  void syncWithDeviceStatus({
+    required int deviceTotalMs,
+    required int deviceElapsedMs,
+    required bool deviceRunning,
+    List<String>? queueIds,
+  }) {
+    final total = Duration(milliseconds: deviceTotalMs);
+    final elapsed = Duration(milliseconds: deviceElapsedMs);
+    final rawRemaining = total - elapsed;
+    final remaining = rawRemaining > Duration.zero ? rawRemaining : Duration.zero;
+
+    final ids = (queueIds != null && queueIds.isNotEmpty)
+        ? queueIds
+        : (_state.queueIds.isNotEmpty
+            ? _state.queueIds
+            : const <String>['_reconnected_program']);
+
+    _stopTicker();
+    _state = PlayerState(
+      isPlaying: deviceRunning,
+      queueIds: List.unmodifiable(ids),
+      currentIndex: 0,
+      total: total,
+      remaining: remaining,
+    );
+    if (deviceRunning) _startTicker();
+    notifyListeners();
+  }
 }

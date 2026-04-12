@@ -17,6 +17,7 @@ import 'package:hbcure/services/cure_protocol.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'cure_ble_transport_native.dart';
+import 'package:hbcure/services/app_memory.dart';
 
 // UUIDs for CureBase (Nordic UART-like)
 final Guid cureUartServiceUuid =
@@ -72,6 +73,11 @@ class BleCureDeviceService {
   bool _isUnlocked = false;
   bool get isUnlocked => _isUnlocked;
   int? _activeKeyIndex;
+
+  /// Mark the device as unlocked externally (e.g. after auto-reconnect).
+  void markUnlocked() {
+    _isUnlocked = true;
+  }
 
   // Candidate private keys list (hex).
   // *** WICHTIG: Kandidat 0 ist jetzt der echte private_key_CureApp ***

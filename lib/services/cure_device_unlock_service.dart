@@ -12,6 +12,7 @@ import 'cure_program_compiler.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_model.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_factory.dart';
 import 'package:hbcure/services/cure_crypto_dart.dart';
+import 'package:hbcure/services/app_memory.dart';
 
 enum CureUnlockStatus {
   connecting,
@@ -657,6 +658,7 @@ class CureDeviceUnlockService {
       }
       // -----------------------------------------
 
+      AppMemory.instance.setLastDevice(deviceId);
       return const CureUnlockResult(success: true);
     } catch (e) {
       // Rollback sharedDeviceId if we set it for this manageConnection attempt
