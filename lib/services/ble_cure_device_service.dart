@@ -17,6 +17,7 @@ import 'package:hbcure/services/cure_protocol.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'cure_ble_transport_native.dart';
+import 'package:hbcure/services/app_memory.dart';
 
 // UUIDs for CureBase (Nordic UART-like)
 final Guid cureUartServiceUuid =
@@ -58,8 +59,17 @@ class BleCureDeviceService {
   final CureDeviceUnlockService _native = CureDeviceUnlockService.instance;
   // Optional: track currently connected device id for native transport usage
   String? _connectedDeviceId;
+  /// Public getter for the currently connected device id (null if none).
+  String? get connectedDeviceId => _connectedDeviceId;
   // Merkt sich das vom UI ausgewählte Gerät im native-Mode
   BluetoothDevice? _selectedDevice;
+
+  /// Broadcast controller that emits the native connection state for the UI.
+  /// Used by [deviceState] in native transport mode so that DevicesPage
+  /// correctly shows connected/disconnected even though FlutterBluePlus
+  /// is not the BLE owner.
+  final StreamController<BluetoothConnectionState> _nativeStateCtrl =
+      StreamController<BluetoothConnectionState>.broadcast();
 
   BleCureDeviceService._internal();
 
@@ -71,6 +81,9 @@ class BleCureDeviceService {
 
   bool _isUnlocked = false;
   bool get isUnlocked => _isUnlocked;
+  /// Called externally (e.g. auto-reconnect) to mark the device as unlocked
+  /// without going through the full ensureUnlocked flow.
+  void markUnlocked() { _isUnlocked = true; }
   int? _activeKeyIndex;
 
   // Candidate private keys list (hex).
@@ -160,8 +173,17 @@ class BleCureDeviceService {
 
     Future<void> startScan() async {
     if (_isScanning) return;
+
+    // Preserve the currently connected device so the UI keeps showing it
+    BluetoothDevice? connectedDevice;
+    if (_connectedDeviceId != null) {
+      connectedDevice = _found[_connectedDeviceId!] ?? _selectedDevice;
+    }
     _found.clear();
-    _devicesCtrl?.add([]);
+    if (connectedDevice != null && _connectedDeviceId != null) {
+      _found[_connectedDeviceId!] = connectedDevice;
+    }
+    _devicesCtrl?.add(_found.values.toList());
 
     final supported = await FlutterBluePlus.isSupported;
     if (!supported) throw Exception('BLE not supported on this platform');
@@ -206,17 +228,14 @@ class BleCureDeviceService {
         if (kDebugMode) debugPrint('HBDBG scanResult: name="$name" advName="$advName" id=$id rssi=$rssi');
         final combined = (name + ' ' + id).toLowerCase();
         if (kDebugMode) {
-          // In debug builds accept all discovered devices to test whether the
-          // original filter was too narrow (only 'curebase'). In release builds
-          // keep the original filter logic.
-          _found[id] = sr.device;
-        } else {
-          if (combined.contains('curebase')) {
-            _found[id] = sr.device;
-          }
+          debugPrint('HBDBG scanFilter: id=$id name="$name" advName="$advName" combined="$combined"');
         }
-        if (kDebugMode) {
-          debugPrint('HBDBG scanFilter: accepted id=$id name="$name" advName="$advName" combined="$combined"');
+        // Always apply strict CureBase filter – only show real Cure devices.
+        if (combined.contains('curebase')) {
+          _found[id] = sr.device;
+          if (kDebugMode) {
+            debugPrint('HBDBG scanFilter: ACCEPTED CureBase device id=$id');
+          }
         }
       }
       _devicesCtrl?.add(_found.values.toList());
@@ -246,9 +265,9 @@ class BleCureDeviceService {
     _connectedDeviceId = device.remoteId.toString();
 
     // Scan immer stoppen, wenn wir ein Gerät "ausgewählt" haben
-    try {
-      await FlutterBluePlus.stopScan();
-    } catch (_) {}
+    // Use our own stopScan() so that _isScanning is properly reset,
+    // otherwise future startScan() calls will be silently ignored.
+    await stopScan();
 
     // --- NEU: Single-BLE-Owner-Logik im native-Mode -----------------------
     if (kCureTransportMode == CureTransportMode.native) {
@@ -260,6 +279,14 @@ class BleCureDeviceService {
       }
       // Delegiere an native Unlock-Service, damit _sharedDeviceId gesetzt wird
       await _native.nativeConnect(_connectedDeviceId!);
+
+      // Emit connected state so DevicesPage UI reflects connection
+      _nativeStateCtrl.add(BluetoothConnectionState.connected);
+
+      // Ensure the device appears in _found so DevicesPage shows it
+      _found[device.remoteId.toString()] = device;
+      _devicesCtrl?.add(_found.values.toList());
+
       return;
     }
 
@@ -327,9 +354,13 @@ class BleCureDeviceService {
         await _native.nativeDisconnect();
       } catch (_) {}
       _connectedDeviceId = null;
+      _isUnlocked = false;
       if (_selectedDevice?.remoteId.toString() == deviceId) {
         _selectedDevice = null;
       }
+      // Emit disconnected state so DevicesPage UI reflects disconnection
+      _nativeStateCtrl.add(BluetoothConnectionState.disconnected);
+
       if (kDebugMode) {
         debugPrint(
           'HBDBG disconnect(native): delegated to native disconnect for $deviceId',
@@ -345,8 +376,27 @@ class BleCureDeviceService {
   }
 
   Stream<BluetoothConnectionState> deviceState(
-      BluetoothDevice device) =>
-      device.connectionState;
+      BluetoothDevice device) {
+    if (kCureTransportMode == CureTransportMode.native) {
+      // In native mode, FBP's connectionState doesn't know about the native
+      // BLE connection. Return a stream that starts with the current native
+      // state and then forwards updates from _nativeStateCtrl.
+      final deviceId = device.remoteId.toString();
+      final isConnected = (_connectedDeviceId == deviceId && _connectedDeviceId != null);
+      final initial = isConnected
+          ? BluetoothConnectionState.connected
+          : BluetoothConnectionState.disconnected;
+
+      // Create an async* stream that emits the initial value then forwards
+      // all updates from the broadcast controller.
+      Stream<BluetoothConnectionState> merged() async* {
+        yield initial;
+        yield* _nativeStateCtrl.stream;
+      }
+      return merged();
+    }
+    return device.connectionState;
+  }
 
   // --------- High-level CureProtocol-based APIs -----------------------------
 
@@ -446,6 +496,8 @@ class BleCureDeviceService {
 
         if (result.success) {
           _isUnlocked = true;
+          // Persist for auto-reconnect
+          AppMemory.instance.setLastDevice(deviceId);
           if (kDebugMode) {
             debugPrint('HBDBG ensureUnlockedForCurrentDevice: unlocked OK for $deviceId');
           }

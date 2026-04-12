@@ -12,6 +12,7 @@ import 'package:hbcure/core/cure_protocol/cure_program_compiler.dart';
 import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'package:hbcure/services/qt_remote_program_encoder.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/services/app_memory.dart';
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -492,6 +493,8 @@ class _DevicesPageState extends State<DevicesPage> {
                         );
 
                         if (result.success) {
+                          // Persist device id for auto-reconnect
+                          AppMemory.instance.setLastDevice(device.remoteId.toString());
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Unlock OK')),
@@ -731,9 +734,25 @@ class _DevicesPageState extends State<DevicesPage> {
                 StreamBuilder<List<BluetoothDevice>>(
                   stream: _devicesStream,
                   builder: (context, snap) {
-                    final devices = snap.data ?? [];
+                    final rawDevices = snap.data ?? [];
+
+                    // Sort: connected CureBase device always first
+                    final connId = _ble.connectedDeviceId;
+                    final devices = List<BluetoothDevice>.from(rawDevices);
+                    if (connId != null) {
+                      devices.sort((a, b) {
+                        final aConn = a.remoteId.toString() == connId ? 0 : 1;
+                        final bConn = b.remoteId.toString() == connId ? 0 : 1;
+                        return aConn.compareTo(bConn);
+                      });
+                    }
+
                     final String? deviceId =
                     devices.isNotEmpty ? devices.first.remoteId.toString() : null;
+
+                    // Determine if any device in the list is actually connected
+                    final bool hasConnected = connId != null &&
+                        devices.any((d) => d.remoteId.toString() == connId);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,12 +776,21 @@ class _DevicesPageState extends State<DevicesPage> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text(
-                                AppLocalizations.of(context)!.devicesNoDeviceConnected,
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
+                              if (hasConnected)
+                                Text(
+                                  '${AppLocalizations.of(context)!.devicesConnected}: $connId',
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                )
+                              else
+                                Text(
+                                  AppLocalizations.of(context)!.devicesNoDeviceConnected,
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 6),
                               if (devices.isEmpty)
                                 Text(

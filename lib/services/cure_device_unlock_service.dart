@@ -12,6 +12,7 @@ import 'cure_program_compiler.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_model.dart';
 import 'package:hbcure/core/cure_protocol/cure_program_factory.dart';
 import 'package:hbcure/services/cure_crypto_dart.dart';
+import 'package:hbcure/services/app_memory.dart';
 
 enum CureUnlockStatus {
   connecting,
@@ -70,6 +71,14 @@ class CureDeviceUnlockService {
   String? hardwareInfo;
   String? buildInfo;
   bool supportsRemotePrograms = false;
+
+  /// Bumped every time device info (hardware/build/connection) changes.
+  /// UI widgets can listen to this to refresh.
+  final ValueNotifier<int> deviceInfoRevision = ValueNotifier<int>(0);
+
+  void _notifyDeviceInfoChanged() {
+    deviceInfoRevision.value++;
+  }
   // ---------------------------------------------------
 
   // ---------------- progStatus polling ----------------
@@ -111,6 +120,7 @@ class CureDeviceUnlockService {
       await _sharedTransport.disconnect();
     } finally {
       _sharedDeviceId = null;
+      _notifyDeviceInfoChanged();
     }
   }
 
@@ -656,6 +666,12 @@ class CureDeviceUnlockService {
         }
       }
       // -----------------------------------------
+
+      // Persist device id for auto-reconnect on next app start
+      AppMemory.instance.setLastDevice(deviceId);
+
+      // Notify UI that device info changed
+      _notifyDeviceInfoChanged();
 
       return const CureUnlockResult(success: true);
     } catch (e) {

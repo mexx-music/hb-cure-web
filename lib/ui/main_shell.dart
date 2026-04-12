@@ -18,6 +18,10 @@ import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
 import 'package:hbcure/ui/pages/custom_frequencies_page.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/services/cure_device_unlock_service.dart';
+import 'package:hbcure/services/ble_cure_device_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -117,6 +121,9 @@ class _MainShellState extends State<MainShell> {
 
     // Listen to AppMemory.programMode changes so the shell rebuilds (tabs/pages)
     AppMemory.instance.addListener(_onModeChanged);
+
+    // Auto-reconnect to last Cube if enabled
+    _attemptAutoReconnect();
   }
 
   @override
@@ -133,6 +140,98 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       // Rebuild to reflect mode-dependent pages / labels
     });
+  }
+
+  /// Auto-reconnect to last Cube device if setting is enabled.
+  /// Runs asynchronously in the background — does not block UI.
+  ///
+  /// Uses the normal BleCureDeviceService.connect() → ensureUnlockedForCurrentDevice()
+  /// pipeline so that _selectedDevice / _connectedDeviceId are properly set and
+  /// the manual Unlock button keeps working afterwards.
+  Future<void> _attemptAutoReconnect() async {
+    final mem = AppMemory.instance;
+    if (!mem.reconnectEnabled) {
+      debugPrint('[AutoReconnect] disabled in settings');
+      return;
+    }
+    final lastId = mem.lastConnectedDeviceId;
+    if (lastId == null || lastId.isEmpty) {
+      debugPrint('[AutoReconnect] no last device id stored');
+      return;
+    }
+
+    debugPrint('[AutoReconnect] scheduled for $lastId – waiting for BLE adapter ...');
+
+    try {
+      // ── Wait for FlutterBluePlus to be ready ──────────────────────────
+      final adapterState = await FlutterBluePlus.adapterState
+          .firstWhere((s) => s == BluetoothAdapterState.on)
+          .timeout(const Duration(seconds: 6), onTimeout: () => BluetoothAdapterState.unknown);
+
+      if (adapterState != BluetoothAdapterState.on) {
+        debugPrint('[AutoReconnect] BLE adapter not ON ($adapterState) – aborting');
+        return;
+      }
+
+      // Extra delay: let flutterRestart + disconnectAllDevices finish
+      await Future.delayed(const Duration(seconds: 3));
+      if (!mounted) return;
+
+      debugPrint('[AutoReconnect] BLE adapter ready – attempting reconnect to $lastId ...');
+
+      // ── Step 1: Connect through BleCureDeviceService ──────────────────
+      // This sets _selectedDevice, _connectedDeviceId, and in native mode
+      // delegates to the native transport. The normal UI flow remains intact.
+      final bleDevice = BluetoothDevice.fromId(lastId);
+      final bleSvc = BleCureDeviceService.instance;
+      await bleSvc.connect(bleDevice);
+
+      if (!mounted) return;
+      debugPrint('[AutoReconnect] BleCureDeviceService.connect() OK');
+
+      // ── Step 2: Unlock through the normal path ────────────────────────
+      final unlocked = await bleSvc.ensureUnlockedForCurrentDevice();
+      if (!unlocked) {
+        debugPrint('[AutoReconnect] unlock failed');
+        return;
+      }
+
+      debugPrint('[AutoReconnect] unlock OK');
+
+      // ── Step 3: Fetch progStatus ──────────────────────────────────────
+      final svc = CureDeviceUnlockService.instance;
+      final status = await svc.fetchProgStatus();
+      if (status == null) {
+        debugPrint('[AutoReconnect] progStatus returned null');
+        return;
+      }
+
+      debugPrint('[AutoReconnect] progStatus: running=${status.running} '
+          'elapsed=${status.elapsedSec} total=${status.totalSec}');
+
+      // ── Step 4: Sync player timer if device is still running ──────────
+      if (status.running) {
+        playerService.syncWithDeviceStatus(
+          deviceTotalMs: status.totalSec,
+          deviceElapsedMs: status.elapsedSec,
+          deviceRunning: true,
+        );
+        debugPrint('[AutoReconnect] player timer synced – device still running');
+
+        // ── Step 5: Show PlayerPopup so user sees remaining time ────────
+        if (mounted) {
+          // Small delay to let the widget tree settle after init
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _openPlayerPopupForReconnect();
+          });
+        }
+      } else {
+        debugPrint('[AutoReconnect] device not running – no timer sync needed');
+      }
+    } catch (e, st) {
+      debugPrint('[AutoReconnect] failed: $e');
+      if (kDebugMode) debugPrint('[AutoReconnect] stack: $st');
+    }
   }
 
   @override
@@ -162,10 +261,17 @@ class _MainShellState extends State<MainShell> {
         child: AppBar(
           title: Text(_appBarTitle(context)),
           actions: [
-            IconButton(
-              tooltip: 'Player',
-              icon: const Icon(Icons.queue_music),
-              onPressed: () async {
+            ListenableBuilder(
+              listenable: playerService,
+              builder: (context, _) {
+                final isPlaying = playerService.state.isPlaying;
+                return IconButton(
+                  tooltip: 'Player',
+                  icon: Icon(
+                    isPlaying ? Icons.play_circle_filled : Icons.queue_music,
+                    color: isPlaying ? Colors.greenAccent : null,
+                  ),
+                  onPressed: () async {
                 // ensure name cache for sync resolver used by PlayerPopup
                 await _ensureNameCacheLoaded();
 
@@ -221,7 +327,9 @@ class _MainShellState extends State<MainShell> {
                   ),
                 );
               },
-            ),
+            ); // IconButton
+              },
+            ), // ListenableBuilder
             ProgramLangToggle(onChanged: () => setState(() {})),
           ],
         ),
@@ -332,6 +440,40 @@ class _MainShellState extends State<MainShell> {
     }
 
     return {'ids': playable, 'titles': titles};
+  }
+
+  /// Opens PlayerPopup after auto-reconnect detected a running device.
+  void _openPlayerPopupForReconnect() {
+    _ensureNameCacheLoaded().then((_) {
+      if (!mounted) return;
+
+      String resolveTitle(String id) {
+        final langCode =
+            (ProgramLangController.instance.lang == ProgramLang.de)
+                ? 'de'
+                : 'en';
+        final keyEn = playerService.titleKeyEnById[id] ?? id;
+        return ProgramNameLocalizer.instance.displayName(
+          keyEn: keyEn,
+          langCode: langCode,
+        );
+      }
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        showDragHandle: false,
+        builder: (ctx) => SafeArea(
+          child: Center(
+            child: PlayerPopup(
+              player: playerService,
+              resolveTitle: resolveTitle,
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Future<void> _syncPlayerQueueWithMyPrograms() async {

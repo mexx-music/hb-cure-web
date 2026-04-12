@@ -18,12 +18,18 @@ class AppMemory extends ChangeNotifier {
   static final AppMemory instance = AppMemory._internal();
 
   static const String _kProgramModeKey = 'programMode';
+  static const String _kReconnectEnabledKey = 'reconnectEnabled';
+  static const String _kLastDeviceIdKey = 'lastConnectedDeviceId';
 
   // Example fields
   int appLaunchCount = 0;
   final Map<String, dynamic> deviceProfilesCache = {};
   String? lastConnectedDeviceId;
   final Map<String, bool> featureFlags = {};
+
+  // Reconnect setting (persisted)
+  bool _reconnectEnabled = true;
+  bool get reconnectEnabled => _reconnectEnabled;
 
   // Program mode (beginner/advanced/expert)
   // Backed by a private field so we can notify listeners on change.
@@ -86,8 +92,19 @@ class AppMemory extends ChangeNotifier {
         programModeNotifier.value = loaded;
         // no notifyListeners here; init usually happens before UI
       }
+
+      // Load reconnectEnabled (default true)
+      if (prefs.containsKey(_kReconnectEnabledKey)) {
+        _reconnectEnabled = prefs.getBool(_kReconnectEnabledKey) ?? true;
+      }
+
+      // Load lastConnectedDeviceId
+      final savedDeviceId = prefs.getString(_kLastDeviceIdKey);
+      if (savedDeviceId != null && savedDeviceId.isNotEmpty) {
+        lastConnectedDeviceId = savedDeviceId;
+      }
     } catch (e) {
-      debugPrint('AppMemory.init: could not load persisted mode: $e');
+      debugPrint('AppMemory.init: could not load persisted settings: $e');
     }
 
     // 2) Try to load BLE profiles from YAML documentation file
@@ -126,9 +143,28 @@ class AppMemory extends ChangeNotifier {
     // TODO: persist
   }
 
-  void setLastDevice(String id) {
+  /// Persist reconnectEnabled setting.
+  Future<void> setReconnectEnabled(bool value) async {
+    if (_reconnectEnabled == value) return;
+    _reconnectEnabled = value;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kReconnectEnabledKey, value);
+    } catch (e) {
+      debugPrint('AppMemory.setReconnectEnabled: persist failed: $e');
+    }
+  }
+
+  /// Persist last connected device id.
+  Future<void> setLastDevice(String id) async {
     lastConnectedDeviceId = id;
-    // TODO: persist
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kLastDeviceIdKey, id);
+    } catch (e) {
+      debugPrint('AppMemory.setLastDevice: persist failed: $e');
+    }
   }
 
   void setFeatureFlag(String key, bool value) {

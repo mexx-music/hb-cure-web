@@ -18,7 +18,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   // ProgramMode-backed selection (replaces String _filter)
   ProgramMode _mode = ProgramMode.beginner;
-  bool _reconnect = true;
+  bool _reconnect = true; // loaded from AppMemory in initState
   bool _switchAfterAdd = true;
 
   @override
@@ -26,6 +26,8 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     // initialize _mode from AppMemory.programMode
     _mode = AppMemory.instance.programMode;
+    // initialize _reconnect from persisted AppMemory
+    _reconnect = AppMemory.instance.reconnectEnabled;
   }
 
   @override
@@ -70,7 +72,11 @@ class _SettingsPageState extends State<SettingsPage> {
             title: Text(l10n.settingsReconnect,
                 style: TextStyle(color: AppColors.textPrimary)),
             value: _reconnect,
-            onChanged: (v) => setState(() => _reconnect = v ?? false),
+            onChanged: (v) {
+              final val = v ?? false;
+              setState(() => _reconnect = val);
+              AppMemory.instance.setReconnectEnabled(val);
+            },
             activeColor: AppColors.primary,
           ),
           CheckboxListTile(
@@ -129,13 +135,36 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _CureBaseInfoCard extends StatelessWidget {
+class _CureBaseInfoCard extends StatefulWidget {
   const _CureBaseInfoCard();
+
+  @override
+  State<_CureBaseInfoCard> createState() => _CureBaseInfoCardState();
+}
+
+class _CureBaseInfoCardState extends State<_CureBaseInfoCard> {
+  final _svc = CureDeviceUnlockService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _svc.deviceInfoRevision.addListener(_onDeviceInfoChanged);
+  }
+
+  @override
+  void dispose() {
+    _svc.deviceInfoRevision.removeListener(_onDeviceInfoChanged);
+    super.dispose();
+  }
+
+  void _onDeviceInfoChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final svc = CureDeviceUnlockService.instance;
+    final svc = _svc;
 
     final hw = (svc.hardwareInfo ?? '').trim();
     final build = (svc.buildInfo ?? '').trim();

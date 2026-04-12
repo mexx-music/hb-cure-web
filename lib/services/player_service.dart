@@ -273,13 +273,26 @@ class PlayerService extends ChangeNotifier {
   }
 
   /// Sync app timer with real device status after reconnect.
-  /// [deviceTotalMs] and [deviceElapsedMs] come from progStatus response.
+  /// [deviceTotalMs] and [deviceElapsedMs] come from progStatus response
+  /// (the device reports these values in milliseconds despite the field names).
+  ///
+  /// If [queueIds] is provided, the player will use them as the queue
+  /// (used during reconnect when the original queue is not available).
   void syncWithDeviceStatus({
     required int deviceTotalMs,
     required int deviceElapsedMs,
     required bool deviceRunning,
+    List<String>? queueIds,
   }) {
-    if (_state.queueIds.isEmpty) return;
+    // If a queue is provided (reconnect scenario), install it
+    if (queueIds != null && queueIds.isNotEmpty) {
+      _state = _state.copyWith(queueIds: queueIds);
+    }
+
+    // If still no queue, create a synthetic single-item queue so the timer works
+    if (_state.queueIds.isEmpty) {
+      _state = _state.copyWith(queueIds: ['_reconnected_program']);
+    }
 
     final deviceTotal = Duration(milliseconds: deviceTotalMs);
     final deviceRemaining = Duration(milliseconds: (deviceTotalMs - deviceElapsedMs).clamp(0, deviceTotalMs));
