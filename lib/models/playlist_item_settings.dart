@@ -52,5 +52,27 @@ class PlaylistItemSettings {
       magneticWaveform: magneticWaveform ?? this.magneticWaveform,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'durationMinutes': durationMinutes,
+        'intensity': intensity,
+        'electric': electric,
+        'electricWaveform': electricWaveform.name,
+        'magnetic': magnetic,
+        'magneticWaveform': magneticWaveform.name,
+      };
+
+  static PlaylistItemSettings fromJson(Map<String, dynamic> j) {
+    Waveform _wf(String? s) =>
+        Waveform.values.firstWhere((w) => w.name == s, orElse: () => Waveform.sine);
+    return PlaylistItemSettings(
+      durationMinutes: (j['durationMinutes'] as num?)?.toInt() ?? defaults.durationMinutes,
+      intensity: (j['intensity'] as num?)?.toInt() ?? defaults.intensity,
+      electric: j['electric'] as bool? ?? defaults.electric,
+      electricWaveform: _wf(j['electricWaveform'] as String?),
+      magnetic: j['magnetic'] as bool? ?? defaults.magnetic,
+      magneticWaveform: _wf(j['magneticWaveform'] as String?),
+    );
+  }
 }
 

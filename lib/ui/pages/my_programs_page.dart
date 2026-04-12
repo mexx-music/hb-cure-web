@@ -352,6 +352,9 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                     ),
                     onTap: () async {
                       await ClientsStore.instance.setActiveClientId(c.id);
+                      // Load persisted settings for the newly selected client
+                      playerService.clearSettings();
+                      await playerService.loadSettingsForClient(c.id);
                       if (!mounted) return;
                       Navigator.pop(ctx);
                       setState(() {});

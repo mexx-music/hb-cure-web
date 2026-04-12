@@ -7,6 +7,8 @@ import 'ui/pages/start_page.dart';
 import 'ui/theme/app_colors.dart';
 import 'dart:async';
 import 'services/app_memory.dart';
+import 'services/clients_store.dart';
+import 'app_services.dart';
 import 'i18n/program_name_localizer.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'services/program_language_controller.dart';
@@ -31,6 +33,14 @@ Future<void> main() async {
     await ProgramNameLocalizer.instance.ensureLoaded();
   } catch (_) {
     // non-fatal: proceed even if CSV load failed
+  }
+
+  // Load persisted program settings for the active client
+  try {
+    final activeId = await ClientsStore.instance.loadActiveClientId();
+    await playerService.loadSettingsForClient(activeId ?? 'default');
+  } catch (_) {
+    // non-fatal
   }
 
   runApp(const MyApp());

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/playlist_item_settings.dart';
 
 class PlayerState {
@@ -68,6 +70,12 @@ class PlayerService extends ChangeNotifier {
   // BEGIN PATCH: per-program settings (in-memory)
   final Map<String, PlaylistItemSettings> _settingsByProgramId = {};
 
+  // SharedPreferences key prefix: prog_settings__<clientId>__<programId>
+  static const _kSettingsPrefix = 'prog_settings__';
+
+  static String _settingsKey(String clientId, String programId) =>
+      '${_kSettingsPrefix}${clientId}__$programId';
+
   PlaylistItemSettings settingsFor(String programId) {
     return _settingsByProgramId[programId] ?? PlaylistItemSettings.defaults;
   }
@@ -75,6 +83,53 @@ class PlayerService extends ChangeNotifier {
   void setSettings(String programId, PlaylistItemSettings settings) {
     _settingsByProgramId[programId] = settings;
     // Notify listeners so UI (player, lists) can react immediately to changes
+    notifyListeners();
+    // Persist asynchronously (fire and forget)
+    _persistSettings(programId, settings);
+  }
+
+  Future<void> _persistSettings(String programId, PlaylistItemSettings settings) async {
+    try {
+      // Avoid importing clients_store here: read raw pref directly
+      final prefs = await SharedPreferences.getInstance();
+      const kActive = 'clients_active_id_v1';
+      final clientId = prefs.getString(kActive) ?? 'default';
+      final key = _settingsKey(clientId, programId);
+      await prefs.setString(key, jsonEncode(settings.toJson()));
+    } catch (e) {
+      debugPrint('[PlayerService] _persistSettings error: $e');
+    }
+  }
+
+  /// Load all persisted settings for the given clientId into memory.
+  /// Call this on app start and on client switch.
+  Future<void> loadSettingsForClient(String clientId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = '${_kSettingsPrefix}${clientId}__';
+      final keys = prefs.getKeys().where((k) => k.startsWith(prefix));
+      _settingsByProgramId.clear();
+      for (final key in keys) {
+        final programId = key.substring(prefix.length);
+        final raw = prefs.getString(key);
+        if (raw != null) {
+          try {
+            final map = jsonDecode(raw) as Map<String, dynamic>;
+            _settingsByProgramId[programId] = PlaylistItemSettings.fromJson(map);
+          } catch (_) {
+            // skip corrupt entry
+          }
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[PlayerService] loadSettingsForClient error: $e');
+    }
+  }
+
+  /// Clear in-memory settings (used when switching clients before loading new ones).
+  void clearSettings() {
+    _settingsByProgramId.clear();
     notifyListeners();
   }
   // END PATCH
