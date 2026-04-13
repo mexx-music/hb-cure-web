@@ -61,8 +61,16 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   Text(l10n.setupDurationMinutes),
                   DropdownButton<int>(
                     value: _duration,
-                    items: [5, 10, 15, 20, 30, 45, 60]
-                        .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+                    items: [5, 10, 15, 20, 30, 45, 60, 120, 180]
+                        .map((e) {
+                          String label;
+                          if (e >= 60 && e % 60 == 0) {
+                            label = '${e ~/ 60} h';
+                          } else {
+                            label = '$e min';
+                          }
+                          return DropdownMenuItem(value: e, child: Text(label));
+                        })
                         .toList(),
                     onChanged: (v) => setState(() => _duration = v ?? _duration),
                   ),

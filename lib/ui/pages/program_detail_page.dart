@@ -33,7 +33,7 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   bool _powerMode = false;
   bool _inMyPrograms = false;
   final _myService = MyProgramsService();
-  final List<int> _durations = [10, 15, 20, 30, 45, 60, 90, 120, 180];
+  final List<int> _durations = [5, 10, 15, 20, 30, 45, 60, 120, 180];
   // waveform selections for electric and magnetic fields
   String _electricWaveform = 'sine';
   String _magneticWaveform = 'sine';
@@ -216,6 +216,12 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   void dispose() {
     _statusTimer?.cancel();
     super.dispose();
+  }
+
+  String _formatDurationLabel(int m) {
+    if (m >= 60 && m % 60 == 0) return '${m ~/ 60} h';
+    if (m >= 60) return '${m ~/ 60} h ${m % 60} min';
+    return '$m min';
   }
 
   void _showDurationPicker() {
@@ -435,7 +441,7 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('Duration: ${_selectedMinutes} min', style: const TextStyle(color: AppColors.textPrimary, decoration: TextDecoration.none, fontSize: 18), textAlign: TextAlign.center, textScaleFactor: 1.0),
+                      child: Text('Duration: ${_formatDurationLabel(_selectedMinutes ?? 15)}', style: const TextStyle(color: AppColors.textPrimary, decoration: TextDecoration.none, fontSize: 18), textAlign: TextAlign.center, textScaleFactor: 1.0),
                     ),
                   ),
                 ),
