@@ -2,7 +2,7 @@ import '../models/program_item.dart';
 import 'cure_device_unlock_service.dart';
 import 'program_catalog.dart';
 import '../core/cure_protocol/cure_program_factory.dart';
-import 'my_programs_service.dart';
+import 'my_programs_service.dart' show MyProgramsService, baseIdFromSlotKey;
 import 'player_service.dart';
 import 'composite_program_builder.dart';
 import 'qt_remote_composite_program_encoder.dart';
@@ -24,11 +24,14 @@ class CubeDeviceService {
     required Duration duration,
     required bool powerMode,
   }) async {
-    // Special-case: custom single-frequency programs stored locally (id startsWith 'custom_')
-    if (program.id.startsWith('custom_')) {
-      final e = await CustomFrequenciesStore.instance.getById(program.id);
+    // Resolve base id (strip __slot_ suffix if present)
+    final baseId = baseIdFromSlotKey(program.id);
+
+    // Special-case: custom single-frequency programs stored locally (baseId startsWith 'custom_')
+    if (baseId.startsWith('custom_')) {
+      final e = await CustomFrequenciesStore.instance.getById(baseId);
       if (e == null) {
-        throw StateError('Custom program not found: id=${program.id}');
+        throw StateError('Custom program not found: id=$baseId');
       }
 
       // Build a CureProgram using the factory's singleFrequency variant
@@ -66,15 +69,15 @@ class CubeDeviceService {
         (program.internalId != null
             ? ProgramCatalog.instance.byInternalId(program.internalId!)
             : null) ??
-        // 3) Fallback: id als UUID interpretieren
-        ProgramCatalog.instance.byUuid(program.id) ??
+        // 3) Fallback: id als UUID interpretieren (use baseId, not slot key)
+        ProgramCatalog.instance.byUuid(baseId) ??
         // 4) Fallback: id als internalId interpretieren
-        ProgramCatalog.instance.byInternalId(int.tryParse(program.id) ?? -1);
+        ProgramCatalog.instance.byInternalId(int.tryParse(baseId) ?? -1);
 
     if (entry == null) {
       throw StateError(
         'Program not found: '
-        'slug=${program.id}, '
+        'slug=${program.id} (baseId=$baseId), '
         'uuid=${program.uuid}, '
         'internalId=${program.internalId}',
       );
@@ -332,11 +335,12 @@ class CubeDeviceService {
     debugPrint('MERGED: enter ids=${ids.length}');
     if (ids.isEmpty) return;
 
-    // Resolve ProgramItems from slugs/ids (used as a lookup map for non-custom ids)
+    // Resolve ProgramItems from base IDs (slot keys are stripped to base by resolveProgramItems)
     final resolvedPrograms = await MyProgramsCatalogResolver.resolveProgramItems(ids);
-    final byId = <String, ProgramItem>{};
+    // Build lookup map keyed by base programId
+    final byBaseId = <String, ProgramItem>{};
     for (final p in resolvedPrograms) {
-      byId[p.id] = p;
+      byBaseId[p.id] = p;
     }
     debugPrint('MERGED: resolved programs=${resolvedPrograms.length}');
 
@@ -355,11 +359,12 @@ class CubeDeviceService {
       // [PLAYLIST_TIME] diagnostic: per-item upload values
       debugPrint('[PLAYLIST_TIME] UPLOAD id=$id uiDurMin=${playlistSettings.durationMinutes} uiDurSec=${playlistDuration.inSeconds} clampedDwell=$dwell');
 
-      if (id.startsWith('custom_')) {
-        // Custom entry stored locally
-        final ce = await CustomFrequenciesStore.instance.getById(id);
+      if (baseIdFromSlotKey(id).startsWith('custom_')) {
+        // Custom entry stored locally – resolve base id for store lookup
+        final customBaseId = baseIdFromSlotKey(id);
+        final ce = await CustomFrequenciesStore.instance.getById(customBaseId);
         if (ce == null) {
-          throw StateError('Merged: custom entry not found: $id');
+          throw StateError('Merged: custom entry not found: $customBaseId');
         }
 
         // Single step for custom entry
@@ -387,10 +392,11 @@ class CubeDeviceService {
         continue;
       }
 
-      // Non-custom: resolve ProgramItem (must have been in resolved map)
-      final program = byId[id];
+      // Non-custom: resolve ProgramItem via base ID (strip slot suffix)
+      final baseId = baseIdFromSlotKey(id);
+      final program = byBaseId[baseId];
       if (program == null) {
-        throw StateError('Merged: program not resolved: $id');
+        throw StateError('Merged: program not resolved: $id (baseId=$baseId)');
       }
 
       final entry =
@@ -405,7 +411,8 @@ class CubeDeviceService {
         );
       }
 
-      final s = settingsForId(program.id);
+      // Use the original slot key for settings lookup (independent per duplicate)
+      final s = settingsForId(id);
       final duration = Duration(minutes: s.durationMinutes);
 
       // Factory: build CureProgram (ensures same encoding as single-upload)

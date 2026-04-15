@@ -10,7 +10,7 @@ import 'package:hbcure/ui/widgets/player_popup.dart';
 
 import '../../data/program_repository.dart';
 import '../../models/program_item.dart';
-import '../../services/my_programs_service.dart';
+import '../../services/my_programs_service.dart' show MyProgramsService, baseIdFromSlotKey;
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'program_detail_page.dart';
@@ -138,18 +138,18 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       final nextDisplay = <String, String>{};
 
       for (final id in ids) {
+        final baseId = baseIdFromSlotKey(id);
+
         // custom user-created entries (persisted as custom_<ts>)
-        if (id.startsWith('custom_')) {
+        if (baseId.startsWith('custom_')) {
           // try to load persisted custom entry and use its name for display
-          final e = await CustomFrequenciesStore.instance.getById(id);
+          final e = await CustomFrequenciesStore.instance.getById(baseId);
           final displayName = (e?.name ?? '').trim();
 
           programs.add(
             ProgramItem(
-              id: id,
-              name: displayName.isNotEmpty
-                  ? displayName
-                  : id,
+              id: id, // keep slot key as id for settings independence
+              name: displayName.isNotEmpty ? displayName : id,
               uuid: null,
               internalId: null,
               level: 1,
@@ -162,9 +162,20 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
           continue;
         }
 
-        final p = map[id];
+        final p = map[baseId];
         if (p != null) {
-          programs.add(p);
+          // Return a ProgramItem with the slot key as id, but preserve metadata
+          if (id == baseId) {
+            programs.add(p);
+          } else {
+            programs.add(ProgramItem(
+              id: id, // slot key
+              name: p.name,
+              uuid: p.uuid,
+              internalId: p.internalId,
+              level: p.level,
+            ));
+          }
           // leave display name to enrichment below (or set immediately if name present)
           continue;
         }
@@ -258,6 +269,16 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
   Future<void> _remove(String id) async {
     await _mySvc.remove(id);
     _loadPrograms();
+  }
+
+  Future<void> _duplicate(String id) async {
+    // Copy current settings for the original entry
+    final currentSettings = playerService.settingsFor(id);
+    // Create new slot key directly below the original
+    final newSlotKey = await _mySvc.duplicate(id);
+    // Copy settings to new slot key
+    playerService.setSettings(newSlotKey, currentSettings);
+    // _loadPrograms will be triggered by the notifyListeners in duplicate()
   }
 
   Future<void> _reorder(int oldIndex, int newIndex) async {
@@ -457,8 +478,9 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Use enriched display name, but prefer stored custom name for custom_ entries
     String uiName = (_displayNameById[program.id] ?? program.name);
-    if (program.id.startsWith('custom_')) {
-      final e = await CustomFrequenciesStore.instance.getById(program.id);
+    final baseId = baseIdFromSlotKey(program.id);
+    if (baseId.startsWith('custom_')) {
+      final e = await CustomFrequenciesStore.instance.getById(baseId);
       if (e != null && e.name.trim().isNotEmpty) {
         uiName = e.name.trim();
       }
@@ -693,6 +715,14 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                                     );
                                   }
                                 },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.content_copy,
+                                  color: AppColors.textSecondary,
+                                ),
+                                onPressed: () async => _duplicate(program.id),
+                                tooltip: 'Duplicate',
                               ),
                               IconButton(
                                 icon: const Icon(

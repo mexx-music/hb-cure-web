@@ -1,8 +1,30 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hbcure/services/clients_store.dart';
+
+/// Extracts the base programId from a slot key.
+/// e.g. "pain_abdominal_pain_1__slot_abc123" -> "pain_abdominal_pain_1"
+/// Plain IDs are returned as-is.
+String baseIdFromSlotKey(String slotKey) {
+  const sep = '__slot_';
+  final idx = slotKey.indexOf(sep);
+  if (idx < 0) return slotKey;
+  return slotKey.substring(0, idx);
+}
+
+/// Returns true if the given id is a slot key (i.e. a duplicate entry).
+bool isSlotKey(String id) => id.contains('__slot_');
+
+String _generateShortId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  final rng = math.Random();
+  return String.fromCharCodes(
+    List.generate(6, (_) => chars.codeUnitAt(rng.nextInt(chars.length))),
+  );
+}
 
 /// Singleton service to manage the user's saved program IDs.
 class MyProgramsService extends ChangeNotifier {
@@ -88,5 +110,34 @@ class MyProgramsService extends ChangeNotifier {
     await _migrateLegacyIfNeeded(prefs, key);
     final list = prefs.getStringList(key) ?? <String>[];
     return list.contains(programId);
+  }
+
+  /// Duplicates [originalId] by inserting a new slot-keyed entry directly
+  /// after the original in the list.
+  /// Returns the newly generated slot key so the caller can copy settings.
+  Future<String> duplicate(String originalId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = await _keyForActiveClient();
+    await _migrateLegacyIfNeeded(prefs, key);
+    final list = prefs.getStringList(key) ?? <String>[];
+
+    final baseId = baseIdFromSlotKey(originalId);
+    // Build a unique slot key
+    String slotKey;
+    do {
+      slotKey = '${baseId}__slot_${_generateShortId()}';
+    } while (list.contains(slotKey));
+
+    final insertAt = list.indexOf(originalId);
+    if (insertAt >= 0) {
+      list.insert(insertAt + 1, slotKey);
+    } else {
+      list.add(slotKey);
+    }
+
+    await prefs.setStringList(key, list);
+    _changes.add(null);
+    notifyListeners();
+    return slotKey;
   }
 }

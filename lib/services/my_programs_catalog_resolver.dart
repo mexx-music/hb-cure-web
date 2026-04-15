@@ -1,5 +1,6 @@
 import '../data/program_repository.dart';
 import '../models/program_item.dart';
+import 'my_programs_service.dart' show baseIdFromSlotKey;
 
 class MyProgramsCatalogResolver {
   MyProgramsCatalogResolver._();
@@ -26,7 +27,8 @@ class MyProgramsCatalogResolver {
     final map = await buildIdToProgramItemMap();
     final out = <ProgramItem>[];
     for (final id in ids) {
-      final p = map[id];
+      final baseId = baseIdFromSlotKey(id);
+      final p = map[baseId];
       if (p != null) out.add(p);
     }
     return out;
