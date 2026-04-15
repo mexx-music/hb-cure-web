@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -712,7 +712,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.stop),
-                            label: const Text('Stop (Cube)'),
+                            label: const Text('Stopp'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
@@ -745,16 +745,135 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       const SizedBox(height: 12),
 
-                      // Segment timer (current program)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(isDe ? 'Programm' : 'Program',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                          Text('${fmt(segRemaining)} / ${fmt(currentSegDur)}  •  ${(queue.isEmpty ? 0 : (idx + 1))}/${queue.length}',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                        ],
-                      ),
+                      // ---- Playlist progress list ----
+                      if (queue.isNotEmpty) ...[
+                        const Divider(height: 1),
+                        const SizedBox(height: 8),
+                        ...List.generate(queue.length, (i) {
+                          final itemId = queue[i];
+                          final itemDurMin = widget.player.settingsFor(itemId).durationMinutes;
+                          final itemDur = Duration(minutes: itemDurMin);
+                          final itemTitle = widget.resolveTitle(itemId);
+
+                          // Determine state: completed / current / upcoming
+                          final bool isCompleted = i < idx;
+                          final bool isCurrent = i == idx;
+
+                          double barFill;
+                          Duration displayRemaining;
+
+                          if (isCompleted) {
+                            barFill = 1.0;
+                            displayRemaining = Duration.zero;
+                          } else if (isCurrent) {
+                            barFill = itemDur.inSeconds > 0
+                                ? (1.0 - segRemaining.inSeconds / itemDur.inSeconds).clamp(0.0, 1.0)
+                                : 0.0;
+                            displayRemaining = segRemaining;
+                          } else {
+                            barFill = 0.0;
+                            displayRemaining = itemDur;
+                          }
+
+                          final Color barColor = isCurrent
+                              ? Theme.of(context).colorScheme.primary
+                              : isCompleted
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.45)
+                                  : Colors.grey.withOpacity(0.25);
+
+                          final Color textColor = isCurrent
+                              ? Theme.of(context).colorScheme.onSurface
+                              : isCompleted
+                                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.55)
+                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.4);
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    // Index dot
+                                    Container(
+                                      width: 22,
+                                      height: 22,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isCurrent
+                                            ? Theme.of(context).colorScheme.primary
+                                            : isCompleted
+                                                ? Theme.of(context).colorScheme.primary.withOpacity(0.35)
+                                                : Colors.grey.withOpacity(0.22),
+                                      ),
+                                      child: Center(
+                                        child: isCompleted
+                                            ? Icon(Icons.check,
+                                                size: 13,
+                                                color: isCurrent
+                                                    ? Theme.of(context).colorScheme.onPrimary
+                                                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))
+                                            : Text(
+                                                '${i + 1}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isCurrent
+                                                      ? Theme.of(context).colorScheme.onPrimary
+                                                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Title
+                                    Expanded(
+                                      child: Text(
+                                        itemTitle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              color: textColor,
+                                              fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Time text
+                                    Text(
+                                      isCompleted
+                                          ? fmt(itemDur)
+                                          : isCurrent
+                                              ? '${fmt(displayRemaining)} / ${fmt(itemDur)}'
+                                              : fmt(itemDur),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: textColor,
+                                            fontFeatures: const [ui.FontFeature.tabularFigures()],
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                // Progress bar
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 30),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: barFill,
+                                      minHeight: 5,
+                                      backgroundColor: Colors.grey.withOpacity(0.15),
+                                      valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                        const Divider(height: 1),
+                      ],
 
                       const SizedBox(height: 8),
 
