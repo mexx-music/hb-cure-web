@@ -616,6 +616,26 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _programs.length,
                 onReorder: (oldIndex, newIndex) => _reorder(oldIndex, newIndex),
+                proxyDecorator: (child, index, animation) {
+                  return AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, child) {
+                      final t = Curves.easeOut.transform(animation.value);
+                      final scale = 1.0 + 0.025 * t;
+                      return Transform.scale(
+                        scale: scale,
+                        child: Material(
+                          color: Colors.transparent,
+                          elevation: 8 * t,
+                          shadowColor: Colors.black45,
+                          borderRadius: BorderRadius.circular(22),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: child,
+                  );
+                },
                 itemBuilder: (context, index) {
                   final program = _programs[index];
 
@@ -665,6 +685,14 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                           ),
                           child: Row(
                             children: [
+                              const Opacity(
+                                opacity: 0.18,
+                                child: Icon(
+                                  Icons.drag_indicator,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                               IconButton(
                                 icon: const Icon(Icons.play_arrow),
                                 color: AppColors.primary,
