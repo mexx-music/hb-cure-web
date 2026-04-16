@@ -38,6 +38,11 @@ class _MainShellState extends State<MainShell> {
   StreamSubscription<void>? _myProgramsSub;
   bool _syncInProgress = false;
 
+  // ── Device-status polling during active playback ──────────────────────────
+  static const Duration _pollInterval = Duration(minutes: 3);
+  Timer? _playbackPollTimer;
+  bool _pollBusy = false;
+
   // Name cache for Player resolver
   final Map<String, String> _keyEnByProgramId = {};
   final _repo = ProgramRepository();
@@ -122,6 +127,9 @@ class _MainShellState extends State<MainShell> {
     // Listen to AppMemory.programMode changes so the shell rebuilds (tabs/pages)
     AppMemory.instance.addListener(_onModeChanged);
 
+    // Listen to playerService so we can start/stop the device-status poll
+    playerService.addListener(_onPlayerStateChanged);
+
     // Auto-reconnect to last Cube if enabled
     _attemptAutoReconnect();
   }
@@ -129,8 +137,10 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     AppMemory.instance.removeListener(_onModeChanged);
+    playerService.removeListener(_onPlayerStateChanged);
     _myProgramsSub?.cancel();
     _myProgramsSub = null;
+    _stopPlaybackPolling();
     super.dispose();
   }
 
@@ -142,7 +152,90 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  /// Auto-reconnect to last Cube device if setting is enabled.
+  // Called on every playerService change — starts/stops the device poll timer
+  void _onPlayerStateChanged() {
+    final playing = playerService.state.isPlaying;
+    if (playing && _playbackPollTimer == null) {
+      _startPlaybackPolling();
+    } else if (!playing && _playbackPollTimer != null) {
+      _stopPlaybackPolling();
+    }
+  }
+
+  void _startPlaybackPolling() {
+    _playbackPollTimer?.cancel();
+    debugPrint('[PlaybackPoll] starting periodic poll (interval: $_pollInterval)');
+    _playbackPollTimer = Timer.periodic(_pollInterval, (_) => _pollDeviceStatus());
+  }
+
+  void _stopPlaybackPolling() {
+    _playbackPollTimer?.cancel();
+    _playbackPollTimer = null;
+    debugPrint('[PlaybackPoll] polling stopped');
+  }
+
+  Future<void> _pollDeviceStatus() async {
+    if (_pollBusy) {
+      debugPrint('[PlaybackPoll] poll skipped – previous still running');
+      return;
+    }
+    if (!playerService.state.isPlaying) {
+      _stopPlaybackPolling();
+      return;
+    }
+
+    _pollBusy = true;
+    try {
+      final svc = CureDeviceUnlockService.instance;
+      if (!svc.isNativeConnected) {
+        debugPrint('[PlaybackPoll] poll skipped – device not connected');
+        return;
+      }
+
+      debugPrint('[PlaybackPoll] polling progStatus ...');
+      final status = await svc.fetchProgStatus(timeout: const Duration(seconds: 10));
+      if (status == null) {
+        debugPrint('[PlaybackPoll] progStatus returned null – skipping');
+        return;
+      }
+
+      debugPrint('[PlaybackPoll] progStatus: running=${status.running} '
+          'elapsed=${status.elapsedSec} total=${status.totalSec}');
+
+      if (!status.running) {
+        // Device has stopped – reflect this in the app immediately
+        debugPrint('[PlaybackPoll] MISMATCH: device stopped but app still playing → stopping app timer');
+        playerService.stop();
+        _stopPlaybackPolling();
+        return;
+      }
+
+      // Device is running – check for drift
+      final localRemaining = playerService.state.remaining;
+      final deviceRemaining = Duration(
+          milliseconds: (status.totalSec - status.elapsedSec).clamp(0, status.totalSec));
+      final drift = (localRemaining - deviceRemaining).abs();
+
+      debugPrint('[PlaybackPoll] localRemaining=$localRemaining '
+          'deviceRemaining=$deviceRemaining drift=$drift');
+
+      // Sync if drift > 60 seconds
+      if (drift > const Duration(seconds: 60)) {
+        debugPrint('[PlaybackPoll] MISMATCH: drift=$drift > 60s → syncing with device');
+        playerService.syncWithDeviceStatus(
+          deviceTotalMs: status.totalSec,
+          deviceElapsedMs: status.elapsedSec,
+          deviceRunning: true,
+        );
+      } else {
+        debugPrint('[PlaybackPoll] drift=$drift – within tolerance, no sync needed');
+      }
+    } catch (e) {
+      debugPrint('[PlaybackPoll] poll error: $e');
+    } finally {
+      _pollBusy = false;
+    }
+  }
   /// Runs asynchronously in the background — does not block UI.
   ///
   /// Uses the normal BleCureDeviceService.connect() → ensureUnlockedForCurrentDevice()

@@ -634,8 +634,10 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                     );
                   }
 
-                  return Padding(
+                  return ReorderableDelayedDragStartListener(
                     key: ValueKey(program.id),
+                    index: index,
+                    child: Padding(
                     padding: const EdgeInsets.only(bottom: 6.0),
                     child: Material(
                       color: AppColors.cardBackground,
@@ -731,18 +733,12 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                                 ),
                                 onPressed: () async => _remove(program.id),
                               ),
-                              ReorderableDragStartListener(
-                                index: index,
-                                child: const Icon(
-                                  Icons.drag_handle,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
+                  ),
                   );
                 },
               ),
