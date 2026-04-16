@@ -718,16 +718,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () async {
-                              try {
-                                await CubeDeviceService.instance.stopProgram();
-                              } catch (e) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Stop failed: ${e.toString()}')),
-                                );
-                                return;
-                              }
-
+                              // 1. Stop local player/timer immediately (no BLE required)
                               try {
                                 widget.player.stop();
                               } catch (_) {}
@@ -737,6 +728,18 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                   _fillIndex = 0;
                                   _cycleNo = 0;
                                 });
+                              }
+
+                              // 2. Also send stop to Cube if connected (best-effort)
+                              try {
+                                await CubeDeviceService.instance.stopProgram();
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Gerät-Stop fehlgeschlagen: ${e.toString()}')),
+                                  );
+                                }
+                                // local stop already done above – no early return needed
                               }
                             },
                           ),
