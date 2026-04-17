@@ -205,20 +205,11 @@ class _ProgramListPageState extends State<ProgramListPage> {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () async {
+                                  _AddButton(
+                                    onAdd: () async {
                                       debugPrint('Add to My Programs: ${p.id} (${p.name})');
                                       await MyProgramsService().add(p.id);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Zu My Programs hinzugefügt: ${p.name}')),
-                                      );
                                     },
-                                    child: const CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: AppColors.primary,
-                                      child: Icon(Icons.add, color: Colors.white, size: 18),
-                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   const Icon(Icons.chevron_right, color: AppColors.textSecondary),
@@ -239,3 +230,68 @@ class _ProgramListPageState extends State<ProgramListPage> {
     );
   }
 }
+
+/// Small animated add button: shows checkmark briefly after tap.
+class _AddButton extends StatefulWidget {
+  final Future<void> Function() onAdd;
+  const _AddButton({required this.onAdd});
+
+  @override
+  State<_AddButton> createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<_AddButton>
+    with SingleTickerProviderStateMixin {
+  bool _done = false;
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 1.25).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    if (_done) return;
+    await widget.onAdd();
+    if (!mounted) return;
+    setState(() => _done = true);
+    await _ctrl.forward();
+    await _ctrl.reverse();
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (mounted) setState(() => _done = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scale,
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
+          child: Icon(
+            _done ? Icons.check : Icons.add,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

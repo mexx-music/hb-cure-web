@@ -104,10 +104,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         );
                       }),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.tune, color: AppColors.textPrimary),
-                      onPressed: () => debugPrint('Filter'),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -144,25 +140,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                GestureDetector(
-                                  onTap: () async {
+                                _CatAddButton(
+                                  onAdd: () async {
                                     debugPrint(
                                         'Add to My Programs: ${p.id} (${p.name})');
                                     await MyProgramsService().add(p.id);
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Zu My Programs hinzugefügt: ${p.name}'),
-                                      ),
-                                    );
                                   },
-                                  child: const CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: AppColors.primary,
-                                    child: Icon(Icons.add,
-                                        color: Colors.white, size: 18),
-                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 const Icon(Icons.chevron_right,
@@ -221,26 +204,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (sub.programs.length == 1)
-                                GestureDetector(
-                                  onTap: () async {
+                                _CatAddButton(
+                                  onAdd: () async {
                                     final p = sub.programs.first;
                                     debugPrint(
                                         'Add to My Programs: ${p.id} (${p.name})');
                                     await MyProgramsService().add(p.id);
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Zu My Programs hinzugefügt: ${p.name}'),
-                                      ),
-                                    );
                                   },
-                                  child: const CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: AppColors.primary,
-                                    child: Icon(Icons.add,
-                                        color: Colors.white, size: 18),
-                                  ),
                                 ),
                               if (sub.programs.length == 1)
                                 const SizedBox(width: 10),
@@ -305,3 +275,68 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 }
+
+/// Animated add button: briefly shows checkmark with scale pop after tap.
+class _CatAddButton extends StatefulWidget {
+  final Future<void> Function() onAdd;
+  const _CatAddButton({required this.onAdd});
+
+  @override
+  State<_CatAddButton> createState() => _CatAddButtonState();
+}
+
+class _CatAddButtonState extends State<_CatAddButton>
+    with SingleTickerProviderStateMixin {
+  bool _done = false;
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 1.25).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    if (_done) return;
+    await widget.onAdd();
+    if (!mounted) return;
+    setState(() => _done = true);
+    await _ctrl.forward();
+    await _ctrl.reverse();
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (mounted) setState(() => _done = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scale,
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
+          child: Icon(
+            _done ? Icons.check : Icons.add,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
