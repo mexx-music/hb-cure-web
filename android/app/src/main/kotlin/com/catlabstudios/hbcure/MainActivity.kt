@@ -10,9 +10,12 @@ import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.content.Intent
+import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -234,6 +237,24 @@ class MainActivity : FlutterActivity() {
                             Log.e(TAG, "verifyDeviceSignature failed", e)
                             result.error("VERIFY_FAILED", e.message ?: "unknown", null)
                         }
+                    }
+                }
+
+                "isLocationServiceEnabled" -> {
+                    val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    val enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                            lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                    result.success(enabled)
+                }
+
+                "openLocationSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("SETTINGS_ERROR", e.message ?: "unknown", null)
                     }
                 }
 

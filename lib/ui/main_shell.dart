@@ -80,17 +80,22 @@ class _MainShellState extends State<MainShell> {
     final langCode =
     (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
 
-    // 1) Cached EN key?
-    var keyEn = _keyEnByProgramId[programId];
+    // Resolve base id for slot-key duplicates
+    final baseId = programId.contains('__slot_')
+        ? programId.split('__slot_').first
+        : programId;
+
+    // 1) Cached EN key? (try full key first, then base)
+    var keyEn = _keyEnByProgramId[programId] ?? _keyEnByProgramId[baseId];
 
     if (keyEn == null) {
-      // 2) Try decoded catalog by UUID / internalId
+      // 2) Try decoded catalog by UUID / internalId using baseId
       try {
-        final byUuid = ProgramCatalog.instance.byUuid(programId);
+        final byUuid = ProgramCatalog.instance.byUuid(baseId);
         if (byUuid != null) {
           keyEn = ProgramCatalog.instance.name(byUuid, lang: 'EN');
         } else {
-          final intId = int.tryParse(programId);
+          final intId = int.tryParse(baseId);
           if (intId != null) {
             final byInt = ProgramCatalog.instance.byInternalId(intId);
             if (byInt != null) {
@@ -102,8 +107,8 @@ class _MainShellState extends State<MainShell> {
         // ignore
       }
 
-      // 3) Fallback: if still null -> use id itself
-      keyEn ??= programId;
+      // 3) Fallback: if still null -> use baseId
+      keyEn ??= baseId;
 
       _keyEnByProgramId[programId] = keyEn;
     }
@@ -219,9 +224,9 @@ class _MainShellState extends State<MainShell> {
       debugPrint('[PlaybackPoll] localRemaining=$localRemaining '
           'deviceRemaining=$deviceRemaining drift=$drift');
 
-      // Sync if drift > 60 seconds
-      if (drift > const Duration(seconds: 60)) {
-        debugPrint('[PlaybackPoll] MISMATCH: drift=$drift > 60s → syncing with device');
+      // Sync if drift > 15 seconds
+      if (drift > const Duration(seconds: 15)) {
+        debugPrint('[PlaybackPoll] MISMATCH: drift=$drift > 15s → syncing with device');
         playerService.syncWithDeviceStatus(
           deviceTotalMs: status.totalSec,
           deviceElapsedMs: status.elapsedSec,
@@ -397,7 +402,14 @@ class _MainShellState extends State<MainShell> {
                   (ProgramLangController.instance.lang == ProgramLang.de)
                       ? 'de'
                       : 'en';
-                  final keyEn = playerService.titleKeyEnById[id] ?? id;
+                  // For slot-key duplicates, prefer the full-key lookup first,
+                  // then fall back to the base programId lookup.
+                  var keyEn = playerService.titleKeyEnById[id];
+                  if (keyEn == null && id.contains('__slot_')) {
+                    final baseId = id.split('__slot_').first;
+                    keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
+                  }
+                  keyEn ??= id;
                   return ProgramNameLocalizer.instance.displayName(
                     keyEn: keyEn,
                     langCode: langCode,
@@ -525,11 +537,15 @@ class _MainShellState extends State<MainShell> {
     final playable = <String>[];
     final titles = <String, String>{};
     for (final id in ids) {
-      final p = map[id];
-      if (p != null) {
-        playable.add(id);
-        titles[id] = p.name; // EN-key
-      }
+      // Strip __slot_<suffix> to get the base programId for catalog lookup.
+      // The full slot key is kept in the queue for independent settings.
+      final baseId = id.contains('__slot_') ? id.split('__slot_').first : id;
+      final p = map[baseId];
+      // Always include every persisted ID – even if not found in programs.json
+      // (e.g. numeric catalog IDs, custom_ IDs, slot-key duplicates).
+      // Missing from catalog just means the raw baseId is used as title fallback.
+      playable.add(id);
+      titles[id] = p?.name ?? baseId; // EN-key keyed by full slot key
     }
 
     return {'ids': playable, 'titles': titles};
@@ -545,7 +561,12 @@ class _MainShellState extends State<MainShell> {
             (ProgramLangController.instance.lang == ProgramLang.de)
                 ? 'de'
                 : 'en';
-        final keyEn = playerService.titleKeyEnById[id] ?? id;
+        var keyEn = playerService.titleKeyEnById[id];
+        if (keyEn == null && id.contains('__slot_')) {
+          final baseId = id.split('__slot_').first;
+          keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
+        }
+        keyEn ??= id;
         return ProgramNameLocalizer.instance.displayName(
           keyEn: keyEn,
           langCode: langCode,

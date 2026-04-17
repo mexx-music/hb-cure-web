@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import '../../services/ble_cure_device_service.dart';
@@ -62,16 +64,7 @@ class _DevicesPageState extends State<DevicesPage> {
 
     // Auto-Scan beim Start (mit Fehler-Handling)
     Future.microtask(() async {
-      try {
-        await _ble.startScan();
-      } catch (e) {
-        if (kDebugMode) debugPrint('Initial auto-scan failed: $e');
-        if (mounted) {
-          setState(() {
-            _scanError = e.toString();
-          });
-        }
-      }
+      await _checkLocationAndScan();
     });
   }
 
@@ -81,6 +74,71 @@ class _DevicesPageState extends State<DevicesPage> {
     _bleErrorSub?.cancel();
     _unlockSub?.cancel();
     super.dispose();
+  }
+
+  static const _nativeCh = MethodChannel('cure_ble_native/methods');
+
+  Future<bool> _isLocationServiceEnabled() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final result = await _nativeCh.invokeMethod<bool>('isLocationServiceEnabled');
+      return result ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<void> _openLocationSettings() async {
+    try {
+      await _nativeCh.invokeMethod('openLocationSettings');
+    } catch (_) {}
+  }
+
+  Future<void> _checkLocationAndScan() async {
+    if (Platform.isAndroid) {
+      final locationEnabled = await _isLocationServiceEnabled();
+      if (!locationEnabled && mounted) {
+        final confirmed = await _showLocationDialog();
+        if (confirmed == true) {
+          await _openLocationSettings();
+          return; // user must re-open app / press Scan again
+        }
+        // user dismissed – still try to scan
+      }
+    }
+    try {
+      await _ble.startScan();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Scan failed: $e');
+      if (mounted) {
+        setState(() {
+          _scanError = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<bool?> _showLocationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Standort erforderlich'),
+        content: const Text(
+          'Für die Bluetooth-Geräteerkennung muss der Standortdienst aktiviert sein.\n\n'
+          'Bitte aktiviere den Standort in den Systemeinstellungen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Abbrechen'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Standort aktivieren'),
+          ),
+        ],
+      ),
+    );
   }
 
   // --- Minimal helpers for consistent native/shared wiring ---
@@ -608,7 +666,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         }
                         try {
                           await _ble.stopScan();
-                          await _ble.startScan();
+                          await _checkLocationAndScan();
                         } catch (e) {
                           final msg = e.toString();
                           if (context.mounted) {

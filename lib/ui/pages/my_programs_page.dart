@@ -451,12 +451,14 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Upload banner in popup (PlayerPopup reads playerService.isUploading)
     playerService.setUploading(true);
+    bool uploadOk = false;
     try {
       await CubeDeviceService.instance.sendMyProgramsAsMergedSingleFromIds(
         ids: ids,
         powerMode: true,
         settingsForId: (id) => playerService.settingsFor(id),
       );
+      uploadOk = true;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -464,6 +466,30 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       );
     } finally {
       if (mounted) playerService.setUploading(false);
+    }
+
+    // After successful upload, sync app timer with device's actual compiled
+    // total to eliminate the ~20s drift caused by step-rounding overhead.
+    if (uploadOk && mounted) {
+      try {
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        final status = await CureDeviceUnlockService.instance.fetchProgStatus(
+          timeout: const Duration(seconds: 8),
+        );
+        if (status != null && status.running) {
+          playerService.syncWithDeviceStatus(
+            deviceTotalMs: status.totalSec,
+            deviceElapsedMs: status.elapsedSec,
+            deviceRunning: true,
+          );
+          debugPrint('[PLAYLIST_TIME] POST_UPLOAD_SYNC: '
+              'synced with device total=${status.totalSec}ms '
+              'elapsed=${status.elapsedSec}ms');
+        }
+      } catch (_) {
+        // best-effort – not fatal
+      }
     }
   }
 
@@ -505,12 +531,14 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Upload banner in popup
     playerService.setUploading(true);
+    bool singleUploadOk = false;
     try {
       await CubeDeviceService.instance.sendProgram(
         program: program,
         duration: duration,
         powerMode: true,
       );
+      singleUploadOk = true;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -518,6 +546,29 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       );
     } finally {
       if (mounted) playerService.setUploading(false);
+    }
+
+    // Sync app timer with device's actual compiled total
+    if (singleUploadOk && mounted) {
+      try {
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        final status = await CureDeviceUnlockService.instance.fetchProgStatus(
+          timeout: const Duration(seconds: 8),
+        );
+        if (status != null && status.running) {
+          playerService.syncWithDeviceStatus(
+            deviceTotalMs: status.totalSec,
+            deviceElapsedMs: status.elapsedSec,
+            deviceRunning: true,
+          );
+          debugPrint('[PLAYLIST_TIME] POST_SINGLE_UPLOAD_SYNC: '
+              'synced with device total=${status.totalSec}ms '
+              'elapsed=${status.elapsedSec}ms');
+        }
+      } catch (_) {
+        // best-effort
+      }
     }
   }
 
