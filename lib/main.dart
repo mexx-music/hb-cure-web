@@ -27,6 +27,9 @@ Future<void> main() async {
 
   await AppMemory.instance.init();
 
+  // Load persisted language preference
+  await ProgramLangController.instance.load();
+
   // Ensure program name CSV is loaded early so localized program names are available
   // as soon as the UI is shown.
   try {

@@ -2,7 +2,7 @@ name: hbcure
 description: "HB Cure application."
 publish_to: 'none'
 
-version: 1.0.1+19
+version: 1.0.1+20
 environment:
   sdk: ^3.9.2
 
@@ -35,6 +35,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/icon.png
     - assets/programs.json
     - assets/programs/Programs_decoded_full.json
     - doc/app_memory/40_ble_profiles.yaml
