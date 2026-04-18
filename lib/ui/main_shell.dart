@@ -390,121 +390,51 @@ class _MainShellState extends State<MainShell> {
               listenable: playerService,
               builder: (context, _) {
                 final isPlaying = playerService.state.isPlaying;
-                return IconButton(
-                  tooltip: 'Player',
-                  icon: Icon(
-                    isPlaying ? Icons.play_circle_filled : Icons.queue_music,
-                    color: isPlaying ? Colors.greenAccent : null,
-                  ),
-                  onPressed: () => _openPlayerPopup(),
-            ); // IconButton
-              },
-            ), // ListenableBuilder
-            ProgramLangToggle(onChanged: () => setState(() {})),
-          ],
-        ),
-      ),
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: pages,
-          ),
-          // ── Mini-player bar ──────────────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: ListenableBuilder(
-              listenable: playerService,
-              builder: (context, _) {
-                if (!playerService.state.isPlaying) {
-                  return const SizedBox.shrink();
-                }
-                final st = playerService.state;
-                final rem = st.remaining;
-                final total = st.total;
-                final progress = total.inMilliseconds > 0
-                    ? 1.0 - (rem.inMilliseconds / total.inMilliseconds)
-                    : 0.0;
-                final remMin = rem.inMinutes;
-                final remSec = rem.inSeconds % 60;
-                final timeText = '${remMin.toString().padLeft(2, '0')}:${remSec.toString().padLeft(2, '0')}';
-
-                String title = 'Programm läuft';
-                final curId = st.currentProgramId;
-                if (curId != null) {
-                  final langCode =
-                      (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
-                  var keyEn = playerService.titleKeyEnById[curId];
-                  if (keyEn == null && curId.contains('__slot_')) {
-                    final baseId = curId.split('__slot_').first;
-                    keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
-                  }
-                  keyEn ??= curId;
-                  title = ProgramNameLocalizer.instance.displayName(
-                    keyEn: keyEn,
-                    langCode: langCode,
+                if (!isPlaying) {
+                  return IconButton(
+                    tooltip: 'Player',
+                    icon: const Icon(Icons.queue_music),
+                    onPressed: () => _openPlayerPopup(),
                   );
                 }
-
+                // Active playback: icon + remaining time
+                final rem = playerService.state.remaining;
+                final h = rem.inHours;
+                final m = rem.inMinutes % 60;
+                final s = rem.inSeconds % 60;
+                final timeText = h > 0
+                    ? '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+                    : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
                 return GestureDetector(
                   onTap: () => _openPlayerPopup(),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1B1B2F),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.play_arrow, color: Colors.greenAccent, size: 28),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                title,
-                                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(3),
-                                child: LinearProgressIndicator(
-                                  value: progress.clamp(0.0, 1.0),
-                                  backgroundColor: Colors.white24,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
-                                  minHeight: 4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
+                        const Icon(Icons.play_circle_filled, color: Colors.greenAccent, size: 24),
+                        const SizedBox(width: 4),
                         Text(
                           timeText,
-                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 );
               },
-            ),
-          ),
-        ],
+            ), // ListenableBuilder
+          ],
+        ),
+      ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: pages,
       ),
       bottomNavigationBar: SafeArea(
         bottom: true,
