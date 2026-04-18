@@ -39,7 +39,17 @@ class _MainShellState extends State<MainShell> {
   bool _syncInProgress = false;
 
   // ── Device-status polling during active playback ──────────────────────────
-  static const Duration _pollInterval = Duration(minutes: 3);
+  /// Adaptive poll interval based on remaining playback time.
+  Duration get _pollInterval {
+    final remaining = playerService.state.remaining;
+    if (remaining < const Duration(minutes: 5)) {
+      return const Duration(seconds: 8);
+    } else if (remaining < const Duration(minutes: 30)) {
+      return const Duration(seconds: 30);
+    } else {
+      return const Duration(minutes: 3);
+    }
+  }
   Timer? _playbackPollTimer;
   bool _pollBusy = false;
 
@@ -169,8 +179,10 @@ class _MainShellState extends State<MainShell> {
 
   void _startPlaybackPolling() {
     _playbackPollTimer?.cancel();
-    debugPrint('[PlaybackPoll] starting periodic poll (interval: $_pollInterval)');
-    _playbackPollTimer = Timer.periodic(_pollInterval, (_) => _pollDeviceStatus());
+    final interval = _pollInterval;
+    _lastScheduledInterval = interval;
+    debugPrint('[PlaybackPoll] starting periodic poll (interval: $interval)');
+    _playbackPollTimer = Timer.periodic(interval, (_) => _pollDeviceStatus());
   }
 
   void _stopPlaybackPolling() {
@@ -221,12 +233,14 @@ class _MainShellState extends State<MainShell> {
           milliseconds: (status.totalSec - status.elapsedSec).clamp(0, status.totalSec));
       final drift = (localRemaining - deviceRemaining).abs();
 
+      final inFinalMinute = localRemaining < const Duration(minutes: 1);
       debugPrint('[PlaybackPoll] localRemaining=$localRemaining '
-          'deviceRemaining=$deviceRemaining drift=$drift');
+          'deviceRemaining=$deviceRemaining drift=$drift finalMinute=$inFinalMinute');
 
-      // Sync if drift > 15 seconds
-      if (drift > const Duration(seconds: 15)) {
-        debugPrint('[PlaybackPoll] MISMATCH: drift=$drift > 15s → syncing with device');
+      // During the final minute: always sync from device (even small drift)
+      // Outside final minute: sync only if drift > 15 seconds
+      if (inFinalMinute || drift > const Duration(seconds: 15)) {
+        debugPrint('[PlaybackPoll] syncing with device (finalMinute=$inFinalMinute drift=$drift)');
         playerService.syncWithDeviceStatus(
           deviceTotalMs: status.totalSec,
           deviceElapsedMs: status.elapsedSec,
@@ -235,10 +249,23 @@ class _MainShellState extends State<MainShell> {
       } else {
         debugPrint('[PlaybackPoll] drift=$drift – within tolerance, no sync needed');
       }
+
+      // Reschedule if the adaptive interval changed
+      _rescheduleIfIntervalChanged();
     } catch (e) {
       debugPrint('[PlaybackPoll] poll error: $e');
     } finally {
       _pollBusy = false;
+    }
+  }
+
+  Duration _lastScheduledInterval = Duration.zero;
+
+  void _rescheduleIfIntervalChanged() {
+    final newInterval = _pollInterval;
+    if (newInterval != _lastScheduledInterval && playerService.state.isPlaying) {
+      debugPrint('[PlaybackPoll] adaptive interval changed: $_lastScheduledInterval → $newInterval');
+      _startPlaybackPolling();
     }
   }
   /// Runs asynchronously in the background — does not block UI.
@@ -369,69 +396,7 @@ class _MainShellState extends State<MainShell> {
                     isPlaying ? Icons.play_circle_filled : Icons.queue_music,
                     color: isPlaying ? Colors.greenAccent : null,
                   ),
-                  onPressed: () async {
-                // ensure name cache for sync resolver used by PlayerPopup
-                await _ensureNameCacheLoaded();
-
-                // Wenn Player noch keine Queue hat: starte automatisch "My Programs" (gefiltert)
-                if (playerService.state.queueIds.isEmpty) {
-                  final res = await _loadPlayableIdsAndTitles();
-                  final playableIds =
-                      (res['ids'] as List<dynamic>?)?.cast<String>() ??
-                          <String>[];
-                  final titles = (res['titles'] as Map<dynamic, dynamic>?)
-                      ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
-                      <String, String>{};
-                  if (playableIds.isNotEmpty) {
-                    try {
-                      playerService.playQueue(
-                        playableIds,
-                        0,
-                        titleKeyEnById: titles,
-                      );
-                    } catch (_) {
-                      // fallback if playQueue signature doesn't accept titles
-                      playerService.playQueue(playableIds, 0);
-                    }
-                  }
-                }
-
-                // Konsistenter Resolver: nutze playerService.titleKeyEnById als Quelle für keyEn
-                String resolveTitle(String id) {
-                  final langCode =
-                  (ProgramLangController.instance.lang == ProgramLang.de)
-                      ? 'de'
-                      : 'en';
-                  // For slot-key duplicates, prefer the full-key lookup first,
-                  // then fall back to the base programId lookup.
-                  var keyEn = playerService.titleKeyEnById[id];
-                  if (keyEn == null && id.contains('__slot_')) {
-                    final baseId = id.split('__slot_').first;
-                    keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
-                  }
-                  keyEn ??= id;
-                  return ProgramNameLocalizer.instance.displayName(
-                    keyEn: keyEn,
-                    langCode: langCode,
-                  );
-                }
-
-                if (!context.mounted) return;
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  showDragHandle: false,
-                  builder: (ctx) => SafeArea(
-                    child: Center(
-                      child: PlayerPopup(
-                        player: playerService,
-                        resolveTitle: resolveTitle,
-                      ),
-                    ),
-                  ),
-                );
-              },
+                  onPressed: () => _openPlayerPopup(),
             ); // IconButton
               },
             ), // ListenableBuilder
@@ -439,9 +404,107 @@ class _MainShellState extends State<MainShell> {
           ],
         ),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _currentIndex,
+            children: pages,
+          ),
+          // ── Mini-player bar ──────────────────────────────────────────────
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ListenableBuilder(
+              listenable: playerService,
+              builder: (context, _) {
+                if (!playerService.state.isPlaying) {
+                  return const SizedBox.shrink();
+                }
+                final st = playerService.state;
+                final rem = st.remaining;
+                final total = st.total;
+                final progress = total.inMilliseconds > 0
+                    ? 1.0 - (rem.inMilliseconds / total.inMilliseconds)
+                    : 0.0;
+                final remMin = rem.inMinutes;
+                final remSec = rem.inSeconds % 60;
+                final timeText = '${remMin.toString().padLeft(2, '0')}:${remSec.toString().padLeft(2, '0')}';
+
+                String title = 'Programm läuft';
+                final curId = st.currentProgramId;
+                if (curId != null) {
+                  final langCode =
+                      (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+                  var keyEn = playerService.titleKeyEnById[curId];
+                  if (keyEn == null && curId.contains('__slot_')) {
+                    final baseId = curId.split('__slot_').first;
+                    keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
+                  }
+                  keyEn ??= curId;
+                  title = ProgramNameLocalizer.instance.displayName(
+                    keyEn: keyEn,
+                    langCode: langCode,
+                  );
+                }
+
+                return GestureDetector(
+                  onTap: () => _openPlayerPopup(),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B1B2F),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.play_arrow, color: Colors.greenAccent, size: 28),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(3),
+                                child: LinearProgressIndicator(
+                                  value: progress.clamp(0.0, 1.0),
+                                  backgroundColor: Colors.white24,
+                                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                                  minHeight: 4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          timeText,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         bottom: true,
@@ -516,6 +579,58 @@ class _MainShellState extends State<MainShell> {
     }
   }
 
+  Future<void> _openPlayerPopup() async {
+    await _ensureNameCacheLoaded();
+
+    // Wenn Player noch keine Queue hat: starte automatisch "My Programs" (gefiltert)
+    if (playerService.state.queueIds.isEmpty) {
+      final res = await _loadPlayableIdsAndTitles();
+      final playableIds =
+          (res['ids'] as List<dynamic>?)?.cast<String>() ?? <String>[];
+      final titles = (res['titles'] as Map<dynamic, dynamic>?)
+              ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+          <String, String>{};
+      if (playableIds.isNotEmpty) {
+        try {
+          playerService.playQueue(playableIds, 0, titleKeyEnById: titles);
+        } catch (_) {
+          playerService.playQueue(playableIds, 0);
+        }
+      }
+    }
+
+    String resolveTitle(String id) {
+      final langCode =
+          (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+      var keyEn = playerService.titleKeyEnById[id];
+      if (keyEn == null && id.contains('__slot_')) {
+        final baseId = id.split('__slot_').first;
+        keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
+      }
+      keyEn ??= id;
+      return ProgramNameLocalizer.instance.displayName(
+        keyEn: keyEn,
+        langCode: langCode,
+      );
+    }
+
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      showDragHandle: false,
+      builder: (ctx) => SafeArea(
+        child: Center(
+          child: PlayerPopup(
+            player: playerService,
+            resolveTitle: resolveTitle,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> _loadPlayableIdsAndTitles() async {
     final ids = await MyProgramsService().loadIds();
 
@@ -553,41 +668,7 @@ class _MainShellState extends State<MainShell> {
 
   /// Opens PlayerPopup after auto-reconnect detected a running device.
   void _openPlayerPopupForReconnect() {
-    _ensureNameCacheLoaded().then((_) {
-      if (!mounted) return;
-
-      String resolveTitle(String id) {
-        final langCode =
-            (ProgramLangController.instance.lang == ProgramLang.de)
-                ? 'de'
-                : 'en';
-        var keyEn = playerService.titleKeyEnById[id];
-        if (keyEn == null && id.contains('__slot_')) {
-          final baseId = id.split('__slot_').first;
-          keyEn = playerService.titleKeyEnById[baseId] ?? baseId;
-        }
-        keyEn ??= id;
-        return ProgramNameLocalizer.instance.displayName(
-          keyEn: keyEn,
-          langCode: langCode,
-        );
-      }
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        showDragHandle: false,
-        builder: (ctx) => SafeArea(
-          child: Center(
-            child: PlayerPopup(
-              player: playerService,
-              resolveTitle: resolveTitle,
-            ),
-          ),
-        ),
-      );
-    });
+    _openPlayerPopup();
   }
 
   Future<void> _syncPlayerQueueWithMyPrograms() async {

@@ -44,20 +44,15 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
       }
     }
 
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
-      child: SafeArea(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
-            Text(l10n.setupTitle, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            Center(child: Text(l10n.setupTitle, style: Theme.of(context).textTheme.titleMedium)),
+            const SizedBox(height: 12),
                   Text(l10n.setupDurationMinutes),
                   DropdownButton<int>(
                     value: _duration,
@@ -99,7 +94,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   if (_electric) ...[
                     const SizedBox(height: 8),
                     DropdownButtonFormField<Waveform>(
-                      initialValue: _electricWaveform,
+                      value: _electricWaveform,
                       decoration: InputDecoration(labelText: l10n.setupElectricWaveform),
                       items: Waveform.values.map((w) {
                         return DropdownMenuItem(
@@ -123,7 +118,7 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                   if (_magnetic) ...[
                     const SizedBox(height: 8),
                     DropdownButtonFormField<Waveform>(
-                      initialValue: _magneticWaveform,
+                      value: _magneticWaveform,
                       decoration: InputDecoration(labelText: l10n.setupMagneticWaveform),
                       items: Waveform.values.map((w) {
                         return DropdownMenuItem(
@@ -160,18 +155,19 @@ class _PlaylistItemSetupSheetState extends State<PlaylistItemSetupSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
     );
   }
 }
 
 Future<PlaylistItemSettings?> showPlaylistItemSetup(BuildContext context, String programId, PlaylistItemSettings initial) {
-  return showModalBottomSheet<PlaylistItemSettings>(
+  return showDialog<PlaylistItemSettings>(
     context: context,
-    isScrollControlled: true,
-    builder: (_) => PlaylistItemSetupSheet(programId: programId, initial: initial),
+    builder: (_) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: PlaylistItemSetupSheet(programId: programId, initial: initial),
+      ),
+    ),
   );
 }

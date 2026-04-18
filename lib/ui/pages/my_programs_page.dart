@@ -436,14 +436,15 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       debugPrint('[PLAYLIST_TIME] PRE_PLAY queueSize=${ids.length} startIndex=$index summedDurationMin=$sumMin');
     }
 
-    playerService.playQueue(
+    // Set queue UI-only (no ticker yet) — timer starts only after device is confirmed running
+    playerService.setQueueUiOnly(
       ids,
-      index,
+      startIndex: index,
       titleKeyEnById: keyEnMap,
     );
 
-    // [PLAYLIST_TIME] log after playQueue
-    debugPrint('[PLAYLIST_TIME] POST_PLAY state.total=${playerService.state.total} state.remaining=${playerService.state.remaining} currentIndex=${playerService.state.currentIndex}');
+    // [PLAYLIST_TIME] log after setQueueUiOnly
+    debugPrint('[PLAYLIST_TIME] POST_PLAY (UI-only) state.total=${playerService.state.total} state.remaining=${playerService.state.remaining} currentIndex=${playerService.state.currentIndex}');
 
     // Popup öffnen wie bisher
     if (!context.mounted) return;
@@ -471,6 +472,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     // After successful upload, sync app timer with device's actual compiled
     // total to eliminate the ~20s drift caused by step-rounding overhead.
     if (uploadOk && mounted) {
+      bool synced = false;
       try {
         await Future.delayed(const Duration(seconds: 2));
         if (!mounted) return;
@@ -483,12 +485,18 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
             deviceElapsedMs: status.elapsedSec,
             deviceRunning: true,
           );
+          synced = true;
           debugPrint('[PLAYLIST_TIME] POST_UPLOAD_SYNC: '
               'synced with device total=${status.totalSec}ms '
               'elapsed=${status.elapsedSec}ms');
         }
       } catch (_) {
         // best-effort – not fatal
+      }
+      // Fallback: if sync didn't happen, start timer now based on UI settings
+      if (!synced && mounted && !playerService.state.isPlaying) {
+        debugPrint('[PLAYLIST_TIME] POST_UPLOAD_SYNC: fallback markStarted (no device status)');
+        playerService.markStarted();
       }
     }
   }
@@ -522,9 +530,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       titleKeyEnById: keyEnMap,
     );
 
-    if (playerService.state.total > Duration.zero) {
-      playerService.markStarted();
-    }
+    // Do NOT markStarted here — timer starts only after device is confirmed running
 
     if (!context.mounted) return;
     _openPlayerPopup(context);
@@ -550,6 +556,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
     // Sync app timer with device's actual compiled total
     if (singleUploadOk && mounted) {
+      bool synced = false;
       try {
         await Future.delayed(const Duration(seconds: 2));
         if (!mounted) return;
@@ -562,12 +569,17 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
             deviceElapsedMs: status.elapsedSec,
             deviceRunning: true,
           );
+          synced = true;
           debugPrint('[PLAYLIST_TIME] POST_SINGLE_UPLOAD_SYNC: '
               'synced with device total=${status.totalSec}ms '
               'elapsed=${status.elapsedSec}ms');
         }
       } catch (_) {
         // best-effort
+      }
+      if (!synced && mounted && !playerService.state.isPlaying) {
+        debugPrint('[PLAYLIST_TIME] POST_SINGLE_UPLOAD_SYNC: fallback markStarted');
+        playerService.markStarted();
       }
     }
   }
