@@ -154,7 +154,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
                   _langButton('DE'),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('|', style: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.4), fontSize: 14)),
+                    child: Text('|', style: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.4), fontSize: 14, decoration: TextDecoration.none)),
                   ),
                   _langButton('EN'),
                 ],
@@ -183,6 +183,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
             color: isActive ? AppColors.textPrimary : AppColors.textPrimary.withValues(alpha: 0.4),
             fontSize: 14,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            decoration: TextDecoration.none,
           ),
         ),
       ),
