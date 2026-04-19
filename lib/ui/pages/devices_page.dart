@@ -521,7 +521,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         final has = connected.any((d) {
                           final n = (d.platformName ?? '').toLowerCase();
                           final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
-                          return n.contains('curebase') || id.contains('curebase');
+                          return isCureDevice(n) || isCureDevice(id);
                         });
 
                         if (!has) {
@@ -536,7 +536,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         final device = connected.firstWhere((d) {
                           final n = (d.platformName ?? '').toLowerCase();
                           final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
-                          return n.contains('curebase') || id.contains('curebase');
+                          return isCureDevice(n) || isCureDevice(id);
                         });
 
                         if (context.mounted) {
@@ -587,7 +587,7 @@ class _DevicesPageState extends State<DevicesPage> {
                         final has = connected.any((d) {
                           final n = (d.platformName ?? '').toLowerCase();
                           final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
-                          return n.contains('curebase') || id.contains('curebase');
+                          return isCureDevice(n) || isCureDevice(id);
                         });
 
                         if (!has) {

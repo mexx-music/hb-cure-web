@@ -51,6 +51,10 @@ Future<_CureChars> _findCureCharacteristics(BluetoothDevice device) async {
   return _CureChars(writeChar, notifyChar);
 }
 
+/// Returns true if [s] matches a known Cure device family name.
+bool isCureDevice(String s) =>
+    s.contains('curebase') || s.contains('cureclip');
+
 class BleCureDeviceService {
   static final BleCureDeviceService instance = BleCureDeviceService._internal();
 
@@ -230,11 +234,11 @@ class BleCureDeviceService {
         if (kDebugMode) {
           debugPrint('HBDBG scanFilter: id=$id name="$name" advName="$advName" combined="$combined"');
         }
-        // Always apply strict CureBase filter – only show real Cure devices.
-        if (combined.contains('curebase')) {
+        // Only show real Cure devices (CureBase + CureClip).
+        if (isCureDevice(combined)) {
           _found[id] = sr.device;
           if (kDebugMode) {
-            debugPrint('HBDBG scanFilter: ACCEPTED CureBase device id=$id');
+            debugPrint('HBDBG scanFilter: ACCEPTED Cure device id=$id');
           }
         }
       }
@@ -803,9 +807,9 @@ class BleCureDeviceService {
       (d) {
         final n = (d.name).toLowerCase();
         final id = (d.id.id ?? d.id.toString()).toLowerCase();
-        return n.contains('curebase') || id.contains('curebase');
+        return isCureDevice(n) || isCureDevice(id);
       },
-      orElse: () => throw Exception('No connected CureBase device found'),
+      orElse: () => throw Exception('No connected Cure device found'),
     );
   }
 
