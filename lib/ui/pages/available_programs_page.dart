@@ -10,7 +10,6 @@ import 'package:hbcure/services/app_memory.dart';
 import 'package:hbcure/core/program_mode.dart';
 import 'package:hbcure/models/program_item.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
-import 'package:hbcure/ui/pages/program_detail_page.dart';
 import 'package:hbcure/services/my_programs_service.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
 
@@ -235,12 +234,12 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                         Navigator.of(actionCtx).pop(); // close actions
                                                         Navigator.of(ctx).pop(); // close search sheet
                                                         final devId = CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '';
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
-                                                          ),
-                                                        );
+                                                        // NO-OP: Navigator.push(
+                                                        //   context,
+                                                        //   MaterialPageRoute(
+                                                        //     builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
+                                                        //   ),
+                                                        // );
                                                       },
                                                     ),
                                                     ListTile(
@@ -263,12 +262,12 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                         Navigator.of(actionCtx).pop(); // close actions
                                                         Navigator.of(ctx).pop(); // close search sheet
                                                         final devId = CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '';
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
-                                                          ),
-                                                        );
+                                                        // NO-OP: Navigator.push(
+                                                        //   context,
+                                                        //   MaterialPageRoute(
+                                                        //     builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
+                                                        //   ),
+                                                        // );
                                                       },
                                                     ),
                                                     const SizedBox(height: 8),

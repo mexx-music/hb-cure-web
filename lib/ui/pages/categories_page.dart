@@ -148,22 +148,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                   },
                                 ),
                                 const SizedBox(width: 10),
-                                const Icon(Icons.chevron_right,
-                                    color: AppColors.textSecondary),
                               ],
                             ),
+                            // Tap no longer opens the old details page
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => detail.ProgramDetailPage(
-                                    program: p,
-                                    deviceId: CureDeviceUnlockService
-                                        .instance.nativeConnectedDeviceId ??
-                                        '',
-                                  ),
-                                ),
-                              );
+                              debugPrint('Category program tap: details screen removed');
                             },
                           ),
                         ),
@@ -214,25 +203,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                 ),
                               if (sub.programs.length == 1)
                                 const SizedBox(width: 10),
-                              const Icon(Icons.chevron_right,
-                                  color: AppColors.textSecondary),
                             ],
                           ),
                           onTap: () {
                             final progs = sub.programs;
                             if (progs.length == 1) {
                               final p = progs.first;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => detail.ProgramDetailPage(
-                                    program: p,
-                                    deviceId: CureDeviceUnlockService
-                                        .instance.nativeConnectedDeviceId ??
-                                        '',
-                                  ),
-                                ),
-                              );
+                              debugPrint('Subcategory single program tap: details screen removed');
                               return;
                             }
 

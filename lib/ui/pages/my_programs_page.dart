@@ -13,7 +13,6 @@ import '../../models/program_item.dart';
 import '../../services/my_programs_service.dart' show MyProgramsService, baseIdFromSlotKey;
 import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
-import 'program_detail_page.dart';
 import '../../services/program_catalog.dart';
 import 'package:hbcure/services/custom_frequency_name_store.dart';
 import '../widgets/playlist_item_setup.dart';
@@ -728,18 +727,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(22),
                         onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProgramDetailPage(
-                                program: program,
-                                deviceId: CureDeviceUnlockService
-                                    .instance.nativeConnectedDeviceId ??
-                                    '',
-                              ),
-                            ),
-                          );
-                          await _loadPrograms();
+                          // Removed navigation to ProgramDetailPage
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -840,3 +828,4 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     );
   }
 }
+

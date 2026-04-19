@@ -72,7 +72,7 @@ class _ProgramListPageState extends State<ProgramListPage> {
 
   // Helper: Build localized Chakra name from program id (e.g. "..._1" -> "Seven Chakras 1")
   String _chakraNameFromId(String id, {required bool isDe}) {
-    final m = RegExp(r"(\d+)$").firstMatch(id.trim());
+    final m = RegExp(r"(\d+)").firstMatch(id.trim());
     final n = m?.group(1);
     final base = isDe ? 'Sieben Chakras' : 'Seven Chakras';
     return (n == null) ? base : '$base $n';
@@ -160,18 +160,11 @@ class _ProgramListPageState extends State<ProgramListPage> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
+                        // Navigation to the old ProgramDetailPage has been removed intentionally.
+                        // Tapping the row no longer opens the old detail screen.
                         onTap: () {
                           debugPrint(
-                            'TAP program id=${p.id} name=${p.name} uuid=${p.uuid} internalId=${p.internalId} level=${p.level}',
-                          );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => detail.ProgramDetailPage(
-                                program: p,
-                                deviceId: CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '',
-                              ),
-                            ),
+                            'TAP program id=${p.id} name=${p.name} uuid=${p.uuid} internalId=${p.internalId} level=${p.level} (details screen removed)'
                           );
                         },
                         child: Padding(
@@ -201,7 +194,7 @@ class _ProgramListPageState extends State<ProgramListPage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // trailing: Add button + chevron
+                              // trailing: Add button (kept) — chevron removed to avoid navigation to removed screen
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -212,7 +205,6 @@ class _ProgramListPageState extends State<ProgramListPage> {
                                     },
                                   ),
                                   const SizedBox(width: 10),
-                                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                                 ],
                               ),
                             ],
