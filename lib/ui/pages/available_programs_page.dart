@@ -227,21 +227,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
                                                     const SizedBox(height: 8),
-                                                    ListTile(
-                                                      leading: const Icon(Icons.play_arrow, color: AppColors.textPrimary),
-                                                      title: Text(l10n.playNow, style: const TextStyle(color: AppColors.textPrimary)),
-                                                      onTap: () {
-                                                        Navigator.of(actionCtx).pop(); // close actions
-                                                        Navigator.of(ctx).pop(); // close search sheet
-                                                        final devId = CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '';
-                                                        // NO-OP: Navigator.push(
-                                                        //   context,
-                                                        //   MaterialPageRoute(
-                                                        //     builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
-                                                        //   ),
-                                                        // );
-                                                      },
-                                                    ),
+
+                                                    // Kept: only "Add to My Programs" action. Removed obsolete actions.
                                                     ListTile(
                                                       leading: const Icon(Icons.favorite_border, color: AppColors.textPrimary),
                                                       title: Text(l10n.addToMyPrograms, style: const TextStyle(color: AppColors.textPrimary)),
@@ -255,21 +242,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                         );
                                                       },
                                                     ),
-                                                    ListTile(
-                                                      leading: const Icon(Icons.info_outline, color: AppColors.textPrimary),
-                                                      title: Text(l10n.openDetails, style: const TextStyle(color: AppColors.textPrimary)),
-                                                      onTap: () {
-                                                        Navigator.of(actionCtx).pop(); // close actions
-                                                        Navigator.of(ctx).pop(); // close search sheet
-                                                        final devId = CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '';
-                                                        // NO-OP: Navigator.push(
-                                                        //   context,
-                                                        //   MaterialPageRoute(
-                                                        //     builder: (_) => ProgramDetailPage(program: p, deviceId: devId),
-                                                        //   ),
-                                                        // );
-                                                      },
-                                                    ),
+
                                                     const SizedBox(height: 8),
                                                   ],
                                                 ),
