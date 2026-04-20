@@ -5,6 +5,7 @@ import '../widgets/gradient_background.dart';
 import '../theme/app_colors.dart';
 import 'package:hbcure/ui/main_shell.dart';
 import 'package:hbcure/services/program_language_controller.dart';
+import 'package:hbcure/ui/pages/first_steps_page.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -121,7 +122,8 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
                             const SizedBox(height: 14),
                             TextButton(
                               onPressed: () {
-                                // TODO: navigate to onboarding / first steps
+                                debugPrint('[StartPage] Erste Schritte tapped');
+                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FirstStepsPage()));
                               },
                               child: Text(
                                 isDe ? 'Erste Schritte' : 'Getting Started',
