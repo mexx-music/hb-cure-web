@@ -598,9 +598,55 @@ class _PlayerPopupState extends State<PlayerPopup> {
               final titleId = uiId ?? keysId;
               final isDe = ProgramLangController.instance.lang == ProgramLang.de;
 
-              final title = titleId == null
-                  ? (isDe ? 'Playlist leer' : 'Playlist empty')
-                  : widget.resolveTitle(titleId);
+              String _friendlyTitle(String? programId) {
+                if (programId == null) return isDe ? 'Playlist leer' : 'Playlist empty';
+
+                // First try the provided resolver (may be populated from main shell)
+                try {
+                  final resolved = widget.resolveTitle(programId);
+                  if (resolved.isNotEmpty && resolved != programId) return resolved;
+                } catch (_) {}
+
+                // Try to resolve via ProgramCatalog using slug keys / uuid / internalId
+                final baseId = programId.contains('__slot_') ? programId.split('__slot_').first : programId;
+
+                // 1) try slugKeys map
+                try {
+                  final keys = _slugKeys[baseId];
+                  if (keys != null) {
+                    if (keys.uuid != null) {
+                      final rec = ProgramCatalog.instance.byUuid(keys.uuid!);
+                      if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                    }
+                    if (keys.internalId != null) {
+                      final rec = ProgramCatalog.instance.byInternalId(keys.internalId!);
+                      if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                    }
+                  }
+                } catch (_) {}
+
+                // 2) try trailing internal id
+                try {
+                  final trailing = _extractTrailingInt(baseId);
+                  if (trailing != null) {
+                    final rec = ProgramCatalog.instance.byInternalId(trailing);
+                    if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                  }
+                } catch (_) {}
+
+                // 3) try direct uuid
+                try {
+                  if (baseId.isNotEmpty && _looksLikeUuid(baseId)) {
+                    final rec = ProgramCatalog.instance.byUuid(baseId);
+                    if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                  }
+                } catch (_) {}
+
+                // fallback: return the original id (last resort)
+                return programId;
+              }
+
+              final title = _friendlyTitle(titleId);
 
               final bool isRunning = st.isPlaying;
               final double visualProgress =
@@ -756,7 +802,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
                           final itemId = queue[i];
                           final itemDurMin = widget.player.settingsFor(itemId).durationMinutes;
                           final itemDur = Duration(minutes: itemDurMin);
-                          final itemTitle = widget.resolveTitle(itemId);
+                          // Resolve playlist row title the same way as the main title above:
+                          final itemKeysId = _normalizeProgramId(itemId, fixEnergyTypo: false);
+                          final itemUiId = _normalizeProgramId(itemId, fixEnergyTypo: true);
+                          final itemTitleId = itemUiId ?? itemKeysId;
+                          final itemTitle = _friendlyTitle(itemTitleId);
 
                           // Determine state: completed / current / upcoming
                           final bool isCompleted = i < idx;
@@ -917,3 +967,4 @@ class _PlayerPopupState extends State<PlayerPopup> {
     );
   }
 }
+

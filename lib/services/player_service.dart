@@ -145,6 +145,34 @@ class PlayerService extends ChangeNotifier {
   }
   // END PATCH
 
+  // BEGIN ADD: session persistence keys/helpers
+  static const _kSessionKey = 'player_last_session_v1';
+
+  Future<void> _persistSession(List<String> queueIds, int currentIndex) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final payload = jsonEncode({'queueIds': queueIds, 'currentIndex': currentIndex});
+      await prefs.setString(_kSessionKey, payload);
+    } catch (e) {
+      debugPrint('[PlayerService] _persistSession error: $e');
+    }
+  }
+
+  /// Return persisted session or null if none
+  Future<Map<String, dynamic>?> loadLastSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kSessionKey);
+      if (raw == null || raw.isEmpty) return null;
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return map;
+    } catch (e) {
+      debugPrint('[PlayerService] loadLastSession error: $e');
+      return null;
+    }
+  }
+  // END ADD
+
   void _stopTicker() {
     _ticker?.cancel();
     _ticker = null;
@@ -248,6 +276,9 @@ class PlayerService extends ChangeNotifier {
       remaining: remaining,
     );
 
+    // Persist last session (fire-and-forget)
+    unawaited(_persistSession(_state.queueIds, _state.currentIndex));
+
     _startTicker();
     notifyListeners();
   }
@@ -306,6 +337,8 @@ class PlayerService extends ChangeNotifier {
       total: total,
       remaining: total,
     );
+    // Persist UI queue as last session (so reconnect can restore richer UI)
+    unawaited(_persistSession(_state.queueIds, _state.currentIndex));
     notifyListeners();
   }
   // END ADD
@@ -394,6 +427,13 @@ class PlayerService extends ChangeNotifier {
       return;
     }
     _state = _state.copyWith(isPlaying: false, remaining: _state.total);
+    // Clear persisted session when stopping playback entirely
+    unawaited(() async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_kSessionKey);
+      } catch (_) {}
+    }());
     notifyListeners();
   }
 

@@ -132,8 +132,12 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    // initial sync
-    _syncPlayerQueueWithMyPrograms();
+    // Try auto-reconnect first; only after it completes do the initial
+    // MyPrograms -> player queue sync. This avoids overwriting a device
+    // running-single-program context with the saved playlist during startup.
+    _attemptAutoReconnect().whenComplete(() async {
+      await _syncPlayerQueueWithMyPrograms();
+    });
     // subscribe to changes in MyPrograms and sync the player queue
     _myProgramsSub = _myProgramsService.onChange.listen((_) async {
       await _syncPlayerQueueWithMyPrograms();
@@ -146,7 +150,7 @@ class _MainShellState extends State<MainShell> {
     playerService.addListener(_onPlayerStateChanged);
 
     // Auto-reconnect to last Cube if enabled
-    _attemptAutoReconnect();
+    // _attemptAutoReconnect();
   }
 
   @override
@@ -336,11 +340,77 @@ class _MainShellState extends State<MainShell> {
 
       // ── Step 4: Sync player timer if device is still running ──────────
       if (status.running) {
-        playerService.syncWithDeviceStatus(
-          deviceTotalMs: status.totalSec,
-          deviceElapsedMs: status.elapsedSec,
-          deviceRunning: true,
-        );
+        // If our current queue is empty (e.g. app restarted after single-start),
+        // try to provide a meaningful queue id so the UI shows the actual running
+        // program instead of falling back to index 0 of a saved list.
+        if (playerService.state.queueIds.isEmpty) {
+          // First: attempt to restore a previously persisted session (rich UI queue)
+          try {
+            final lastSess = await playerService.loadLastSession();
+            if (lastSess != null) {
+              final q = (lastSess['queueIds'] as List<dynamic>?)?.cast<String>() ?? <String>[];
+              final idx = (lastSess['currentIndex'] is int) ? lastSess['currentIndex'] as int : 0;
+              if (q.isNotEmpty) {
+                debugPrint('[AutoReconnect] restored persisted session queue=${q} idx=$idx');
+                playerService.syncWithDeviceStatus(
+                  deviceTotalMs: status.totalSec,
+                  deviceElapsedMs: status.elapsedSec,
+                  deviceRunning: true,
+                  queueIds: q,
+                );
+                debugPrint('[AutoReconnect] player timer synced with persisted session');
+                // Open popup and return early
+                if (mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _openPlayerPopupForReconnect();
+                  });
+                }
+                return;
+              }
+            }
+          } catch (e) {
+            debugPrint('[AutoReconnect] failed to load persisted session: $e');
+          }
+
+          final progHex = status.programIdHex ?? '';
+          if (progHex.isNotEmpty && progHex != '-' && progHex != 'FFFFFFFF') {
+            debugPrint('[AutoReconnect] attempt resolve running program from programIdHex=$progHex');
+            // Try to resolve the device program hex to a real app program id
+            // (so the UI shows a friendly program identity instead of raw hex).
+            final resolvedId = await _resolveProgramIdFromHex(progHex);
+            if (resolvedId != null && resolvedId.isNotEmpty) {
+              debugPrint('[AutoReconnect] resolved programIdHex to app id=$resolvedId');
+              playerService.syncWithDeviceStatus(
+                deviceTotalMs: status.totalSec,
+                deviceElapsedMs: status.elapsedSec,
+                deviceRunning: true,
+                queueIds: [resolvedId],
+              );
+              debugPrint('[AutoReconnect] player timer synced with resolved program id');
+            } else {
+              // No reliable resolution possible: keep existing behavior but DO NOT
+              // insert the raw hex as a visible queue id (avoid technical placeholder).
+              playerService.syncWithDeviceStatus(
+                deviceTotalMs: status.totalSec,
+                deviceElapsedMs: status.elapsedSec,
+                deviceRunning: true,
+              );
+              debugPrint('[AutoReconnect] could not resolve progHex – synced timer without synthetic queue id');
+            }
+          } else {
+            playerService.syncWithDeviceStatus(
+              deviceTotalMs: status.totalSec,
+              deviceElapsedMs: status.elapsedSec,
+              deviceRunning: true,
+            );
+          }
+        } else {
+          playerService.syncWithDeviceStatus(
+            deviceTotalMs: status.totalSec,
+            deviceElapsedMs: status.elapsedSec,
+            deviceRunning: true,
+          );
+        }
         debugPrint('[AutoReconnect] player timer synced – device still running');
 
         // ── Step 5: Show PlayerPopup so user sees remaining time ────────
@@ -357,6 +427,46 @@ class _MainShellState extends State<MainShell> {
       debugPrint('[AutoReconnect] failed: $e');
       if (kDebugMode) debugPrint('[AutoReconnect] stack: $st');
     }
+  }
+
+  // Try to resolve a device programIdHex (hex string) to a real app program id.
+  // Returns null if resolution cannot be done reliably.
+  Future<String?> _resolveProgramIdFromHex(String hex) async {
+    if (hex.isEmpty) return null;
+    await _ensureNameCacheLoaded();
+
+    try {
+      // Try ProgramCatalog lookup by UUID/hex first
+      final entry = ProgramCatalog.instance.byUuid(hex);
+      if (entry != null) {
+        try {
+          final dyn = entry as dynamic;
+          // Common property names: id, slug, internalId
+          if (dyn.id is String && (dyn.id as String).isNotEmpty) return dyn.id as String;
+          if (dyn.slug is String && (dyn.slug as String).isNotEmpty) return dyn.slug as String;
+          if (dyn.internalId != null) return '${dyn.internalId}';
+        } catch (_) {
+          // ignore and continue
+        }
+      }
+
+      // Fallback: try parse hex as base-16 integer and lookup by internal id
+      final intVal = int.tryParse(hex, radix: 16);
+      if (intVal != null) {
+        final byInt = ProgramCatalog.instance.byInternalId(intVal);
+        if (byInt != null) {
+          try {
+            final dyn = byInt as dynamic;
+            if (dyn.id is String && (dyn.id as String).isNotEmpty) return dyn.id as String;
+            if (dyn.slug is String && (dyn.slug as String).isNotEmpty) return dyn.slug as String;
+            return '$intVal';
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('[AutoReconnect] resolveProgramIdFromHex error: $e');
+    }
+    return null;
   }
 
   @override
@@ -690,3 +800,4 @@ class _NavTextTab extends StatelessWidget {
     );
   }
 }
+
