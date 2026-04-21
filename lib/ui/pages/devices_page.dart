@@ -32,10 +32,10 @@ class _DevicesPageState extends State<DevicesPage> {
   StreamSubscription<bool>? _unlockSub;
   bool _unlockInProgressLocal = false;
 
-  // UI-only: Unlock result per deviceId (null=unknown, true=OK, false=failed)
+  // UI-only: track auto-unlock attempt state per device
+  // _unlockOkById: null=unknown, true=ok, false=failed
+  // _unlockBusyById: currently attempting unlock
   final Map<String, bool?> _unlockOkById = {};
-
-  // UI-only: Unlock running per deviceId
   final Set<String> _unlockBusyById = {};
 
   // UI-only: remember expansion state
@@ -157,6 +157,63 @@ class _DevicesPageState extends State<DevicesPage> {
   }
   // ----------------------------------------------------------
 
+  // compact adapter state widget to display adapter status / hints in the main card
+  Widget _adapterStateWidget() {
+    return StreamBuilder<BluetoothAdapterState>(
+      stream: FlutterBluePlus.adapterState,
+      builder: (context, snap) {
+        final t = AppLocalizations.of(context)!;
+        final state = snap.data;
+        String stateLabel;
+        String hint = '';
+        if (state == null) {
+          stateLabel = t.btStateUnknown;
+        } else {
+          switch (state) {
+            case BluetoothAdapterState.on:
+              stateLabel = t.btStateOn;
+              break;
+            case BluetoothAdapterState.off:
+              stateLabel = t.btStateOff;
+              hint = t.devicesBluetoothOff;
+              break;
+            case BluetoothAdapterState.unauthorized:
+              stateLabel = t.btStateUnauthorized;
+              hint = t.devicesBluetoothUnauthorized;
+              break;
+            case BluetoothAdapterState.turningOn:
+              stateLabel = t.btStateTurningOn;
+              break;
+            case BluetoothAdapterState.turningOff:
+              stateLabel = t.btStateTurningOff;
+              break;
+            default:
+              stateLabel = t.btStateUnknown;
+              hint = t.devicesBluetoothUnknown;
+          }
+        }
+
+        final List<Widget> lines = [
+          Text(
+            stateLabel,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+        ];
+        if (hint.isNotEmpty) {
+          lines.add(const SizedBox(height: 4));
+          lines.add(Text(hint, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)));
+        }
+        if (_scanError != null) {
+          lines.add(const SizedBox(height: 6));
+          lines.add(Text('${t.devicesScanError}: $_scanError', style: const TextStyle(color: Colors.orange, fontSize: 12)));
+        }
+
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: lines);
+      },
+    );
+  }
+
+  // Restyled device row: cleaner card, prominent name, small secondary id, single action button
   Widget _buildDeviceRow(BluetoothDevice d) {
     return StreamBuilder<BluetoothConnectionState>(
       stream: _ble.deviceState(d),
@@ -165,177 +222,49 @@ class _DevicesPageState extends State<DevicesPage> {
         final connected = state == BluetoothConnectionState.connected;
 
         final deviceId = d.remoteId.toString();
-        final unlockOk = _unlockOkById[deviceId]; // null/true/false
-        final unlockBusy = _unlockBusyById.contains(deviceId);
-
-        // bolt color: orange while running, green if ok, red otherwise (unknown/fail)
-        final Color boltColor = unlockBusy
-            ? Colors.orange
-            : (unlockOk == true
-            ? Colors.green
-            : (unlockOk == false ? Colors.red : Colors.red));
-
-        // blue even when disabled
-        final ButtonStyle connectedBlueStyle = ButtonStyle(
-          backgroundColor: MaterialStateProperty.resolveWith((states) => Colors.blue),
-          foregroundColor: MaterialStateProperty.all(Colors.white),
-          padding: MaterialStateProperty.all(
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        );
 
         return Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          margin: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
             borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Builder(builder: (ctx) {
-                      final deviceName =
-                      (d.platformName != null && d.platformName.isNotEmpty)
-                          ? d.platformName
-                          : d.remoteId.toString();
-                      return Text(
-                        deviceName,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 6),
-                    Text(
-                      'ID: ${d.remoteId}',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
-              const SizedBox(width: 8),
-              if (connected) ...[
-                ElevatedButton(
-                  style: connectedBlueStyle,
-                  onPressed: null,
-                  child: Text(AppLocalizations.of(context)!.devicesConnected),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _unlockOkById[deviceId] = null;
-                          _unlockBusyById.remove(deviceId);
-                        });
-                        _ble.disconnect(d);
-                      },
-                      child: Text(AppLocalizations.of(context)!.devicesDisconnect),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton(
-                      tooltip: 'Native Unlock Test',
-                      icon: Icon(Icons.bolt, color: boltColor),
-                      onPressed: unlockBusy
-                          ? null
-                          : () async {
-                        setState(() {
-                          _unlockBusyById.add(deviceId);
-                          _unlockOkById[deviceId] = null;
-                        });
-
-                        try {
-                          await NativeUnlockTester.instance
-                              .testNativeUnlock(deviceId);
-
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockOkById[deviceId] = true;
-                          });
-                        } catch (e) {
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockOkById[deviceId] = false;
-                          });
-                          if (kDebugMode) {
-                            debugPrint(
-                                'Native unlock test failed for $deviceId: $e');
-                          }
-                        } finally {
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockBusyById.remove(deviceId);
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ] else ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _unlockOkById[deviceId] = null;
-                          _unlockBusyById.remove(deviceId);
-                        });
-                        _ble.connect(d);
-                      },
-                      child: Text(AppLocalizations.of(context)!.devicesConnect),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton(
-                      tooltip: 'Native Unlock Test',
-                      icon: Icon(Icons.bolt, color: boltColor),
-                      onPressed: unlockBusy
-                          ? null
-                          : () async {
-                        setState(() {
-                          _unlockBusyById.add(deviceId);
-                          _unlockOkById[deviceId] = null;
-                        });
-
-                        try {
-                          await NativeUnlockTester.instance
-                              .testNativeUnlock(deviceId);
-
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockOkById[deviceId] = true;
-                          });
-                        } catch (e) {
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockOkById[deviceId] = false;
-                          });
-                          if (kDebugMode) {
-                            debugPrint(
-                                'Native unlock test failed for $deviceId: $e');
-                          }
-                        } finally {
-                          if (!mounted) return;
-                          setState(() {
-                            _unlockBusyById.remove(deviceId);
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
             ],
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            title: Text(
+              (d.platformName != null && d.platformName.isNotEmpty) ? d.platformName! : deviceId,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              deviceId,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: connected
+                ? ElevatedButton(
+              onPressed: () {
+                _ble.disconnect(d);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text(AppLocalizations.of(context)!.devicesDisconnect),
+            )
+                : ElevatedButton(
+              onPressed: () {
+                _ble.connect(d);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text(AppLocalizations.of(context)!.devicesConnect),
+            ),
           ),
         );
       },
@@ -643,148 +572,10 @@ class _DevicesPageState extends State<DevicesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header + Scan-Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.devicesTitle,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(color: AppColors.textPrimary),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _isScanningLocal
-                          ? null
-                          : () async {
-                        if (mounted) {
-                          setState(() {
-                            _scanError = null;
-                            _isScanningLocal = true;
-                          });
-                        }
-                        try {
-                          await _ble.stopScan();
-                          await _checkLocationAndScan();
-                        } catch (e) {
-                          final msg = e.toString();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('${AppLocalizations.of(context)!.devicesScanFailed}: $msg')),
-                            );
-                          }
-                          if (mounted) {
-                            setState(() {
-                              _scanError = msg;
-                            });
-                          }
-                          if (kDebugMode) {
-                            debugPrint('Scan action failed: $e');
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() {
-                              _isScanningLocal = false;
-                            });
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: Text(AppLocalizations.of(context)!.devicesScan),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                if (_isScanningLocal)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 6),
-                    child: Row(
-                      children: [
-                        CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context)!.devicesScanning,
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Bluetooth adapter state diagnostic
-                StreamBuilder<BluetoothAdapterState>(
-                  stream: FlutterBluePlus.adapterState,
-                  builder: (context, snap) {
-                    final t = AppLocalizations.of(context)!;
-                    final state = snap.data;
-                    final String stateLabel;
-                    String hint = '';
-                    if (state == null) {
-                      stateLabel = t.btStateUnknown;
-                    } else {
-                      switch (state) {
-                        case BluetoothAdapterState.on:
-                          stateLabel = t.btStateOn;
-                        case BluetoothAdapterState.off:
-                          stateLabel = t.btStateOff;
-                          hint = t.devicesBluetoothOff;
-                        case BluetoothAdapterState.unauthorized:
-                          stateLabel = t.btStateUnauthorized;
-                          hint = t.devicesBluetoothUnauthorized;
-                        case BluetoothAdapterState.turningOn:
-                          stateLabel = t.btStateTurningOn;
-                        case BluetoothAdapterState.turningOff:
-                          stateLabel = t.btStateTurningOff;
-                        default:
-                          stateLabel = t.btStateUnknown;
-                          hint = t.devicesBluetoothUnknown;
-                      }
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${t.devicesAdapter}: $stateLabel',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                        if (hint.isNotEmpty)
-                          Text(
-                            hint,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        if (_scanError != null)
-                          Text(
-                            '${t.devicesScanError}: $_scanError',
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 8),
+                // Header (single strong title)
                 Text(
-                  AppLocalizations.of(context)!.devicesAvailableDevices,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: AppColors.textSecondary),
+                  AppLocalizations.of(context)!.devicesTitle,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 12),
 
@@ -805,17 +596,15 @@ class _DevicesPageState extends State<DevicesPage> {
                       });
                     }
 
-                    final String? deviceId =
-                    devices.isNotEmpty ? devices.first.remoteId.toString() : null;
+                    final String? deviceId = devices.isNotEmpty ? devices.first.remoteId.toString() : null;
 
                     // Determine if any device in the list is actually connected
-                    final bool hasConnected = connId != null &&
-                        devices.any((d) => d.remoteId.toString() == connId);
+                    final bool hasConnected = connId != null && devices.any((d) => d.remoteId.toString() == connId);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Current device summary card
+                        // Current device summary card (styled like Settings cards)
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
@@ -834,13 +623,32 @@ class _DevicesPageState extends State<DevicesPage> {
                                 ),
                               ),
                               const SizedBox(height: 8),
+
+                              // Adapter state + connection summary (moved into this card for cleaner layout)
+                              _adapterStateWidget(),
+                              const SizedBox(height: 10),
+
                               if (hasConnected)
-                                Text(
-                                  '${AppLocalizations.of(context)!.devicesConnected}: $connId',
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      (devices.first.platformName?.isNotEmpty == true)
+                                          ? devices.first.platformName!
+                                          : connId ?? AppLocalizations.of(context)!.devicesConnected,
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      connId ?? '',
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 )
                               else
                                 Text(
@@ -849,7 +657,8 @@ class _DevicesPageState extends State<DevicesPage> {
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 8),
+
                               if (devices.isEmpty)
                                 Text(
                                   AppLocalizations.of(context)!.devicesTipScan,
@@ -864,6 +673,57 @@ class _DevicesPageState extends State<DevicesPage> {
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
+
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _isScanningLocal
+                                          ? null
+                                          : () async {
+                                        if (mounted) {
+                                          setState(() {
+                                            _scanError = null;
+                                            _isScanningLocal = true;
+                                          });
+                                        }
+                                        try {
+                                          await _ble.stopScan();
+                                          await _checkLocationAndScan();
+                                        } catch (e) {
+                                          final msg = e.toString();
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('${AppLocalizations.of(context)!.devicesScanFailed}: $msg')),
+                                            );
+                                          }
+                                          if (mounted) {
+                                            setState(() {
+                                              _scanError = msg;
+                                            });
+                                          }
+                                          if (kDebugMode) {
+                                            debugPrint('Scan action failed: $e');
+                                          }
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              _isScanningLocal = false;
+                                            });
+                                          }
+                                        }
+                                      },
+                                      icon: const Icon(Icons.search),
+                                      label: Text(AppLocalizations.of(context)!.devicesScan),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -886,8 +746,8 @@ class _DevicesPageState extends State<DevicesPage> {
                           for (final d in devices) _buildDeviceRow(d),
                           const SizedBox(height: 12),
 
-                          // Collapsible developer/native block (restored)
-                          _buildDeveloperPanel(deviceId!),
+                          // Developer/native tools are only visible in debug builds
+                          if (kDebugMode && deviceId != null) _buildDeveloperPanel(deviceId!),
                         ],
                       ],
                     );
@@ -1017,31 +877,6 @@ class _NativeDebugPanel extends StatelessWidget {
                 }
               },
               child: const Text('progClear'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                minimumSize: const Size(140, 40),
-              ),
-              onPressed: () async {
-                try {
-                  final st = await svc.fetchProgStatus(timeout: const Duration(seconds: 5));
-                  final msg = (st == null)
-                      ? 'progStatus: (no data)'
-                      : 'progStatus: ${st.rawLine ?? st.toString()}';
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('progStatus failed: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Prog Status'),
             ),
             ElevatedButton(
               onPressed: () async {

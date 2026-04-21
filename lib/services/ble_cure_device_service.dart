@@ -291,6 +291,17 @@ class BleCureDeviceService {
       _found[device.remoteId.toString()] = device;
       _devicesCtrl?.add(_found.values.toList());
 
+      // Trigger automatic unlock asynchronously (do not block connect())
+      Future.microtask(() async {
+        try {
+          if (kDebugMode) debugPrint('HBDBG connect: triggering auto-unlock for $_connectedDeviceId (native mode)');
+          final ok = await ensureUnlockedForCurrentDevice();
+          if (kDebugMode) debugPrint('HBDBG auto-unlock result (native): $ok for $_connectedDeviceId');
+        } catch (e) {
+          if (kDebugMode) debugPrint('HBDBG auto-unlock error (native): $e');
+        }
+      });
+
       return;
     }
 
@@ -327,6 +338,21 @@ class BleCureDeviceService {
           debugPrint('HBDBG connect: proto.ensureNotify failed: $e');
         }
       }
+
+      if (kDebugMode) {
+        debugPrint('HBDBG connect: CureProtocol created for device ${device.id.id}');
+      }
+
+      // Trigger automatic unlock asynchronously (do not block connect())
+      Future.microtask(() async {
+        try {
+          if (kDebugMode) debugPrint('HBDBG connect: triggering auto-unlock for ${device.remoteId.toString()} (fbp mode)');
+          final ok = await ensureUnlockedForCurrentDevice();
+          if (kDebugMode) debugPrint('HBDBG auto-unlock result (fbp): $ok for ${device.remoteId.toString()}');
+        } catch (e) {
+          if (kDebugMode) debugPrint('HBDBG auto-unlock error (fbp): $e');
+        }
+      });
 
       if (kDebugMode) {
         debugPrint('HBDBG connect: CureProtocol created for device ${device.id.id}');
