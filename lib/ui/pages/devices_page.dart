@@ -42,6 +42,9 @@ class _DevicesPageState extends State<DevicesPage> {
   // UI-only: remember expansion state
   bool _devExpanded = false;
 
+  // UI-only: cache friendly platform names per device id to keep stable labels across reconnects
+  final Map<String, String> _cachedFriendlyNames = {};
+
   @override
   void initState() {
     super.initState();
@@ -664,11 +667,22 @@ class _DevicesPageState extends State<DevicesPage> {
       return s;
     }
 
+    // If platformName exists and looks like a friendly name, cache it for later reconnects
     if (platformName != null && platformName.isNotEmpty) {
-      // If platformName contains a technical suffix (like CureBase-441793E6C36C), shorten it.
       final shortened = shortenCandidate(platformName);
-      // If shortening produced the exact same string (no suffix), return the original platformName
+      // store friendly name in cache keyed by deviceId to keep it across reconnects
+      if (deviceId != null && deviceId.isNotEmpty) {
+        try {
+          _cachedFriendlyNames[deviceId] = shortened;
+        } catch (_) {}
+      }
       return shortened;
+    }
+
+    // If platformName missing, attempt to use cached friendly name
+    if (deviceId != null && deviceId.isNotEmpty) {
+      final cached = _cachedFriendlyNames[deviceId];
+      if (cached != null && cached.isNotEmpty) return cached;
     }
 
     // Fallback to a shortened device id label
