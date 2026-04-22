@@ -104,7 +104,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
   Future<void> _loadDecodedFallback() async {
     try {
-      final raw = await rootBundle.loadString('assets/programs/Programs_decoded_full.json');
+      final raw = await rootBundle.loadString(
+        'assets/programs/Programs_decoded_full.json',
+      );
       final decoded = jsonDecode(raw);
       if (!mounted) return;
       setState(() {
@@ -152,7 +154,12 @@ class _PlayerPopupState extends State<PlayerPopup> {
       _walkProgramsJson(root, (programMap) {
         if (programMap is! Map) return;
 
-        final slug = _pickString(programMap, const ['id', 'Id', 'slug', 'programId']);
+        final slug = _pickString(programMap, const [
+          'id',
+          'Id',
+          'slug',
+          'programId',
+        ]);
         if (slug == null || slug.isEmpty) return;
 
         final uuid = _pickString(programMap, const [
@@ -190,9 +197,14 @@ class _PlayerPopupState extends State<PlayerPopup> {
     }
   }
 
-  void _walkProgramsJson(dynamic node, void Function(dynamic programMap) onProgram) {
+  void _walkProgramsJson(
+    dynamic node,
+    void Function(dynamic programMap) onProgram,
+  ) {
     if (node is Map) {
-      if (node.containsKey('id') || node.containsKey('programId') || node.containsKey('slug')) {
+      if (node.containsKey('id') ||
+          node.containsKey('programId') ||
+          node.containsKey('slug')) {
         onProgram(node);
       }
       for (final v in node.values) {
@@ -257,7 +269,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
   }
 
   bool _looksLikeUuid(String s) {
-    return RegExp(r'^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$').hasMatch(s);
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+    ).hasMatch(s);
   }
 
   int? _extractTrailingInt(String id) {
@@ -301,7 +315,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
       if (nde.isEmpty && nen.isEmpty) continue;
 
-      final match = nde == nt ||
+      final match =
+          nde == nt ||
           nen == nt ||
           (nde.isNotEmpty && (nde.contains(nt) || nt.contains(nde))) ||
           (nen.isNotEmpty && (nen.contains(nt) || nt.contains(nen)));
@@ -356,7 +371,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
         final out = <num>[];
         for (final st in stepsVal) {
           if (st is Map) {
-            final v = st['frequencyHz'] ?? st['freqHz'] ?? st['frequency'] ?? st['freq'];
+            final v =
+                st['frequencyHz'] ??
+                st['freqHz'] ??
+                st['frequency'] ??
+                st['freq'];
             if (v is num && v.isFinite) out.add(v);
             if (v is String) {
               final n = num.tryParse(v.trim());
@@ -373,7 +392,8 @@ class _PlayerPopupState extends State<PlayerPopup> {
       }
 
       // frequencies array inside map
-      dynamic freqs = rec['Frequencies'] ?? rec['frequencies'] ?? rec['FREQUENCIES'];
+      dynamic freqs =
+          rec['Frequencies'] ?? rec['frequencies'] ?? rec['FREQUENCIES'];
       if (freqs == null && rec['data'] is Map) {
         final m = rec['data'] as Map;
         freqs = m['Frequencies'] ?? m['frequencies'];
@@ -469,7 +489,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
     // 5) decoded title fallback (optional)
     final title = widget.resolveTitle(programId);
-    final byTitle = (_decodedRoot != null) ? _freqsFromDecodedByTitle(_decodedRoot, title) : const <num>[];
+    final byTitle = (_decodedRoot != null)
+        ? _freqsFromDecodedByTitle(_decodedRoot, title)
+        : const <num>[];
     if (byTitle.isNotEmpty) return byTitle;
 
     return const <num>[];
@@ -487,7 +509,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
     _cachedProgramId = currentId;
 
     var series = _freqsForProgramId(currentId);
-    series = series.where((v) => v is num && (v as num).isFinite).toList(growable: false);
+    series = series
+        .where((v) => v is num && (v as num).isFinite)
+        .toList(growable: false);
 
     // ensure something drawable
     if (series.length == 1) {
@@ -496,7 +520,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
       series = List<num>.generate(_cycleWindowSize, (i) => series[i % 2]);
     }
 
-    _cachedFreqs = series.isNotEmpty ? series : const <num>[100, 100, 100, 100, 100];
+    _cachedFreqs = series.isNotEmpty
+        ? series
+        : const <num>[100, 100, 100, 100, 100];
 
     _fillIndex = 0;
     _cycleNo = 0;
@@ -514,7 +540,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
     final stride = (37 + (seed % 200)).clamp(37, 236);
     final start = (_cycleNo * stride) % base.length;
 
-    final int take = base.length < _cycleWindowSize ? base.length : _cycleWindowSize;
+    final int take = base.length < _cycleWindowSize
+        ? base.length
+        : _cycleWindowSize;
 
     final out = <num>[];
     for (int i = 0; i < take; i++) {
@@ -557,18 +585,21 @@ class _PlayerPopupState extends State<PlayerPopup> {
               // Ensure ProgramCatalog is loaded once from the popup (safety)
               if (!_catalogLoaded && !_catalogLoading) {
                 _catalogLoading = true;
-                ProgramCatalog.instance.ensureLoaded().then((_) {
-                  if (!mounted) return;
-                  setState(() {
-                    _catalogLoaded = true;
-                    _catalogLoading = false;
-                    _cachedProgramId = null;
-                    _cachedFreqs = const <num>[];
-                  });
-                }).catchError((_) {
-                  if (!mounted) return;
-                  setState(() => _catalogLoading = false);
-                });
+                ProgramCatalog.instance
+                    .ensureLoaded()
+                    .then((_) {
+                      if (!mounted) return;
+                      setState(() {
+                        _catalogLoaded = true;
+                        _catalogLoading = false;
+                        _cachedProgramId = null;
+                        _cachedFreqs = const <num>[];
+                      });
+                    })
+                    .catchError((_) {
+                      if (!mounted) return;
+                      setState(() => _catalogLoading = false);
+                    });
               }
 
               // Queue-aware raw id
@@ -596,19 +627,24 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
               // Title: prefer uiId, fallback to keysId
               final titleId = uiId ?? keysId;
-              final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+              final isDe =
+                  ProgramLangController.instance.lang == ProgramLang.de;
 
               String _friendlyTitle(String? programId) {
-                if (programId == null) return isDe ? 'Playlist leer' : 'Playlist empty';
+                if (programId == null)
+                  return isDe ? 'Playlist leer' : 'Playlist empty';
 
                 // First try the provided resolver (may be populated from main shell)
                 try {
                   final resolved = widget.resolveTitle(programId);
-                  if (resolved.isNotEmpty && resolved != programId) return resolved;
+                  if (resolved.isNotEmpty && resolved != programId)
+                    return resolved;
                 } catch (_) {}
 
                 // Try to resolve via ProgramCatalog using slug keys / uuid / internalId
-                final baseId = programId.contains('__slot_') ? programId.split('__slot_').first : programId;
+                final baseId = programId.contains('__slot_')
+                    ? programId.split('__slot_').first
+                    : programId;
 
                 // 1) try slugKeys map
                 try {
@@ -616,11 +652,21 @@ class _PlayerPopupState extends State<PlayerPopup> {
                   if (keys != null) {
                     if (keys.uuid != null) {
                       final rec = ProgramCatalog.instance.byUuid(keys.uuid!);
-                      if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                      if (rec != null)
+                        return ProgramCatalog.instance.name(
+                          rec,
+                          lang: isDe ? 'DE' : 'EN',
+                        );
                     }
                     if (keys.internalId != null) {
-                      final rec = ProgramCatalog.instance.byInternalId(keys.internalId!);
-                      if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                      final rec = ProgramCatalog.instance.byInternalId(
+                        keys.internalId!,
+                      );
+                      if (rec != null)
+                        return ProgramCatalog.instance.name(
+                          rec,
+                          lang: isDe ? 'DE' : 'EN',
+                        );
                     }
                   }
                 } catch (_) {}
@@ -630,7 +676,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
                   final trailing = _extractTrailingInt(baseId);
                   if (trailing != null) {
                     final rec = ProgramCatalog.instance.byInternalId(trailing);
-                    if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                    if (rec != null)
+                      return ProgramCatalog.instance.name(
+                        rec,
+                        lang: isDe ? 'DE' : 'EN',
+                      );
                   }
                 } catch (_) {}
 
@@ -638,7 +688,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
                 try {
                   if (baseId.isNotEmpty && _looksLikeUuid(baseId)) {
                     final rec = ProgramCatalog.instance.byUuid(baseId);
-                    if (rec != null) return ProgramCatalog.instance.name(rec, lang: isDe ? 'DE' : 'EN');
+                    if (rec != null)
+                      return ProgramCatalog.instance.name(
+                        rec,
+                        lang: isDe ? 'DE' : 'EN',
+                      );
                   }
                 } catch (_) {}
 
@@ -649,8 +703,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
               final title = _friendlyTitle(titleId);
 
               final bool isRunning = st.isPlaying;
-              final double visualProgress =
-              isRunning ? (_fillIndex / (_fillSeconds - 1)).clamp(0.0, 1.0) : 0.0;
+              final double visualProgress = isRunning
+                  ? (_fillIndex / (_fillSeconds - 1)).clamp(0.0, 1.0)
+                  : 0.0;
 
               final bool uploading = widget.player.isUploading;
 
@@ -658,13 +713,43 @@ class _PlayerPopupState extends State<PlayerPopup> {
               final queue = st.queueIds;
               final idx = st.currentIndex;
 
-              // st.total and st.remaining are now the MERGED totals.
-              // Compute segment-level remaining for the current program.
+              // Build nominal durations (seconds) from per-item settings
+              final nominalSeconds = <int>[];
+              int nominalTotalSec = 0;
+              for (final id in queue) {
+                final m = widget.player.settingsFor(id).durationMinutes;
+                final s = m * 60;
+                nominalSeconds.add(s);
+                nominalTotalSec += s;
+              }
+
+              final int deviceTotalSec = st.total.inSeconds;
+
+              // Compute effective per-segment seconds by scaling nominal durations
+              List<int> effectiveSeconds;
+              if (nominalTotalSec > 0 && deviceTotalSec > 0) {
+                if (deviceTotalSec != nominalTotalSec) {
+                  final scale = deviceTotalSec / nominalTotalSec;
+                  effectiveSeconds = nominalSeconds.map((s) => (s * scale).round()).toList();
+                  // Ensure sums to deviceTotalSec by adjusting last segment if needed
+                  final sumEff = effectiveSeconds.fold<int>(0, (a, b) => a + b);
+                  final diff = deviceTotalSec - sumEff;
+                  if (diff != 0 && effectiveSeconds.isNotEmpty) {
+                    effectiveSeconds[effectiveSeconds.length - 1] += diff;
+                  }
+                } else {
+                  effectiveSeconds = List<int>.from(nominalSeconds);
+                }
+              } else {
+                // Fallback: use nominal seconds (may be zero if no settings)
+                effectiveSeconds = List<int>.from(nominalSeconds);
+              }
+
+              // Compute segment-level remaining for the current program using effective durations
               Duration cumulativeBefore = Duration.zero;
               Duration currentSegDur = Duration.zero;
               for (int i = 0; i < queue.length; i++) {
-                final m = widget.player.settingsFor(queue[i]).durationMinutes;
-                final d = Duration(minutes: m);
+                final d = Duration(seconds: i < effectiveSeconds.length ? effectiveSeconds[i] : 0);
                 if (i < idx) {
                   cumulativeBefore += d;
                 } else if (i == idx) {
@@ -674,10 +759,14 @@ class _PlayerPopupState extends State<PlayerPopup> {
               final elapsed = st.total - st.remaining;
               final segElapsed = elapsed - cumulativeBefore;
               final rawSegRem = currentSegDur - segElapsed;
-              final segRemaining = rawSegRem < Duration.zero ? Duration.zero : (rawSegRem > currentSegDur ? currentSegDur : rawSegRem);
+              final segRemaining = rawSegRem < Duration.zero
+                  ? Duration.zero
+                  : (rawSegRem > currentSegDur ? currentSegDur : rawSegRem);
 
               // [PLAYLIST_TIME] diagnostic: popup time calculation
-              debugPrint('[PLAYLIST_TIME] POPUP idx=$idx queueLen=${queue.length} st.total=${st.total} st.remaining=${st.remaining} segRemaining=$segRemaining currentSegDur=$currentSegDur');
+              debugPrint(
+                '[PLAYLIST_TIME] POPUP idx=$idx queueLen=${queue.length} st.total=${st.total} st.remaining=${st.remaining} segRemaining=$segRemaining currentSegDur=$currentSegDur',
+              );
 
               String fmt(Duration d) {
                 final s = d.inSeconds.clamp(0, 24 * 3600);
@@ -711,9 +800,7 @@ class _PlayerPopupState extends State<PlayerPopup> {
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -746,7 +833,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
 
                       OriginalPlayerLine(
                         progress: visualProgress,
-                        values: _cycleFreqs.isNotEmpty ? _cycleFreqs : _cachedFreqs,
+                        values: _cycleFreqs.isNotEmpty
+                            ? _cycleFreqs
+                            : _cachedFreqs,
                         height: 120,
                       ),
 
@@ -782,7 +871,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
                               } catch (e) {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Gerät-Stop fehlgeschlagen: ${e.toString()}')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Gerät-Stop fehlgeschlagen: ${e.toString()}',
+                                      ),
+                                    ),
                                   );
                                 }
                                 // local stop already done above – no early return needed
@@ -800,11 +893,25 @@ class _PlayerPopupState extends State<PlayerPopup> {
                         const SizedBox(height: 8),
                         ...List.generate(queue.length, (i) {
                           final itemId = queue[i];
-                          final itemDurMin = widget.player.settingsFor(itemId).durationMinutes;
-                          final itemDur = Duration(minutes: itemDurMin);
+                          final itemDurMin = widget.player
+                              .settingsFor(itemId)
+                              .durationMinutes;
+                          final nominalItemDur = Duration(minutes: itemDurMin);
+                          // If this is a single-program queue, prefer the device-reported total/remaining
+                          // for display so the UI matches the real device runtime.
+                          final bool singleProgramQueue = queue.length == 1;
+                          final Duration itemDur = singleProgramQueue
+                              ? st.total
+                              : Duration(seconds: i < effectiveSeconds.length ? effectiveSeconds[i] : nominalItemDur.inSeconds);
                           // Resolve playlist row title the same way as the main title above:
-                          final itemKeysId = _normalizeProgramId(itemId, fixEnergyTypo: false);
-                          final itemUiId = _normalizeProgramId(itemId, fixEnergyTypo: true);
+                          final itemKeysId = _normalizeProgramId(
+                            itemId,
+                            fixEnergyTypo: false,
+                          );
+                          final itemUiId = _normalizeProgramId(
+                            itemId,
+                            fixEnergyTypo: true,
+                          );
                           final itemTitleId = itemUiId ?? itemKeysId;
                           final itemTitle = _friendlyTitle(itemTitleId);
 
@@ -816,14 +923,31 @@ class _PlayerPopupState extends State<PlayerPopup> {
                           Duration displayRemaining;
 
                           if (isCompleted) {
+                            // finished
                             barFill = 1.0;
                             displayRemaining = Duration.zero;
                           } else if (isCurrent) {
-                            barFill = itemDur.inSeconds > 0
-                                ? (1.0 - segRemaining.inSeconds / itemDur.inSeconds).clamp(0.0, 1.0)
-                                : 0.0;
-                            displayRemaining = segRemaining;
+                            // current program: for single-program queues use device's remaining/total;
+                            // otherwise use calculated segRemaining and nominal duration
+                            if (singleProgramQueue) {
+                              displayRemaining = st.remaining;
+                              barFill = itemDur.inSeconds > 0
+                                  ? (1.0 -
+                                            displayRemaining.inSeconds /
+                                                itemDur.inSeconds)
+                                        .clamp(0.0, 1.0)
+                                  : 0.0;
+                            } else {
+                              displayRemaining = segRemaining;
+                              barFill = itemDur.inSeconds > 0
+                                  ? (1.0 -
+                                            displayRemaining.inSeconds /
+                                                itemDur.inSeconds)
+                                        .clamp(0.0, 1.0)
+                                  : 0.0;
+                            }
                           } else {
+                            // upcoming
                             barFill = 0.0;
                             displayRemaining = itemDur;
                           }
@@ -831,14 +955,20 @@ class _PlayerPopupState extends State<PlayerPopup> {
                           final Color barColor = isCurrent
                               ? Theme.of(context).colorScheme.primary
                               : isCompleted
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.45)
-                                  : Colors.grey.withOpacity(0.25);
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.45)
+                              : Colors.grey.withOpacity(0.25);
 
                           final Color textColor = isCurrent
                               ? Theme.of(context).colorScheme.onSurface
                               : isCompleted
-                                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.55)
-                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.4);
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.55)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.4);
 
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 5),
@@ -854,26 +984,43 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         color: isCurrent
-                                            ? Theme.of(context).colorScheme.primary
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
                                             : isCompleted
-                                                ? Theme.of(context).colorScheme.primary.withOpacity(0.35)
-                                                : Colors.grey.withOpacity(0.22),
+                                            ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withOpacity(0.35)
+                                            : Colors.grey.withOpacity(0.22),
                                       ),
                                       child: Center(
                                         child: isCompleted
-                                            ? Icon(Icons.check,
+                                            ? Icon(
+                                                Icons.check,
                                                 size: 13,
                                                 color: isCurrent
-                                                    ? Theme.of(context).colorScheme.onPrimary
-                                                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))
+                                                    ? Theme.of(
+                                                        context,
+                                                      ).colorScheme.onPrimary
+                                                    : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withOpacity(0.6),
+                                              )
                                             : Text(
                                                 '${i + 1}',
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w600,
                                                   color: isCurrent
-                                                      ? Theme.of(context).colorScheme.onPrimary
-                                                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+                                                      ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.onPrimary
+                                                      : Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withOpacity(0.55),
                                                 ),
                                               ),
                                       ),
@@ -885,9 +1032,14 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                         itemTitle,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
                                               color: textColor,
-                                              fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+                                              fontWeight: isCurrent
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
                                             ),
                                       ),
                                     ),
@@ -897,11 +1049,16 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                       isCompleted
                                           ? fmt(itemDur)
                                           : isCurrent
-                                              ? '${fmt(displayRemaining)} / ${fmt(itemDur)}'
-                                              : fmt(itemDur),
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          ? '${fmt(displayRemaining)} / ${fmt(itemDur)}'
+                                          : fmt(itemDur),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
                                             color: textColor,
-                                            fontFeatures: const [ui.FontFeature.tabularFigures()],
+                                            fontFeatures: const [
+                                              ui.FontFeature.tabularFigures(),
+                                            ],
                                           ),
                                     ),
                                   ],
@@ -915,8 +1072,12 @@ class _PlayerPopupState extends State<PlayerPopup> {
                                     child: LinearProgressIndicator(
                                       value: barFill,
                                       minHeight: 5,
-                                      backgroundColor: Colors.grey.withOpacity(0.15),
-                                      valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                                      backgroundColor: Colors.grey.withOpacity(
+                                        0.15,
+                                      ),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        barColor,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -934,8 +1095,10 @@ class _PlayerPopupState extends State<PlayerPopup> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(isDe ? 'Gesamt' : 'Total',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            isDe ? 'Gesamt' : 'Total',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           Text(
                             '${fmt(st.remaining)} / ${fmt(st.total)}',
                             style: Theme.of(context).textTheme.bodyMedium,
@@ -967,4 +1130,3 @@ class _PlayerPopupState extends State<PlayerPopup> {
     );
   }
 }
-

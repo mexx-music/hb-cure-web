@@ -514,6 +514,22 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
     required ValueChanged<String> onChanged,
   }) {
     final options = const ['sine', 'triangle', 'rectangle', 'saw-tooth'];
+    final l10n = AppLocalizations.of(context)!;
+
+    String _labelForOption(String o) {
+      switch (o) {
+        case 'sine':
+          return l10n.waveformSine;
+        case 'triangle':
+          return l10n.waveformTriangle;
+        case 'rectangle':
+          return l10n.waveformRectangle;
+        case 'saw-tooth':
+          return l10n.waveformSawtooth;
+        default:
+          return o;
+      }
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -534,7 +550,7 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
                 value: value,
                 isExpanded: true,
                 items: options
-                    .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                    .map((o) => DropdownMenuItem(value: o, child: Text(_labelForOption(o))))
                     .toList(),
                 onChanged: enabled ? (v) => onChanged(v ?? value) : null,
               ),
