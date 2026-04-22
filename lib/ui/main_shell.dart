@@ -352,22 +352,33 @@ class _MainShellState extends State<MainShell> {
               final idx = (lastSess['currentIndex'] is int) ? lastSess['currentIndex'] as int : 0;
               if (q.isNotEmpty) {
                 debugPrint('[AutoReconnect] restored persisted session queue=${q} idx=$idx');
-                playerService.syncWithDeviceStatus(
-                  deviceTotalMs: status.totalSec,
-                  deviceElapsedMs: status.elapsedSec,
-                  deviceRunning: true,
-                  queueIds: q,
-                );
-                debugPrint('[AutoReconnect] player timer synced with persisted session');
-                // Open popup and return early
-                if (mounted) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _openPlayerPopupForReconnect();
-                  });
+                // Extract persisted title map (if any) so UI can show friendly titles for copied/slot items
+                Map<String, String>? titleMap;
+                try {
+                  final rawTitles = lastSess['titles'] as Map<String, dynamic>?;
+                  if (rawTitles != null) {
+                    titleMap = rawTitles.map((k, v) => MapEntry(k.toString(), v.toString()));
+                  }
+                } catch (_) {
+                  titleMap = null;
                 }
-                return;
-              }
-            }
+                 playerService.syncWithDeviceStatus(
+                   deviceTotalMs: status.totalSec,
+                   deviceElapsedMs: status.elapsedSec,
+                   deviceRunning: true,
+                   queueIds: q,
+                   titleKeyEnById: titleMap,
+                 );
+                 debugPrint('[AutoReconnect] player timer synced with persisted session');
+                 // Open popup and return early
+                 if (mounted) {
+                   WidgetsBinding.instance.addPostFrameCallback((_) {
+                     if (mounted) _openPlayerPopupForReconnect();
+                   });
+                 }
+                 return;
+               }
+             }
           } catch (e) {
             debugPrint('[AutoReconnect] failed to load persisted session: $e');
           }

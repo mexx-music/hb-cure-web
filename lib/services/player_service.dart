@@ -151,7 +151,12 @@ class PlayerService extends ChangeNotifier {
   Future<void> _persistSession(List<String> queueIds, int currentIndex) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final payload = jsonEncode({'queueIds': queueIds, 'currentIndex': currentIndex});
+      // Also persist any UI title map so reconnect can restore friendly names
+      final payload = jsonEncode({
+        'queueIds': queueIds,
+        'currentIndex': currentIndex,
+        'titles': _titleKeyEnById,
+      });
       await prefs.setString(_kSessionKey, payload);
     } catch (e) {
       debugPrint('[PlayerService] _persistSession error: $e');
@@ -371,9 +376,17 @@ class PlayerService extends ChangeNotifier {
     required int deviceElapsedMs,
     required bool deviceRunning,
     List<String>? queueIds,
+    Map<String, String>? titleKeyEnById,
   }) {
     // If a queue is provided (reconnect scenario), install it
     if (queueIds != null && queueIds.isNotEmpty) {
+      // install any provided UI title map first so subsequent UI uses the friendly titles
+      if (titleKeyEnById != null && titleKeyEnById.isNotEmpty) {
+        _titleKeyEnById = {
+          ..._titleKeyEnById,
+          ...titleKeyEnById,
+        };
+      }
       _state = _state.copyWith(queueIds: queueIds);
     }
 
@@ -390,6 +403,7 @@ class PlayerService extends ChangeNotifier {
     // Compute which segment index the device is currently in
     final elapsed = Duration(milliseconds: deviceElapsedMs);
     int newIdx = 0;
+
     Duration cumulative = Duration.zero;
     for (int i = 0; i < _state.queueIds.length; i++) {
       final segDur = Duration(minutes: settingsFor(_state.queueIds[i]).durationMinutes);
