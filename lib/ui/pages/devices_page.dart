@@ -15,6 +15,7 @@ import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'package:hbcure/services/qt_remote_program_encoder.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
 import 'package:hbcure/services/app_memory.dart';
+import 'dart:typed_data';
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -81,7 +82,9 @@ class _DevicesPageState extends State<DevicesPage> {
   Future<bool> _isLocationServiceEnabled() async {
     if (!Platform.isAndroid) return true;
     try {
-      final result = await _nativeCh.invokeMethod<bool>('isLocationServiceEnabled');
+      final result = await _nativeCh.invokeMethod<bool>(
+        'isLocationServiceEnabled',
+      );
       return result ?? true;
     } catch (_) {
       return true;
@@ -152,7 +155,8 @@ class _DevicesPageState extends State<DevicesPage> {
 
   Future<void> _ensureNativeConnected(String deviceId) async {
     final svc = CureDeviceUnlockService.instance;
-    if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId) return;
+    if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId)
+      return;
     await svc.nativeConnect(deviceId);
   }
   // ----------------------------------------------------------
@@ -201,14 +205,27 @@ class _DevicesPageState extends State<DevicesPage> {
         ];
         if (hint.isNotEmpty) {
           lines.add(const SizedBox(height: 4));
-          lines.add(Text(hint, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)));
+          lines.add(
+            Text(
+              hint,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+          );
         }
         if (_scanError != null) {
           lines.add(const SizedBox(height: 6));
-          lines.add(Text('${t.devicesScanError}: $_scanError', style: const TextStyle(color: Colors.orange, fontSize: 12)));
+          lines.add(
+            Text(
+              '${t.devicesScanError}: $_scanError',
+              style: const TextStyle(color: Colors.orange, fontSize: 12),
+            ),
+          );
         }
 
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: lines);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: lines,
+        );
       },
     );
   }
@@ -237,34 +254,38 @@ class _DevicesPageState extends State<DevicesPage> {
             ],
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             title: Text(
-              (d.platformName != null && d.platformName.isNotEmpty) ? d.platformName! : deviceId,
+              _shortDeviceLabel(d.platformName, deviceId),
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            subtitle: Text(
-              deviceId,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
             trailing: connected
                 ? ElevatedButton(
-              onPressed: () {
-                _ble.disconnect(d);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: Text(AppLocalizations.of(context)!.devicesDisconnect),
-            )
+                    onPressed: () {
+                      _ble.disconnect(d);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.devicesDisconnect,
+                    ),
+                  )
                 : ElevatedButton(
-              onPressed: () {
-                _ble.connect(d);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: Text(AppLocalizations.of(context)!.devicesConnect),
-            ),
+                    onPressed: () {
+                      _ble.connect(d);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: Text(AppLocalizations.of(context)!.devicesConnect),
+                  ),
           ),
         );
       },
@@ -273,9 +294,7 @@ class _DevicesPageState extends State<DevicesPage> {
 
   Widget _buildDeveloperPanel(String deviceId) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: AppColors.cardBackground,
       child: Theme(
         data: Theme.of(context).copyWith(
@@ -336,23 +355,30 @@ class _DevicesPageState extends State<DevicesPage> {
                       try {
                         final svc = CureDeviceUnlockService.instance;
 
-                        final connected = await FlutterBluePlus.connectedDevices;
-                        if (connected.isEmpty) throw Exception('No connected device');
+                        final connected =
+                            await FlutterBluePlus.connectedDevices;
+                        if (connected.isEmpty)
+                          throw Exception('No connected device');
                         final String did = connected.first.remoteId.toString();
 
-                        if (!(svc.isNativeConnected && svc.nativeConnectedDeviceId == did)) {
+                        if (!(svc.isNativeConnected &&
+                            svc.nativeConnectedDeviceId == did)) {
                           await svc.nativeConnect(did);
                         }
 
                         final programModel = buildSimpleTestProgram();
-                        final program = CureProgramCompiler().compile(programModel);
+                        final program = CureProgramCompiler().compile(
+                          programModel,
+                        );
                         final ok = await svc.uploadProgramBytes(program);
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                ok ? 'Testprogramm übertragen (ohne Start)' : 'Upload FAILED (kein OK)',
+                                ok
+                                    ? 'Testprogramm übertragen (ohne Start)'
+                                    : 'Upload FAILED (kein OK)',
                               ),
                             ),
                           );
@@ -386,7 +412,11 @@ class _DevicesPageState extends State<DevicesPage> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)'),
+                              content: Text(
+                                ok
+                                    ? 'Programm gestartet'
+                                    : 'Start fehlgeschlagen (kein OK)',
+                              ),
                             ),
                           );
                         }
@@ -419,7 +449,11 @@ class _DevicesPageState extends State<DevicesPage> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
+                              content: Text(
+                                ok
+                                    ? 'progClear OK'
+                                    : 'progClear FAILED (kein OK)',
+                              ),
                             ),
                           );
                         }
@@ -427,7 +461,9 @@ class _DevicesPageState extends State<DevicesPage> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('progClear failed: ${e.toString()}'),
+                              content: Text(
+                                'progClear failed: ${e.toString()}',
+                              ),
                             ),
                           );
                         }
@@ -444,64 +480,87 @@ class _DevicesPageState extends State<DevicesPage> {
                     onPressed: _unlockInProgressLocal
                         ? null
                         : () async {
-                      if (!mounted) return;
-                      try {
-                        final connected = await FlutterBluePlus.connectedDevices;
-                        final has = connected.any((d) {
-                          final n = (d.platformName ?? '').toLowerCase();
-                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
-                          return isCureDevice(n) || isCureDevice(id);
-                        });
+                            if (!mounted) return;
+                            try {
+                              final connected =
+                                  await FlutterBluePlus.connectedDevices;
+                              final has = connected.any((d) {
+                                final n = (d.platformName ?? '').toLowerCase();
+                                final id =
+                                    (d.remoteId.str ?? d.remoteId.toString())
+                                        .toLowerCase();
+                                return isCureDevice(n) || isCureDevice(id);
+                              });
 
-                        if (!has) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Keine CureBase verbunden')),
-                            );
-                          }
-                          return;
-                        }
+                              if (!has) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Keine CureBase verbunden'),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
 
-                        final device = connected.firstWhere((d) {
-                          final n = (d.platformName ?? '').toLowerCase();
-                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
-                          return isCureDevice(n) || isCureDevice(id);
-                        });
+                              final device = connected.firstWhere((d) {
+                                final n = (d.platformName ?? '').toLowerCase();
+                                final id =
+                                    (d.remoteId.str ?? d.remoteId.toString())
+                                        .toLowerCase();
+                                return isCureDevice(n) || isCureDevice(id);
+                              });
 
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Unlock gestartet...')),
-                          );
-                        }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Unlock gestartet...'),
+                                  ),
+                                );
+                              }
 
-                        final result = await CureDeviceUnlockService.instance.unlockDevice(
-                          device.remoteId.toString(),
-                          onStatus: (s) => debugPrint('HBDBG ensureUnlocked status: $s'),
-                        );
+                              final result = await CureDeviceUnlockService
+                                  .instance
+                                  .unlockDevice(
+                                    device.remoteId.toString(),
+                                    onStatus: (s) => debugPrint(
+                                      'HBDBG ensureUnlocked status: $s',
+                                    ),
+                                  );
 
-                        if (result.success) {
-                          // Persist device id for auto-reconnect
-                          AppMemory.instance.setLastDevice(device.remoteId.toString());
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Unlock OK')),
-                            );
-                          }
-                        } else {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Unlock failed: ${result.errorMessage}')),
-                            );
-                          }
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Unlock failed: ${e.toString()}')),
-                          );
-                        }
-                      }
-                    },
+                              if (result.success) {
+                                // Persist device id for auto-reconnect
+                                AppMemory.instance.setLastDevice(
+                                  device.remoteId.toString(),
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Unlock OK')),
+                                  );
+                                }
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Unlock failed: ${result.errorMessage}',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Unlock failed: ${e.toString()}',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                     child: const Text('Unlock'),
                   ),
                   const SizedBox(height: 8),
@@ -512,17 +571,21 @@ class _DevicesPageState extends State<DevicesPage> {
                     ),
                     onPressed: () async {
                       try {
-                        final connected = await FlutterBluePlus.connectedDevices;
+                        final connected =
+                            await FlutterBluePlus.connectedDevices;
                         final has = connected.any((d) {
                           final n = (d.platformName ?? '').toLowerCase();
-                          final id = (d.remoteId.str ?? d.remoteId.toString()).toLowerCase();
+                          final id = (d.remoteId.str ?? d.remoteId.toString())
+                              .toLowerCase();
                           return isCureDevice(n) || isCureDevice(id);
                         });
 
                         if (!has) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Keine CureBase verbunden')),
+                              const SnackBar(
+                                content: Text('Keine CureBase verbunden'),
+                              ),
                             );
                           }
                           return;
@@ -530,18 +593,28 @@ class _DevicesPageState extends State<DevicesPage> {
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Reactive BLE Unlock-Test gestartet')),
+                            const SnackBar(
+                              content: Text(
+                                'Reactive BLE Unlock-Test gestartet',
+                              ),
+                            ),
                           );
                         }
 
                         // ReactiveBleCureTest removed (flutter_reactive_ble removed).
                         // iOS/Android now use native CureBleNativePlugin; keep this button disabled
                         // or implement native test call via CureDeviceUnlockService if needed.
-                        debugPrint('Reactive BLE Unlock-Test disabled (reactive_ble removed)');
+                        debugPrint(
+                          'Reactive BLE Unlock-Test disabled (reactive_ble removed)',
+                        );
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Reactive BLE Test failed: ${e.toString()}')),
+                            SnackBar(
+                              content: Text(
+                                'Reactive BLE Test failed: ${e.toString()}',
+                              ),
+                            ),
                           );
                         }
                       }
@@ -555,6 +628,49 @@ class _DevicesPageState extends State<DevicesPage> {
         ),
       ),
     );
+  }
+
+  // Explanation: Shorten visible device labels. Update _shortDeviceLabel to also shorten platformName when it contains a technical suffix (prefix-tail),
+  // keeping internal device ids unchanged. Minimal UI-only change.
+
+  String _shortDeviceLabel(String? platformName, String? deviceId) {
+    // Prefer the human-readable platform name if available, but shorten it when it looks technical
+    String shortenCandidate(String s) {
+      if (s.contains('-')) {
+        final parts = s.split('-');
+        if (parts.length >= 2) {
+          final prefix = parts[0];
+          final tail = parts[1].replaceAll(':', '').replaceAll(' ', '');
+          final tailShort = tail.length > 4 ? tail.substring(0, 4) : tail;
+          return '$prefix-$tailShort...';
+        }
+      }
+      return s;
+    }
+
+    if (platformName != null && platformName.isNotEmpty) {
+      // If platformName contains a technical suffix (like CureBase-441793E6C36C), shorten it.
+      final shortened = shortenCandidate(platformName);
+      // If shortening produced the exact same string (no suffix), return the original platformName
+      return shortened;
+    }
+
+    // Fallback to a shortened device id label
+    if (deviceId == null || deviceId.isEmpty)
+      return AppLocalizations.of(context)!.devicesConnected;
+    final s = deviceId;
+    // If the id looks like CureBase-441793E6C36C, keep prefix and short tail
+    if (s.contains('-')) {
+      final parts = s.split('-');
+      if (parts.length >= 2) {
+        final prefix = parts[0];
+        final tail = parts[1].replaceAll(':', '').replaceAll(' ', '');
+        final tailShort = tail.length > 4 ? tail.substring(0, 4) : tail;
+        return '$prefix-$tailShort...';
+      }
+    }
+    // Generic short form
+    return s.length > 12 ? '${s.substring(0, 8)}...' : s;
   }
 
   @override
@@ -572,12 +688,8 @@ class _DevicesPageState extends State<DevicesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header (single strong title)
-                Text(
-                  AppLocalizations.of(context)!.devicesTitle,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 12),
+                // NOTE: main title is provided by the app shell — avoid duplicate in-page title
+                const SizedBox(height: 8),
 
                 // Devices + Current Device Card + Developer collapse
                 StreamBuilder<List<BluetoothDevice>>(
@@ -596,10 +708,14 @@ class _DevicesPageState extends State<DevicesPage> {
                       });
                     }
 
-                    final String? deviceId = devices.isNotEmpty ? devices.first.remoteId.toString() : null;
+                    final String? deviceId = devices.isNotEmpty
+                        ? devices.first.remoteId.toString()
+                        : null;
 
                     // Determine if any device in the list is actually connected
-                    final bool hasConnected = connId != null && devices.any((d) => d.remoteId.toString() == connId);
+                    final bool hasConnected =
+                        connId != null &&
+                        devices.any((d) => d.remoteId.toString() == connId);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,9 +749,10 @@ class _DevicesPageState extends State<DevicesPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      (devices.first.platformName?.isNotEmpty == true)
-                                          ? devices.first.platformName!
-                                          : connId ?? AppLocalizations.of(context)!.devicesConnected,
+                                      _shortDeviceLabel(
+                                        devices.first.platformName,
+                                        connId,
+                                      ),
                                       style: TextStyle(
                                         color: Colors.green,
                                         fontWeight: FontWeight.w600,
@@ -643,16 +760,13 @@ class _DevicesPageState extends State<DevicesPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 6),
-                                    Text(
-                                      connId ?? '',
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
                                   ],
                                 )
                               else
                                 Text(
-                                  AppLocalizations.of(context)!.devicesNoDeviceConnected,
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.devicesNoDeviceConnected,
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
@@ -668,7 +782,9 @@ class _DevicesPageState extends State<DevicesPage> {
                                 )
                               else
                                 Text(
-                                  AppLocalizations.of(context)!.devicesFoundCount(devices.length),
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.devicesFoundCount(devices.length),
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
@@ -682,43 +798,57 @@ class _DevicesPageState extends State<DevicesPage> {
                                       onPressed: _isScanningLocal
                                           ? null
                                           : () async {
-                                        if (mounted) {
-                                          setState(() {
-                                            _scanError = null;
-                                            _isScanningLocal = true;
-                                          });
-                                        }
-                                        try {
-                                          await _ble.stopScan();
-                                          await _checkLocationAndScan();
-                                        } catch (e) {
-                                          final msg = e.toString();
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('${AppLocalizations.of(context)!.devicesScanFailed}: $msg')),
-                                            );
-                                          }
-                                          if (mounted) {
-                                            setState(() {
-                                              _scanError = msg;
-                                            });
-                                          }
-                                          if (kDebugMode) {
-                                            debugPrint('Scan action failed: $e');
-                                          }
-                                        } finally {
-                                          if (mounted) {
-                                            setState(() {
-                                              _isScanningLocal = false;
-                                            });
-                                          }
-                                        }
-                                      },
+                                              if (mounted) {
+                                                setState(() {
+                                                  _scanError = null;
+                                                  _isScanningLocal = true;
+                                                });
+                                              }
+                                              try {
+                                                await _ble.stopScan();
+                                                await _checkLocationAndScan();
+                                              } catch (e) {
+                                                final msg = e.toString();
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '${AppLocalizations.of(context)!.devicesScanFailed}: $msg',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _scanError = msg;
+                                                  });
+                                                }
+                                                if (kDebugMode) {
+                                                  debugPrint(
+                                                    'Scan action failed: $e',
+                                                  );
+                                                }
+                                              } finally {
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _isScanningLocal = false;
+                                                  });
+                                                }
+                                              }
+                                            },
                                       icon: const Icon(Icons.search),
-                                      label: Text(AppLocalizations.of(context)!.devicesScan),
+                                      label: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.devicesScan,
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.primary,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -735,7 +865,9 @@ class _DevicesPageState extends State<DevicesPage> {
                             padding: const EdgeInsets.only(top: 18),
                             child: Center(
                               child: Text(
-                                AppLocalizations.of(context)!.devicesNoDevicesDiscovered,
+                                AppLocalizations.of(
+                                  context,
+                                )!.devicesNoDevicesDiscovered,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                 ),
@@ -747,7 +879,8 @@ class _DevicesPageState extends State<DevicesPage> {
                           const SizedBox(height: 12),
 
                           // Developer/native tools are only visible in debug builds
-                          if (kDebugMode && deviceId != null) _buildDeveloperPanel(deviceId!),
+                          if (kDebugMode && deviceId != null)
+                            _buildDeveloperPanel(deviceId!),
                         ],
                       ],
                     );
@@ -765,10 +898,7 @@ class _DevicesPageState extends State<DevicesPage> {
 }
 
 class _NativeDebugPanel extends StatelessWidget {
-  const _NativeDebugPanel({
-    super.key,
-    required this.deviceId,
-  });
+  const _NativeDebugPanel({super.key, required this.deviceId});
 
   final String deviceId;
 
@@ -785,7 +915,8 @@ class _NativeDebugPanel extends StatelessWidget {
     ];
 
     Future<void> _ensureNativeConnected() async {
-      if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId) return;
+      if (svc.isNativeConnected && svc.nativeConnectedDeviceId == deviceId)
+        return;
       await svc.nativeConnect(deviceId);
     }
 
@@ -804,10 +935,7 @@ class _NativeDebugPanel extends StatelessWidget {
         for (final line in infoLines)
           Text(
             line,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
         const SizedBox(height: 12),
         Text(
@@ -827,7 +955,10 @@ class _NativeDebugPanel extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 minimumSize: const Size(140, 40),
               ),
               onPressed: () async {
@@ -837,7 +968,11 @@ class _NativeDebugPanel extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(ok ? 'Programm gestartet' : 'Start fehlgeschlagen (kein OK)'),
+                        content: Text(
+                          ok
+                              ? 'Programm gestartet'
+                              : 'Start fehlgeschlagen (kein OK)',
+                        ),
                       ),
                     );
                   }
@@ -854,7 +989,10 @@ class _NativeDebugPanel extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 minimumSize: const Size(140, 40),
               ),
               onPressed: () async {
@@ -864,14 +1002,18 @@ class _NativeDebugPanel extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(ok ? 'progClear OK' : 'progClear FAILED (kein OK)'),
+                        content: Text(
+                          ok ? 'progClear OK' : 'progClear FAILED (kein OK)',
+                        ),
                       ),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('progClear failed: ${e.toString()}')),
+                      SnackBar(
+                        content: Text('progClear failed: ${e.toString()}'),
+                      ),
                     );
                   }
                 }
@@ -886,15 +1028,15 @@ class _NativeDebugPanel extends StatelessWidget {
                   try {
                     await _ensureNativeConnected();
 
-                    final uuid16 = Uint8List.fromList(List.generate(16, (i) => i + 1));
+                    final uuid16 = Uint8List.fromList(
+                      List.generate(16, (i) => i + 1),
+                    );
                     final name = "Test 1kHz 60s";
                     final eIntensity = 5;
                     final hIntensity = 3;
                     final eWaveForm = 0x00;
                     final hWaveForm = 0x02;
-                    final steps = [
-                      (freqHz: 1000.0, dwellSec: 60),
-                    ];
+                    final steps = [(freqHz: 1000.0, dwellSec: 60)];
 
                     final programBytes = encodeQtProgramBytes(
                       uuid16: uuid16,
@@ -911,12 +1053,18 @@ class _NativeDebugPanel extends StatelessWidget {
 
                     for (int i = 0; i < 3; i++) {
                       final status = await svc.fetchProgStatus();
-                      debugPrint('Prog Status: ${status?.rawLine ?? status.toString()}');
+                      debugPrint(
+                        'Prog Status: ${status?.rawLine ?? status.toString()}',
+                      );
                       await Future.delayed(const Duration(milliseconds: 500));
                     }
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Program uploaded and started successfully')),
+                      const SnackBar(
+                        content: Text(
+                          'Program uploaded and started successfully',
+                        ),
+                      ),
                     );
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -934,7 +1082,10 @@ class _NativeDebugPanel extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 minimumSize: const Size(140, 40),
               ),
               onPressed: () async {
@@ -946,17 +1097,23 @@ class _NativeDebugPanel extends StatelessWidget {
                   final success = await svc.uploadProgramAndStart(program);
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Program uploaded and started successfully')),
+                      const SnackBar(
+                        content: Text(
+                          'Program uploaded and started successfully',
+                        ),
+                      ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to upload and start program')),
+                      const SnackBar(
+                        content: Text('Failed to upload and start program'),
+                      ),
                     );
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               child: const Text('Upload+Start Test 1 kHz/60s'),
