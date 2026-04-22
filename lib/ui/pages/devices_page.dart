@@ -258,12 +258,28 @@ class _DevicesPageState extends State<DevicesPage> {
               horizontal: 16,
               vertical: 8,
             ),
-            title: Text(
-              _shortDeviceLabel(d.platformName, deviceId),
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+            title: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: connected ? Colors.green : Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _shortDeviceLabel(d.platformName, deviceId),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
             trailing: connected
                 ? ElevatedButton(
