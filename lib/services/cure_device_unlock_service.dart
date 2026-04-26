@@ -570,78 +570,89 @@ class CureDeviceUnlockService {
             }
           }
         } else {
-          // ── Android path (unchanged) ──────────────────────────────────────
-          // Step 1: wait for disconnect to propagate (firmware always disconnects)
-          await Future.delayed(const Duration(milliseconds: 1500));
-
-          // Step 2: if still "connected", explicitly disconnect to clear stale state
-          if (transport.isConnected) {
-            if (kDebugMode) {
-              debugPrint('[CureDeviceUnlockService] post-unlock: transport still shows connected – forcing disconnect before reconnect');
-            }
-            try {
-              await transport.disconnect();
-            } catch (_) {}
-            _sharedDeviceId = null;
-            await Future.delayed(const Duration(milliseconds: 500));
+          // ── Android path (modified) ─────────────────────────────────────
+          // Instead of forcing an immediate disconnect+reconnect (which can
+          // trigger unstable behavior on some older Android devices), try to
+          // keep the transport connected, wait briefly, and query info. Only
+          // if queries fail or the transport is unusable, attempt reconnect.
+          if (kDebugMode) {
+            debugPrint('[CureDeviceUnlockService] POST_UNLOCK_OK');
+            debugPrint('[CureDeviceUnlockService] POST_UNLOCK_KEEP_CONNECTION – delaying 600ms before info queries');
           }
 
-          // Step 3: Reconnect – up to 2 attempts
-          await _reconnectWithDelay(0);
+          // brief settle period before sending gated commands
+          await Future.delayed(const Duration(milliseconds: 600));
 
-          // Step 4: query info only if connected
+          bool hwOk = false;
+          bool buildOk = false;
+
+          // Attempt getHardware while keeping the connection
           if (transport.isConnected) {
-            if (kDebugMode) {
-              debugPrint('[CureDeviceUnlockService] UNLOCK_OK_REACHED – POST_UNLOCK_DELAY_START (500ms)');
-            }
-            await Future.delayed(const Duration(milliseconds: 500));
-            if (kDebugMode) {
-              debugPrint('[CureDeviceUnlockService] POST_UNLOCK_DELAY_END – GET_HARDWARE_SENT');
-            }
-
-            Future<String> _queryWithRetry(String command) async {
-              final lines = await transport.sendCommandAndWaitLines(
-                  command, timeout: const Duration(seconds: 30));
-              var result = _extractResult(lines);
-              if (result.isEmpty && !transport.isConnected) {
-                if (kDebugMode) {
-                  debugPrint('[CureDeviceUnlockService] $command returned empty (device disconnected mid-command) – waiting 1.5s and reconnecting for retry...');
-                }
-                await Future.delayed(const Duration(milliseconds: 1500));
-                try {
-                  await transport.connect(deviceId);
-                  _sharedDeviceId = deviceId;
-                  if (kDebugMode) {
-                    debugPrint('[CureDeviceUnlockService] reconnected (mid-${command == 'getHardware' ? 'info' : 'getBuild'} retry) to $deviceId');
-                  }
-                  final retryLines = await transport.sendCommandAndWaitLines(
-                      command, timeout: const Duration(seconds: 30));
-                  result = _extractResult(retryLines);
-                } catch (retryErr) {
-                  if (kDebugMode) {
-                    debugPrint('[CureDeviceUnlockService] $command retry failed: $retryErr');
-                  }
-                }
+            if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_START');
+            try {
+              final hwLines = await transport.sendCommandAndWaitLines('getHardware', timeout: const Duration(seconds: 30));
+              hardwareInfo = _extractResult(hwLines);
+              if ((hardwareInfo?.isNotEmpty ?? false)) {
+                hwOk = true;
+                if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_OK hw=$hardwareInfo');
+              } else {
+                if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_FAIL (empty)');
               }
-              return result;
+            } catch (e) {
+              if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_FAIL exception: $e');
             }
+          } else {
+            if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_FAIL (transport not connected)');
+          }
 
-            hardwareInfo = await _queryWithRetry('getHardware');
+          // small gap before getBuild
+          if (transport.isConnected) await Future.delayed(const Duration(milliseconds: 200));
 
-            // Reconnect between commands if needed
-            if (!transport.isConnected) {
-              if (kDebugMode) {
-                debugPrint('[CureDeviceUnlockService] disconnected between getHardware and getBuild – reconnecting...');
+          // Attempt getBuild while keeping the connection
+          if (transport.isConnected) {
+            if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_START');
+            try {
+              final buildLines = await transport.sendCommandAndWaitLines('getBuild', timeout: const Duration(seconds: 30));
+              buildInfo = _extractResult(buildLines);
+              if ((buildInfo?.isNotEmpty ?? false)) {
+                buildOk = true;
+                if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_OK build=$buildInfo');
+              } else {
+                if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_FAIL (empty)');
               }
-              await Future.delayed(const Duration(milliseconds: 1500));
+            } catch (e) {
+              if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_FAIL exception: $e');
+            }
+          } else {
+            if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_FAIL (transport not connected)');
+          }
+
+          // If both queries failed (no useful info) or transport not connected,
+          // allow reconnect attempts to recover device state — but only then.
+          if (!hwOk && !buildOk) {
+            if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_RECONNECT_ONLY_ON_FAIL – attempting reconnect for info');
+
+            // Try to reconnect (up to configured attempts inside helper)
+            final reconnected = await _reconnectWithDelay(0);
+            if (reconnected && transport.isConnected) {
+              // After reconnect, try lightweight queries again (no aggressive retry logic here)
               try {
-                await transport.connect(deviceId);
-                _sharedDeviceId = deviceId;
+                final hwLines2 = await transport.sendCommandAndWaitLines('getHardware', timeout: const Duration(seconds: 30));
+                hardwareInfo = _extractResult(hwLines2);
+                if ((hardwareInfo?.isNotEmpty ?? false)) {
+                  if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETHARDWARE_OK (after reconnect) hw=$hardwareInfo');
+                }
               } catch (_) {}
-            }
 
-            if (transport.isConnected) {
-              buildInfo = await _queryWithRetry('getBuild');
+              try {
+                final buildLines2 = await transport.sendCommandAndWaitLines('getBuild', timeout: const Duration(seconds: 30));
+                buildInfo = _extractResult(buildLines2);
+                if ((buildInfo?.isNotEmpty ?? false)) {
+                  if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_GETBUILD_OK (after reconnect) build=$buildInfo');
+                }
+              } catch (_) {}
+            } else {
+              if (kDebugMode) debugPrint('[CureDeviceUnlockService] POST_UNLOCK_RECONNECT_ONLY_ON_FAIL – reconnect attempts failed or transport unusable');
             }
           }
         }
