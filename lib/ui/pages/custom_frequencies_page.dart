@@ -157,9 +157,16 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: ListTile(
-        title: Text(
-          e.name,
-          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                e.name,
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         subtitle: Text(
           '${l10n.cfFrequency}: ${e.frequencyHz.toStringAsFixed(_needsDecimals(e.frequencyHz) ? 2 : 0)} Hz • '
@@ -167,10 +174,120 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
           '${l10n.intensity}: ${e.intensityPct}%',
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-        onTap: () => _openEntryActions(e, index),
+        // Remove the old chevron and popup menu. Instead show add/check icon and support long-press for edit/delete.
+        trailing: _TempAddButton(
+          onAdd: () async {
+            final l10n = AppLocalizations.of(context)!;
+            try {
+              await MyProgramsService().add(e.id);
+              // Persist human-readable name so My Programs can show it
+              try {
+                await CustomFrequencyNameStore.instance.setName(e.id, e.name);
+              } catch (_) {}
+              // small UI refresh
+              if (!mounted) return;
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.addedToMyPrograms)),
+              );
+            } catch (err) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.singleStartFailed)),
+              );
+            }
+          },
+        ),
+        onTap: null,
+        onLongPress: () => _showEditDeleteDialog(e),
       ),
     );
+  }
+
+  Future<void> _handleAddToMyPrograms(CustomFrequencyEntry e) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await MyProgramsService().add(e.id);
+      // Persist human-readable name so My Programs can show it
+      try {
+        await CustomFrequencyNameStore.instance.setName(e.id, e.name);
+      } catch (_) {}
+      // small UI refresh
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.addedToMyPrograms)),
+      );
+    } catch (err) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.singleStartFailed)),
+      );
+    }
+  }
+
+  Future<void> _showEditDeleteDialog(CustomFrequencyEntry e) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (!mounted) return;
+
+    final choice = await showModalBottomSheet<String?>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => SafeArea(
+        child: Material(
+          color: AppColors.cardBackground,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.edit, color: AppColors.textPrimary),
+                title: Text(l10n.cfEdit, style: const TextStyle(color: AppColors.textPrimary)),
+                onTap: () => Navigator.pop(ctx, 'edit'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: AppColors.accentRed),
+                title: Text(l10n.cfDelete, style: const TextStyle(color: AppColors.accentRed)),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == null) return;
+    if (choice == 'edit') {
+      final updated = await showDialog<CustomFrequencyEntry>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _CustomFrequencyDialog(initial: e),
+      );
+      if (updated == null) return;
+      CustomFrequenciesService.instance.upsert(updated);
+      try {
+        await CustomFrequencyNameStore.instance.setName(updated.id, updated.name);
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {});
+    } else if (choice == 'delete') {
+      CustomFrequenciesService.instance.removeById(e.id);
+      try {
+        await store.CustomFrequenciesStore.instance.remove(e.id);
+      } catch (_) {}
+      try {
+        await CustomFrequencyNameStore.instance.remove(e.id);
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cfDeleted)),
+      );
+    }
   }
 
   bool _needsDecimals(double v) => (v - v.roundToDouble()).abs() > 0.000001;
@@ -594,3 +711,65 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
     Navigator.pop(context, entry);
   }
 }
+
+class _TempAddButton extends StatefulWidget {
+  final Future<void> Function() onAdd;
+  const _TempAddButton({required this.onAdd});
+
+  @override
+  State<_TempAddButton> createState() => _TempAddButtonState();
+}
+
+class _TempAddButtonState extends State<_TempAddButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    if (_done) return;
+    try {
+      await widget.onAdd();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() => _done = true);
+    try {
+      await _ctrl.forward();
+      await _ctrl.reverse();
+      await Future.delayed(const Duration(milliseconds: 900));
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _done = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
+          child: Icon(
+            _done ? Icons.check : Icons.add,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
