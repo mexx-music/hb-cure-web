@@ -26,6 +26,9 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
   bool _loading = true;
   late final VoidCallback _langListener;
   ProgramCategory? _selectedCategory;
+  // Maintain a small stack of opened categories/subcategories so the back arrow
+  // can navigate one level up instead of jumping back to the top overview.
+  final List<ProgramCategory> _categoryStack = [];
 
   @override
   void initState() {
@@ -357,7 +360,21 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         Icons.arrow_back,
                         color: AppColors.textPrimary,
                       ),
-                      onPressed: () => setState(() => _selectedCategory = null),
+                      onPressed: () {
+                        // Pop one level from the internal category stack. If the
+                        // stack becomes empty, clear the selection to return to
+                        // the overall overview.
+                        setState(() {
+                          if (_categoryStack.isNotEmpty) {
+                            _categoryStack.removeLast();
+                            _selectedCategory = _categoryStack.isNotEmpty
+                                ? _categoryStack.last
+                                : null;
+                          } else {
+                            _selectedCategory = null;
+                          }
+                        });
+                      },
                     ),
                     Expanded(
                       child: Builder(
@@ -430,21 +447,14 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.add,
-                                color: AppColors.textSecondary,
-                              ),
-                              onPressed: () async {
+                            trailing: _AddButton(
+                              onAdd: () async {
+                                final l10n = AppLocalizations.of(context)!;
                                 final svc = MyProgramsService();
                                 await svc.add(p.id);
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Programm zu "Meine Programme" hinzugefügt',
-                                    ),
-                                  ),
+                                  SnackBar(content: Text(l10n.addedToMyPrograms)),
                                 );
                               },
                             ),
@@ -509,12 +519,26 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                               color: AppColors.textSecondary,
                             ),
                             onTap: () {
-                              // Subcategory navigation via Navigator was removed.
-                              // Switch to category view so the user can pick subcategory's programs there.
+                              // Push the subcategory onto the internal stack so the
+                              // back arrow will return only one level.
                               debugPrint(
                                 'AvailableProgramsPage: subcategory tapped ${sub.id}',
                               );
-                              setState(() => _selectedCategory = category);
+                              final subAsCategory = ProgramCategory(
+                                id: sub.id,
+                                title: sub.title,
+                                color: sub.color ?? category.color,
+                                programs: sub.programs ?? const [],
+                                subcategories: const [],
+                              );
+                              setState(() {
+                                // Ensure the parent category is on the stack first.
+                                if (_categoryStack.isEmpty || _categoryStack.last.id != category.id) {
+                                  _categoryStack.add(category);
+                                }
+                                _categoryStack.add(subAsCategory);
+                                _selectedCategory = subAsCategory;
+                              });
                             },
                           ),
                         ),
@@ -677,7 +701,11 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                               }
 
                               // Always open CategoriesPage. It shows programs (with +) and subcategories together.
-                              setState(() => _selectedCategory = fixedCategory);
+                              setState(() {
+                                _categoryStack.clear();
+                                _categoryStack.add(fixedCategory);
+                                _selectedCategory = fixedCategory;
+                              });
                             },
                           );
                         },
@@ -692,3 +720,66 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     );
   }
 }
+
+// Add a small local transient Add button widget that briefly shows a checkmark when done.
+class _AddButton extends StatefulWidget {
+  final Future<void> Function() onAdd;
+  const _AddButton({required this.onAdd});
+
+  @override
+  State<_AddButton> createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<_AddButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    if (_done) return;
+    try {
+      await widget.onAdd();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() => _done = true);
+    try {
+      await _ctrl.forward();
+      await _ctrl.reverse();
+      await Future.delayed(const Duration(milliseconds: 900));
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _done = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
+          child: Icon(
+            _done ? Icons.check : Icons.add,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
