@@ -25,6 +25,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
   List<ProgramCategory> _categories = [];
   bool _loading = true;
   late final VoidCallback _langListener;
+  ProgramCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -62,10 +63,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
       'detoxification',
       'post_operation',
     };
-    const redIds = {
-      'homeopathic_medicine_dosing_frequency',
-      'psychiatry',
-    };
+    const redIds = {'homeopathic_medicine_dosing_frequency', 'psychiatry'};
 
     if (yellowIds.contains(cc.id)) return 'yellow';
     if (redIds.contains(cc.id)) return 'red';
@@ -140,17 +138,22 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
               child: StatefulBuilder(
                 builder: (cctx, setModalState) {
                   List<ProgramItem> filtered() {
-                    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+                    final langCode =
+                        (ProgramLangController.instance.lang == ProgramLang.de)
+                        ? 'de'
+                        : 'en';
                     final q = _norm(query);
                     if (q.isEmpty) return programs;
 
-                    return programs.where((p) {
-                      final label = ProgramNameLocalizer.instance
-                          .displayName(keyEn: p.name, langCode: langCode);
+                    return programs
+                        .where((p) {
+                          final label = ProgramNameLocalizer.instance
+                              .displayName(keyEn: p.name, langCode: langCode);
 
-                      final hay = _norm('$label ${p.name} ${p.id}');
-                      return hay.contains(q);
-                    }).toList(growable: false);
+                          final hay = _norm('$label ${p.name} ${p.id}');
+                          return hay.contains(q);
+                        })
+                        .toList(growable: false);
                   }
 
                   final list = filtered();
@@ -196,19 +199,27 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                               ? Center(child: Text(l10n.noResults))
                               : ListView.separated(
                                   itemCount: list.length,
-                                  separatorBuilder: (_, __) => const Divider(height: 1),
+                                  separatorBuilder: (_, __) =>
+                                      const Divider(height: 1),
                                   itemBuilder: (ctx2, idx) {
                                     final p = list[idx];
-                                    final langCode = (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
-                                    final label = ProgramNameLocalizer.instance.displayName(
-                                      keyEn: p.name,
-                                      langCode: langCode,
-                                    );
+                                    final langCode =
+                                        (ProgramLangController.instance.lang ==
+                                            ProgramLang.de)
+                                        ? 'de'
+                                        : 'en';
+                                    final label = ProgramNameLocalizer.instance
+                                        .displayName(
+                                          keyEn: p.name,
+                                          langCode: langCode,
+                                        );
 
                                     return ListTile(
                                       title: Text(
                                         label,
-                                        style: const TextStyle(color: AppColors.textPrimary),
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                       subtitle: null,
                                       onTap: () async {
@@ -220,25 +231,53 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                             return SafeArea(
                                               child: Material(
                                                 color: AppColors.cardBackground,
-                                                shape: const RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                                                ),
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                  12,
+                                                                ),
+                                                          ),
+                                                    ),
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     const SizedBox(height: 8),
 
                                                     // Kept: only "Add to My Programs" action. Removed obsolete actions.
                                                     ListTile(
-                                                      leading: const Icon(Icons.favorite_border, color: AppColors.textPrimary),
-                                                      title: Text(l10n.addToMyPrograms, style: const TextStyle(color: AppColors.textPrimary)),
+                                                      leading: const Icon(
+                                                        Icons.favorite_border,
+                                                        color: AppColors
+                                                            .textPrimary,
+                                                      ),
+                                                      title: Text(
+                                                        l10n.addToMyPrograms,
+                                                        style: const TextStyle(
+                                                          color: AppColors
+                                                              .textPrimary,
+                                                        ),
+                                                      ),
                                                       onTap: () async {
-                                                        final svc = MyProgramsService();
+                                                        final svc =
+                                                            MyProgramsService();
                                                         await svc.add(p.id);
-                                                        if (!context.mounted) return;
-                                                        Navigator.of(actionCtx).pop(); // close actions
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(content: Text(l10n.addedToMyPrograms)),
+                                                        if (!context.mounted)
+                                                          return;
+                                                        Navigator.of(
+                                                          actionCtx,
+                                                        ).pop(); // close actions
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              l10n.addedToMyPrograms,
+                                                            ),
+                                                          ),
                                                         );
                                                       },
                                                     ),
@@ -268,11 +307,234 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     );
   }
 
+  Widget _buildCategoryView(ProgramCategory category) {
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
+        ? 'de'
+        : 'en';
+
+    return ValueListenableBuilder<ProgramMode>(
+      valueListenable: AppMemory.instance.programModeNotifier,
+      builder: (context, mode, _) {
+        // ---------- Color handling (single source of truth) ----------
+        final baseColor = AppColors.primaryMuted;
+
+        Color markerFrom(String? color) {
+          final c = (color ?? '').trim().toLowerCase();
+          if (c == 'yellow') return AppColors.yellow;
+          if (c == 'red') return AppColors.accentRed;
+          return baseColor;
+        }
+
+        final categoryMarkerColor = markerFrom(category.color);
+
+        // ---------- Filter visible subcategories ----------
+        final visibleSubcategories = category.subcategories.where((sub) {
+          if (sub.programs.isEmpty) return false;
+
+          final subColor = (sub.color ?? category.color ?? '')
+              .trim()
+              .toLowerCase();
+          final isYellowOrRed = (subColor == 'yellow' || subColor == 'red');
+
+          if (mode == ProgramMode.beginner && isYellowOrRed) return false;
+          return true;
+        }).toList();
+
+        return GradientBackground(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 20.0,
+            ),
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              children: [
+                // ---------- Header ----------
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textPrimary,
+                      ),
+                      onPressed: () => setState(() => _selectedCategory = null),
+                    ),
+                    Expanded(
+                      child: Builder(
+                        builder: (_) {
+                          final isDe =
+                              ProgramLangController.instance.lang ==
+                              ProgramLang.de;
+                          final id = category.id;
+                          final titleText = (id == 'seven_chakras')
+                              ? (isDe
+                                    ? '7 Chakra Frequenzen'
+                                    : '7 Chakra Frequencies')
+                              : ProgramNameLocalizer.instance.displayName(
+                                  keyEn: category.title,
+                                  langCode: langCode,
+                                );
+                          return Text(
+                            titleText,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 18,
+                                ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                // ---------- Programs in this category ----------
+                if (category.programs.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Programme',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  for (final p in category.programs)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: categoryMarkerColor,
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            title: Text(
+                              ProgramNameLocalizer.instance.displayName(
+                                keyEn: p.name,
+                                langCode: langCode,
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.add,
+                                color: AppColors.textSecondary,
+                              ),
+                              onPressed: () async {
+                                final svc = MyProgramsService();
+                                await svc.add(p.id);
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Programm zu "Meine Programme" hinzugefügt',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            onTap: () {
+                              // Program detail navigation removed in UI refactor.
+                              // Keep tap as no-op and log for debugging/testing.
+                              debugPrint(
+                                'AvailableProgramsPage: program tapped ${p.id}',
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+                // ---------- Subcategories ----------
+                if (visibleSubcategories.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Unterkategorien',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  for (final sub in visibleSubcategories)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: markerFrom(
+                                sub.color ?? category.color,
+                              ),
+                              child: const Icon(
+                                Icons.folder,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            title: Text(
+                              ProgramNameLocalizer.instance.displayName(
+                                keyEn: sub.title,
+                                langCode: langCode,
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.textSecondary,
+                            ),
+                            onTap: () {
+                              // Subcategory navigation via Navigator was removed.
+                              // Switch to category view so the user can pick subcategory's programs there.
+                              debugPrint(
+                                'AvailableProgramsPage: subcategory tapped ${sub.id}',
+                              );
+                              setState(() => _selectedCategory = category);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final langCode =
-    (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en';
+    final langCode = (ProgramLangController.instance.lang == ProgramLang.de)
+        ? 'de'
+        : 'en';
 
     // Current mode for filtering visible categories
     final mode = AppMemory.instance.programMode;
@@ -282,9 +544,14 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     final visibleCategories = _categories.where((cat) {
       final color = _inferColor(cat) ?? 'green';
       if (mode == ProgramMode.beginner) return color == 'green';
-      if (mode == ProgramMode.advanced) return color == 'green' || color == 'yellow';
+      if (mode == ProgramMode.advanced)
+        return color == 'green' || color == 'yellow';
       return true; // expert
     }).toList();
+
+    if (_selectedCategory != null) {
+      return _buildCategoryView(_selectedCategory!);
+    }
 
     return GradientBackground(
       child: Padding(
@@ -297,10 +564,10 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
               children: [
                 Text(
                   l10n.availableProgramsTitle,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(color: AppColors.textPrimary, fontSize: 18),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.search, color: AppColors.textPrimary),
@@ -325,91 +592,96 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.borderSubtle),
                       ),
-                      child: Builder(builder: (ctx) {
-                        // Infer and fix color so the next page can inherit yellow/red correctly.
-                        final inferred = _inferColor(c);
-                        final markerColor = _markerFromColorKey(inferred);
+                      child: Builder(
+                        builder: (ctx) {
+                          // Infer and fix color so the next page can inherit yellow/red correctly.
+                          final inferred = _inferColor(c);
+                          final markerColor = _markerFromColorKey(inferred);
 
-                        debugPrint(
-                          'CAT_COLOR id=${c.id} raw=${c.color} inferred=$inferred',
-                        );
+                          debugPrint(
+                            'CAT_COLOR id=${c.id} raw=${c.color} inferred=$inferred',
+                          );
 
-                        final fixedCategory = (inferred == null)
-                            ? c
-                            : ProgramCategory(
-                          id: c.id,
-                          title: c.title,
-                          color: inferred,
-                          programs: c.programs ?? const [],
-                          subcategories: c.subcategories ?? const [],
-                        );
+                          final fixedCategory = (inferred == null)
+                              ? c
+                              : ProgramCategory(
+                                  id: c.id,
+                                  title: c.title,
+                                  color: inferred,
+                                  programs: c.programs ?? const [],
+                                  subcategories: c.subcategories ?? const [],
+                                );
 
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: markerColor,
-                            child: const Icon(Icons.apps,
-                                color: AppColors.textPrimary),
-                          ),
-                          title: Builder(builder: (_) {
-                            // HOTFIX: special-case the known 'seven_chakras' top-folder id
-                            final id = fixedCategory.id;
-                            final titleText = (id == 'seven_chakras')
-                                ? l10n.sevenChakraFrequencies
-                                : ProgramNameLocalizer.instance.displayName(
-                              keyEn: fixedCategory.title,
-                              langCode: langCode,
-                            );
-                            return Text(
-                              titleText,
-                              style: const TextStyle(
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: markerColor,
+                              child: const Icon(
+                                Icons.apps,
                                 color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
                               ),
-                            );
-                          }),
-                          trailing: const Icon(Icons.chevron_right,
-                              color: AppColors.textSecondary),
-                          onTap: () {
-                            final progCount = (fixedCategory.programs?.length ?? 0);
-                            final subCount =
-                            (fixedCategory.subcategories?.length ?? 0);
-                            final isEmpty = (progCount == 0 && subCount == 0);
+                            ),
+                            title: Builder(
+                              builder: (_) {
+                                // HOTFIX: special-case the known 'seven_chakras' top-folder id
+                                final id = fixedCategory.id;
+                                final titleText = (id == 'seven_chakras')
+                                    ? l10n.sevenChakraFrequencies
+                                    : ProgramNameLocalizer.instance.displayName(
+                                        keyEn: fixedCategory.title,
+                                        langCode: langCode,
+                                      );
+                                return Text(
+                                  titleText,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              },
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.textSecondary,
+                            ),
+                            onTap: () {
+                              final progCount =
+                                  (fixedCategory.programs?.length ?? 0);
+                              final subCount =
+                                  (fixedCategory.subcategories?.length ?? 0);
+                              final isEmpty = (progCount == 0 && subCount == 0);
 
-                            final isYellow = (inferred == 'yellow');
-                            final modeNow = AppMemory.instance.programMode;
+                              final isYellow = (inferred == 'yellow');
+                              final modeNow = AppMemory.instance.programMode;
 
-                            debugPrint(
-                              'TAP category id=${fixedCategory.id} title=${fixedCategory.title} '
-                                  'programs=$progCount subcats=$subCount rawColor=${c.color} inferred=$inferred mode=$modeNow',
-                            );
-
-                            if (isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(l10n.categoryEmpty)),
+                              debugPrint(
+                                'TAP category id=${fixedCategory.id} title=${fixedCategory.title} '
+                                'programs=$progCount subcats=$subCount rawColor=${c.color} inferred=$inferred mode=$modeNow',
                               );
-                              return;
-                            }
 
-                            if (modeNow == ProgramMode.beginner && isYellow) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(l10n.categoryNotAvailableInMode)),
-                              );
-                              return;
-                            }
+                              if (isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(l10n.categoryEmpty)),
+                                );
+                                return;
+                              }
 
-                            // Always open CategoriesPage. It shows programs (with +) and subcategories together.
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    CategoriesPage(category: fixedCategory),
-                              ),
-                            );
-                          },
-                        );
-                      }),
+                              if (modeNow == ProgramMode.beginner && isYellow) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      l10n.categoryNotAvailableInMode,
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Always open CategoriesPage. It shows programs (with +) and subcategories together.
+                              setState(() => _selectedCategory = fixedCategory);
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
