@@ -323,7 +323,10 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                                 ),
                                                                 Expanded(
                                                                   child: Text(
-                                                                    '$progTitle ${l10n.addedToMyPrograms}',
+                                                                    ProgramLangController.instance.lang ==
+                                                                            ProgramLang.de
+                                                                        ? '$progTitle wurde zu „Meine Programme" hinzugefügt'
+                                                                        : '$progTitle added to "My Programs"',
                                                                     style: const TextStyle(
                                                                       color: Colors
                                                                           .white,
@@ -505,7 +508,16 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 final svc = MyProgramsService();
                                 await svc.add(p.id);
                                 if (!context.mounted) return;
-                                final programName = p.name;
+                                final programName = ProgramNameLocalizer
+                                    .instance
+                                    .displayName(
+                                      keyEn: p.name,
+                                      langCode:
+                                          ProgramLangController.instance.lang ==
+                                              ProgramLang.de
+                                          ? 'de'
+                                          : 'en',
+                                    );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     behavior: SnackBarBehavior.floating,

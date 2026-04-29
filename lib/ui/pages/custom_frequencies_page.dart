@@ -19,7 +19,8 @@ class CustomFrequenciesPage extends StatefulWidget {
 
 class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   // Use the central service storage
-  List<CustomFrequencyEntry> get _entries => CustomFrequenciesService.instance.items;
+  List<CustomFrequencyEntry> get _entries =>
+      CustomFrequenciesService.instance.items;
   final _myPrograms = MyProgramsService.instance;
   late final VoidCallback _langListener;
 
@@ -74,13 +75,16 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                   Text(
                     l10n.customFrequenciesTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                        ),
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                    ),
                   ),
                   IconButton(
                     tooltip: l10n.cfNote,
-                    icon: const Icon(Icons.info_outline, color: AppColors.textPrimary),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      color: AppColors.textPrimary,
+                    ),
                     onPressed: _showInfoDialog,
                   ),
                 ],
@@ -162,7 +166,10 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
             Expanded(
               child: Text(
                 e.name,
-                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -202,7 +209,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '$progTitle ${l10n.addedToMyPrograms}',
+                          ProgramLangController.instance.lang == ProgramLang.de
+                              ? '$progTitle wurde zu „Meine Programme" hinzugefügt'
+                              : '$progTitle added to "My Programs"',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -212,9 +221,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
               );
             } catch (err) {
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.singleStartFailed)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(l10n.singleStartFailed)));
             }
           },
         ),
@@ -249,7 +258,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '${e.name} ${l10n.addedToMyPrograms}',
+                  ProgramLangController.instance.lang == ProgramLang.de
+                      ? '${e.name} wurde zu „Meine Programme" hinzugefügt'
+                      : '${e.name} added to "My Programs"',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -259,9 +270,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
       );
     } catch (err) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.singleStartFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.singleStartFailed)));
     }
   }
 
@@ -284,12 +295,18 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
               const SizedBox(height: 8),
               ListTile(
                 leading: const Icon(Icons.edit, color: AppColors.textPrimary),
-                title: Text(l10n.cfEdit, style: const TextStyle(color: AppColors.textPrimary)),
+                title: Text(
+                  l10n.cfEdit,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
                 onTap: () => Navigator.pop(ctx, 'edit'),
               ),
               ListTile(
                 leading: const Icon(Icons.delete, color: AppColors.accentRed),
-                title: Text(l10n.cfDelete, style: const TextStyle(color: AppColors.accentRed)),
+                title: Text(
+                  l10n.cfDelete,
+                  style: const TextStyle(color: AppColors.accentRed),
+                ),
                 onTap: () => Navigator.pop(ctx, 'delete'),
               ),
               const SizedBox(height: 8),
@@ -309,7 +326,10 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
       if (updated == null) return;
       CustomFrequenciesService.instance.upsert(updated);
       try {
-        await CustomFrequencyNameStore.instance.setName(updated.id, updated.name);
+        await CustomFrequencyNameStore.instance.setName(
+          updated.id,
+          updated.name,
+        );
       } catch (_) {}
       if (!mounted) return;
       setState(() {});
@@ -323,9 +343,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
       } catch (_) {}
       if (!mounted) return;
       setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.cfDeleted)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.cfDeleted)));
     }
   }
 
@@ -415,9 +435,7 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                     color: inMy ? AppColors.accentGreen : AppColors.textPrimary,
                   ),
                   title: Text(
-                    inMy
-                        ? l10n.cfRemoveFromMyPrograms
-                        : l10n.addToMyPrograms,
+                    inMy ? l10n.cfRemoveFromMyPrograms : l10n.addToMyPrograms,
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                   onTap: () async {
@@ -440,8 +458,14 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.play_arrow, color: AppColors.textPrimary),
-                  title: Text(l10n.cfStart, style: const TextStyle(color: AppColors.textPrimary)),
+                  leading: const Icon(
+                    Icons.play_arrow,
+                    color: AppColors.textPrimary,
+                  ),
+                  title: Text(
+                    l10n.cfStart,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -451,7 +475,10 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.edit, color: AppColors.textPrimary),
-                  title: Text(l10n.cfEdit, style: const TextStyle(color: AppColors.textPrimary)),
+                  title: Text(
+                    l10n.cfEdit,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
                   onTap: () async {
                     Navigator.pop(ctx);
                     final updated = await showDialog<CustomFrequencyEntry>(
@@ -462,14 +489,20 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                     if (updated == null) return;
                     CustomFrequenciesService.instance.upsert(updated);
                     try {
-                      await CustomFrequencyNameStore.instance.setName(updated.id, updated.name);
+                      await CustomFrequencyNameStore.instance.setName(
+                        updated.id,
+                        updated.name,
+                      );
                     } catch (_) {}
                     setState(() {});
                   },
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete, color: AppColors.accentRed),
-                  title: Text(l10n.cfDelete, style: const TextStyle(color: AppColors.accentRed)),
+                  title: Text(
+                    l10n.cfDelete,
+                    style: const TextStyle(color: AppColors.accentRed),
+                  ),
                   onTap: () async {
                     Navigator.pop(ctx);
                     CustomFrequenciesService.instance.removeById(e.id);
@@ -480,9 +513,9 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                       await CustomFrequencyNameStore.instance.remove(e.id);
                     } catch (_) {}
                     setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.cfDeleted)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(l10n.cfDeleted)));
                   },
                 ),
                 const SizedBox(height: 8),
@@ -525,7 +558,9 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
     super.initState();
     final init = widget.initial;
     _nameCtrl = TextEditingController(text: init?.name ?? '');
-    _freqCtrl = TextEditingController(text: init != null ? init.frequencyHz.toString() : '963');
+    _freqCtrl = TextEditingController(
+      text: init != null ? init.frequencyHz.toString() : '963',
+    );
     _defaultNameSet = init != null;
 
     if (init != null) {
@@ -557,7 +592,10 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
 
     return AlertDialog(
       backgroundColor: AppColors.cardBackground,
-      title: Text(l10n.customFrequency, style: const TextStyle(color: AppColors.textPrimary)),
+      title: Text(
+        l10n.customFrequency,
+        style: const TextStyle(color: AppColors.textPrimary),
+      ),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,7 +675,8 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
     );
   }
 
-  Widget _label(String s) => Text(s, style: const TextStyle(color: AppColors.textSecondary));
+  Widget _label(String s) =>
+      Text(s, style: const TextStyle(color: AppColors.textSecondary));
 
   Widget _rowLabel(String left, String right) {
     return Row(
@@ -649,7 +688,11 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
     );
   }
 
-  Widget _textField(TextEditingController ctrl, {required String hint, required TextInputType keyboard}) {
+  Widget _textField(
+    TextEditingController ctrl, {
+    required String hint,
+    required TextInputType keyboard,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: keyboard,
@@ -695,10 +738,7 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          Checkbox(
-            value: enabled,
-            onChanged: (v) => onToggle(v ?? false),
-          ),
+          Checkbox(value: enabled, onChanged: (v) => onToggle(v ?? false)),
           const SizedBox(width: 8),
           Expanded(
             child: DropdownButtonHideUnderline(
@@ -706,7 +746,12 @@ class _CustomFrequencyDialogState extends State<_CustomFrequencyDialog> {
                 value: value,
                 isExpanded: true,
                 items: options
-                    .map((o) => DropdownMenuItem(value: o, child: Text(_labelForOption(o))))
+                    .map(
+                      (o) => DropdownMenuItem(
+                        value: o,
+                        child: Text(_labelForOption(o)),
+                      ),
+                    )
                     .toList(),
                 onChanged: enabled ? (v) => onChanged(v ?? value) : null,
               ),
@@ -759,14 +804,18 @@ class _TempAddButton extends StatefulWidget {
   State<_TempAddButton> createState() => _TempAddButtonState();
 }
 
-class _TempAddButtonState extends State<_TempAddButton> with SingleTickerProviderStateMixin {
+class _TempAddButtonState extends State<_TempAddButton>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   bool _done = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   @override
@@ -797,7 +846,10 @@ class _TempAddButtonState extends State<_TempAddButton> with SingleTickerProvide
     return GestureDetector(
       onTap: _handleTap,
       child: ScaleTransition(
-        scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
+        scale: Tween(
+          begin: 1.0,
+          end: 1.08,
+        ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
         child: CircleAvatar(
           radius: 16,
           backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
@@ -811,4 +863,3 @@ class _TempAddButtonState extends State<_TempAddButton> with SingleTickerProvide
     );
   }
 }
-
