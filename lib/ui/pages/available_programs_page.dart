@@ -273,12 +273,30 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                         Navigator.of(
                                                           actionCtx,
                                                         ).pop(); // close actions
-                                                        ScaffoldMessenger.of(
-                                                          context,
-                                                        ).showSnackBar(
+                                                        // Premium floating success snackbar with program name
+                                                        final progTitle = ProgramNameLocalizer.instance.displayName(
+                                                          keyEn: p.name,
+                                                          langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
+                                                        );
+                                                        ScaffoldMessenger.of(context).showSnackBar(
                                                           SnackBar(
-                                                            content: Text(
-                                                              l10n.addedToMyPrograms,
+                                                            behavior: SnackBarBehavior.floating,
+                                                            duration: const Duration(milliseconds: 1500),
+                                                            backgroundColor: Theme.of(context).colorScheme.primary,
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                            content: Row(
+                                                              children: [
+                                                                const Icon(Icons.check, color: Colors.white),
+                                                                const SizedBox(width: 12),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    '$progTitle ${l10n.addedToMyPrograms}',
+                                                                    style: const TextStyle(color: Colors.white),
+                                                                  ),
+                                                                ),
+                                                              ],
                                                             ),
                                                           ),
                                                         );
@@ -453,8 +471,32 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 final svc = MyProgramsService();
                                 await svc.add(p.id);
                                 if (!context.mounted) return;
+                                // show premium floating snackbar with program name
+                                final progTitle = ProgramNameLocalizer.instance.displayName(
+                                  keyEn: p.name,
+                                  langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
+                                );
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(l10n.addedToMyPrograms)),
+                                  SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(milliseconds: 1500),
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            '$progTitle ${l10n.addedToMyPrograms}',
+                                            style: const TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -782,4 +824,3 @@ class _AddButtonState extends State<_AddButton> with SingleTickerProviderStateMi
     );
   }
 }
-

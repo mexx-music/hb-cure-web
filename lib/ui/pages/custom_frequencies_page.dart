@@ -187,8 +187,28 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
               // small UI refresh
               if (!mounted) return;
               setState(() {});
+              final progTitle = e.name;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.addedToMyPrograms)),
+                SnackBar(
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(milliseconds: 1500),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check, color: Colors.white),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '$progTitle ${l10n.addedToMyPrograms}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             } catch (err) {
               if (!mounted) return;
@@ -216,7 +236,26 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
       if (!mounted) return;
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.addedToMyPrograms)),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 1500),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.check, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${e.name} ${l10n.addedToMyPrograms}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } catch (err) {
       if (!mounted) return;
