@@ -527,7 +527,12 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
-                                            '$programName wurde zu „Meine Programme“ hinzugefügt',
+                                            ProgramLangController
+                                                        .instance
+                                                        .lang ==
+                                                    ProgramLang.de
+                                                ? '$programName wurde zu „Meine Programme” hinzugefügt'
+                                                : '$programName added to “My Programs”',
                                             style: const TextStyle(
                                               color: Colors.white,
                                             ),
