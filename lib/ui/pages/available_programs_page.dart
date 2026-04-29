@@ -274,26 +274,60 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                           actionCtx,
                                                         ).pop(); // close actions
                                                         // Premium floating success snackbar with program name
-                                                        final progTitle = ProgramNameLocalizer.instance.displayName(
-                                                          keyEn: p.name,
-                                                          langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
-                                                        );
-                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                        final progTitle = ProgramNameLocalizer
+                                                            .instance
+                                                            .displayName(
+                                                              keyEn: p.name,
+                                                              langCode:
+                                                                  (ProgramLangController
+                                                                          .instance
+                                                                          .lang ==
+                                                                      ProgramLang
+                                                                          .de)
+                                                                  ? 'de'
+                                                                  : 'en',
+                                                            );
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
                                                           SnackBar(
-                                                            behavior: SnackBarBehavior.floating,
-                                                            duration: const Duration(milliseconds: 1500),
-                                                            backgroundColor: Theme.of(context).colorScheme.primary,
+                                                            behavior:
+                                                                SnackBarBehavior
+                                                                    .floating,
+                                                            duration:
+                                                                const Duration(
+                                                                  milliseconds:
+                                                                      1500,
+                                                                ),
+                                                            backgroundColor:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .primary,
                                                             shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.circular(12),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
                                                             ),
                                                             content: Row(
                                                               children: [
-                                                                const Icon(Icons.check, color: Colors.white),
-                                                                const SizedBox(width: 12),
+                                                                const Icon(
+                                                                  Icons.check,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 12,
+                                                                ),
                                                                 Expanded(
                                                                   child: Text(
                                                                     '$progTitle ${l10n.addedToMyPrograms}',
-                                                                    style: const TextStyle(color: Colors.white),
+                                                                    style: const TextStyle(
+                                                                      color: Colors
+                                                                          .white,
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ],
@@ -471,27 +505,32 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 final svc = MyProgramsService();
                                 await svc.add(p.id);
                                 if (!context.mounted) return;
-                                // show premium floating snackbar with program name
-                                final progTitle = ProgramNameLocalizer.instance.displayName(
-                                  keyEn: p.name,
-                                  langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
-                                );
+                                final programName = p.name;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(milliseconds: 1500),
-                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    duration: const Duration(
+                                      milliseconds: 1500,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.check, color: Colors.white),
+                                        const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                        ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
-                                            '$progTitle ${l10n.addedToMyPrograms}',
-                                            style: const TextStyle(color: Colors.white),
+                                            '$programName wurde zu „Meine Programme“ hinzugefügt',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -575,7 +614,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                               );
                               setState(() {
                                 // Ensure the parent category is on the stack first.
-                                if (_categoryStack.isEmpty || _categoryStack.last.id != category.id) {
+                                if (_categoryStack.isEmpty ||
+                                    _categoryStack.last.id != category.id) {
                                   _categoryStack.add(category);
                                 }
                                 _categoryStack.add(subAsCategory);
@@ -772,14 +812,18 @@ class _AddButton extends StatefulWidget {
   State<_AddButton> createState() => _AddButtonState();
 }
 
-class _AddButtonState extends State<_AddButton> with SingleTickerProviderStateMixin {
+class _AddButtonState extends State<_AddButton>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   bool _done = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   @override
@@ -810,7 +854,10 @@ class _AddButtonState extends State<_AddButton> with SingleTickerProviderStateMi
     return GestureDetector(
       onTap: _handleTap,
       child: ScaleTransition(
-        scale: Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
+        scale: Tween(
+          begin: 1.0,
+          end: 1.08,
+        ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut)),
         child: CircleAvatar(
           radius: 16,
           backgroundColor: _done ? AppColors.accentGreen : AppColors.primary,
