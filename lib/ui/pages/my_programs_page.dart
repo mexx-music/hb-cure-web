@@ -403,6 +403,40 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     }
   }
 
+  bool _isMissingDeviceError(Object e) {
+    final s = e.toString().toLowerCase();
+    return s.contains('uploadprogramandstart failed') ||
+        s.contains('not connected') ||
+        s.contains('no device') ||
+        s.contains('device not found');
+  }
+
+  Future<void> _handleUploadError(
+      Object e, BuildContext context, String fallbackMessage) async {
+    if (!context.mounted) return;
+    if (_isMissingDeviceError(e)) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Kein Cure-Gerät verbunden'),
+          content: const Text(
+            'Das Programm kann erst gestartet werden, wenn ein CureBase-Gerät verbunden ist.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Schließen'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(fallbackMessage)),
+      );
+    }
+  }
+
   Future<void> _playFromIndex(int index, BuildContext context) async {
     final ids = _programs.map((p) => p.id).toList(growable: false);
     if (ids.isEmpty) return;
@@ -461,9 +495,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       uploadOk = true;
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$playlistUploadFailed: $e')),
-      );
+      await _handleUploadError(e, context, '$playlistUploadFailed: $e');
     } finally {
       if (mounted) playerService.setUploading(false);
     }
@@ -546,9 +578,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
       singleUploadOk = true;
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$singleStartFailed: $e')),
-      );
+      await _handleUploadError(e, context, '$singleStartFailed: $e');
     } finally {
       if (mounted) playerService.setUploading(false);
     }

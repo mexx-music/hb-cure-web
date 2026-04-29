@@ -730,7 +730,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
               if (nominalTotalSec > 0 && deviceTotalSec > 0) {
                 if (deviceTotalSec != nominalTotalSec) {
                   final scale = deviceTotalSec / nominalTotalSec;
-                  effectiveSeconds = nominalSeconds.map((s) => (s * scale).round()).toList();
+                  effectiveSeconds = nominalSeconds
+                      .map((s) => (s * scale).round())
+                      .toList();
                   // Ensure sums to deviceTotalSec by adjusting last segment if needed
                   final sumEff = effectiveSeconds.fold<int>(0, (a, b) => a + b);
                   final diff = deviceTotalSec - sumEff;
@@ -749,7 +751,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
               Duration cumulativeBefore = Duration.zero;
               Duration currentSegDur = Duration.zero;
               for (int i = 0; i < queue.length; i++) {
-                final d = Duration(seconds: i < effectiveSeconds.length ? effectiveSeconds[i] : 0);
+                final d = Duration(
+                  seconds: i < effectiveSeconds.length
+                      ? effectiveSeconds[i]
+                      : 0,
+                );
                 if (i < idx) {
                   cumulativeBefore += d;
                 } else if (i == idx) {
@@ -869,16 +875,9 @@ class _PlayerPopupState extends State<PlayerPopup> {
                               try {
                                 await CubeDeviceService.instance.stopProgram();
                               } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Gerät-Stop fehlgeschlagen: ${e.toString()}',
-                                      ),
-                                    ),
-                                  );
-                                }
-                                // local stop already done above – no early return needed
+                                debugPrint(
+                                  '[PlayerPopup] stopProgram error (ignored): $e',
+                                );
                               }
                             },
                           ),
@@ -902,7 +901,11 @@ class _PlayerPopupState extends State<PlayerPopup> {
                           final bool singleProgramQueue = queue.length == 1;
                           final Duration itemDur = singleProgramQueue
                               ? st.total
-                              : Duration(seconds: i < effectiveSeconds.length ? effectiveSeconds[i] : nominalItemDur.inSeconds);
+                              : Duration(
+                                  seconds: i < effectiveSeconds.length
+                                      ? effectiveSeconds[i]
+                                      : nominalItemDur.inSeconds,
+                                );
                           // Resolve playlist row title the same way as the main title above:
                           final itemKeysId = _normalizeProgramId(
                             itemId,
