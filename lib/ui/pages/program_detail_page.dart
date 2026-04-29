@@ -21,7 +21,11 @@ class ProgramDetailPage extends StatefulWidget {
   final ProgramItem program;
   final String deviceId;
 
-  const ProgramDetailPage({super.key, required this.program, required this.deviceId});
+  const ProgramDetailPage({
+    super.key,
+    required this.program,
+    required this.deviceId,
+  });
 
   @override
   State<ProgramDetailPage> createState() => _ProgramDetailPageState();
@@ -59,17 +63,44 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
 
   Future<void> _toggleMyPrograms() async {
     if (_inMyPrograms) {
-      debugPrint('Remove from My Programs: ${widget.program.id} (${widget.program.name})');
+      debugPrint(
+        'Remove from My Programs: ${widget.program.id} (${widget.program.name})',
+      );
       await _myService.remove(widget.program.id);
       if (!mounted) return;
       setState(() => _inMyPrograms = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Entfernt aus My Programs')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Entfernt aus My Programs')));
     } else {
-      debugPrint('Add to My Programs: ${widget.program.id} (${widget.program.name})');
+      debugPrint(
+        'Add to My Programs: ${widget.program.id} (${widget.program.name})',
+      );
       await _myService.add(widget.program.id);
       if (!mounted) return;
       setState(() => _inMyPrograms = true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hinzugefügt zu My Programs')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 1500),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          content: Row(
+            children: [
+              const Icon(Icons.check, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${widget.program.name} wurde zu „Meine Programme“ hinzugefügt',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
   }
 
@@ -80,11 +111,15 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
 
     // Use deviceId passed to the page, otherwise fall back to shared native connection
     final pageDeviceId = widget.deviceId.trim();
-    final deviceId = pageDeviceId.isNotEmpty ? pageDeviceId : svc.nativeConnectedDeviceId;
+    final deviceId = pageDeviceId.isNotEmpty
+        ? pageDeviceId
+        : svc.nativeConnectedDeviceId;
     if (deviceId == null || deviceId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No device connected. Please connect first.')),
+        const SnackBar(
+          content: Text('No device connected. Please connect first.'),
+        ),
       );
       return;
     }
@@ -102,10 +137,14 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Program started')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Program started')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Start failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Start failed: $e')));
     }
   }
 
@@ -115,14 +154,16 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
 
     // DeviceId source: prefer page-provided deviceId, otherwise shared nativeConnectedDeviceId
     final String? deviceId =
-    (widget is dynamic && (widget as dynamic).deviceId is String)
+        (widget is dynamic && (widget as dynamic).deviceId is String)
         ? (widget as dynamic).deviceId as String
         : svc.nativeConnectedDeviceId;
 
     if (deviceId == null || deviceId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kein Cube verbunden. Bitte zuerst verbinden.')),
+        const SnackBar(
+          content: Text('Kein Cube verbunden. Bitte zuerst verbinden.'),
+        ),
       );
       return;
     }
@@ -133,9 +174,9 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
         await svc.nativeConnect(deviceId);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connect failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Connect failed: $e')));
         return;
       }
     }
@@ -150,9 +191,9 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
         powerMode: _powerMode,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Programm gestartet')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Programm gestartet')));
 
       // ---- NEW: Sync PlayerService to this single program and open the popup (UI-only) ----
       final keyEn = widget.program.name;
@@ -185,9 +226,9 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
     } catch (e, st) {
       debugPrint('StartProgram failed: $e\n$st');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Start fehlgeschlagen: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Start fehlgeschlagen: $e')));
     }
   }
 
@@ -204,11 +245,17 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'STOP OK (progClear)' : 'STOP fehlgeschlagen (kein OK)')),
+        SnackBar(
+          content: Text(
+            ok ? 'STOP OK (progClear)' : 'STOP fehlgeschlagen (kein OK)',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Stop failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Stop failed: $e')));
     }
   }
 
@@ -252,27 +299,47 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   }
 
   // helper to show waveform selection bottom sheet
-  void _showWaveformPicker(String title, String current, ValueChanged<String> onSelected) {
+  void _showWaveformPicker(
+    String title,
+    String current,
+    ValueChanged<String> onSelected,
+  ) {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.cardBackground,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
       builder: (ctx) {
         final options = ['sine', 'triangle', 'rectangle', 'saw-tooth'];
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(padding: const EdgeInsets.all(12), child: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold))),
-              ...options.map((o) => ListTile(
-                title: Text(o, style: const TextStyle(color: AppColors.textPrimary)),
-                onTap: () {
-                  onSelected(o);
-                  Navigator.of(ctx).pop();
-                },
-                selected: o == current,
-                selectedTileColor: AppColors.primary.withOpacity(0.12),
-              )),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ...options.map(
+                (o) => ListTile(
+                  title: Text(
+                    o,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
+                  onTap: () {
+                    onSelected(o);
+                    Navigator.of(ctx).pop();
+                  },
+                  selected: o == current,
+                  selectedTileColor: AppColors.primary.withOpacity(0.12),
+                ),
+              ),
               const SizedBox(height: 12),
             ],
           ),
@@ -284,8 +351,9 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
   // Helper to open the Player popup for a single program
   void _openPlayerPopup() {
     String resolveTitle(String id) {
-      final langCode =
-          ProgramLangController.instance.lang == ProgramLang.de ? 'de' : 'en';
+      final langCode = ProgramLangController.instance.lang == ProgramLang.de
+          ? 'de'
+          : 'en';
       final keyEn = playerService.titleKeyEnById[id] ?? id;
       return ProgramNameLocalizer.instance.displayName(
         keyEn: keyEn,
@@ -301,10 +369,7 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
       showDragHandle: false,
       builder: (ctx) => SafeArea(
         child: Center(
-          child: PlayerPopup(
-            player: playerService,
-            resolveTitle: resolveTitle,
-          ),
+          child: PlayerPopup(player: playerService, resolveTitle: resolveTitle),
         ),
       ),
     );
@@ -331,24 +396,45 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
               children: [
                 Row(
                   children: [
-                    IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textPrimary,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                     const Spacer(),
                     IconButton(
-                      icon: Icon(_inMyPrograms ? Icons.favorite : Icons.favorite_border, color: _inMyPrograms ? AppColors.accentGreen : AppColors.textPrimary),
+                      icon: Icon(
+                        _inMyPrograms ? Icons.favorite : Icons.favorite_border,
+                        color: _inMyPrograms
+                            ? AppColors.accentGreen
+                            : AppColors.textPrimary,
+                      ),
                       onPressed: _toggleMyPrograms,
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Icon(Icons.change_history, size: 80, color: AppColors.warmAccent),
+                const Icon(
+                  Icons.change_history,
+                  size: 80,
+                  color: AppColors.warmAccent,
+                ),
                 const SizedBox(height: 16),
                 // limit scaling/size to avoid overflow on large system text settings
                 Text(
                   ProgramNameLocalizer.instance.displayName(
                     keyEn: widget.program.name,
-                    langCode: (ProgramLangController.instance.lang == ProgramLang.de) ? 'de' : 'en',
+                    langCode:
+                        (ProgramLangController.instance.lang == ProgramLang.de)
+                        ? 'de'
+                        : 'en',
                   ),
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppColors.textPrimary, fontSize: 28),
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 28,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -360,88 +446,214 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                   child: Container(
                     height: 52,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(24)),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     alignment: Alignment.center,
                     child: Container(
                       width: double.infinity,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('Intensity: $_intensity%', style: const TextStyle(color: AppColors.textPrimary, decoration: TextDecoration.none, fontSize: 18), textAlign: TextAlign.center, textScaleFactor: 1.0),
+                      child: Text(
+                        'Intensity: $_intensity%',
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          decoration: TextDecoration.none,
+                          fontSize: 18,
+                        ),
+                        textAlign: TextAlign.center,
+                        textScaleFactor: 1.0,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 // Waveform selectors: responsive layout
-                LayoutBuilder(builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 560;
-                  final left = Container(
-                    height: 48,
-                    decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(24)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12, right: 8),
-                            child: Text('Use electric fields', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, decoration: TextDecoration.none), textScaleFactor: 1.0, overflow: TextOverflow.ellipsis, maxLines: 1),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 560;
+                    final left = Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 8,
+                              ),
+                              child: Text(
+                                'Use electric fields',
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  decoration: TextDecoration.none,
+                                ),
+                                textScaleFactor: 1.0,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _showWaveformPicker('Electric waveform', _electricWaveform, (v) => setState(() => _electricWaveform = v)),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-                            child: Row(mainAxisSize: MainAxisSize.min, children: [Text(_electricWaveform, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, decoration: TextDecoration.none)), const SizedBox(width: 6), const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary, size: 20)]),
+                          GestureDetector(
+                            onTap: () => _showWaveformPicker(
+                              'Electric waveform',
+                              _electricWaveform,
+                              (v) => setState(() => _electricWaveform = v),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _electricWaveform,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: AppColors.textPrimary,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
+                        ],
+                      ),
+                    );
 
-                  final right = Container(
-                    height: 48,
-                    decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(24)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12, right: 8),
-                            child: Text('Use magnetic fields', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, decoration: TextDecoration.none), textScaleFactor: 1.0, overflow: TextOverflow.ellipsis, maxLines: 1),
+                    final right = Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 8,
+                              ),
+                              child: Text(
+                                'Use magnetic fields',
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  decoration: TextDecoration.none,
+                                ),
+                                textScaleFactor: 1.0,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _showWaveformPicker('Magnetic waveform', _magneticWaveform, (v) => setState(() => _magneticWaveform = v)),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-                            child: Row(mainAxisSize: MainAxisSize.min, children: [Text(_magneticWaveform, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, decoration: TextDecoration.none)), const SizedBox(width: 6), const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary, size: 20)]),
+                          GestureDetector(
+                            onTap: () => _showWaveformPicker(
+                              'Magnetic waveform',
+                              _magneticWaveform,
+                              (v) => setState(() => _magneticWaveform = v),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _magneticWaveform,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: AppColors.textPrimary,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
+                        ],
+                      ),
+                    );
 
-                  if (isWide) {
-                    return Row(children: [Expanded(child: left), const SizedBox(width: 12), Expanded(child: right)]);
-                  }
-                  return Column(children: [left, const SizedBox(height: 12), right]);
-                }),
+                    if (isWide) {
+                      return Row(
+                        children: [
+                          Expanded(child: left),
+                          const SizedBox(width: 12),
+                          Expanded(child: right),
+                        ],
+                      );
+                    }
+                    return Column(
+                      children: [left, const SizedBox(height: 12), right],
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 GestureDetector(
                   onTap: _showDurationPicker,
                   child: Container(
                     height: 52,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(24)),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     alignment: Alignment.center,
                     child: Container(
                       width: double.infinity,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(color: AppColors.cardBackground, borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('Duration: ${_formatDurationLabel(_selectedMinutes ?? 15)}', style: const TextStyle(color: AppColors.textPrimary, decoration: TextDecoration.none, fontSize: 18), textAlign: TextAlign.center, textScaleFactor: 1.0),
+                      child: Text(
+                        'Duration: ${_formatDurationLabel(_selectedMinutes ?? 15)}',
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          decoration: TextDecoration.none,
+                          fontSize: 18,
+                        ),
+                        textAlign: TextAlign.center,
+                        textScaleFactor: 1.0,
+                      ),
                     ),
                   ),
                 ),
@@ -454,11 +666,17 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentGreen,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                         ),
                         child: const Text(
                           'Start program',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                           textScaleFactor: 1.0,
                         ),
                       ),
@@ -470,11 +688,17 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                         ),
                         child: const Text(
                           'STOP',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                           textScaleFactor: 1.0,
                         ),
                       ),
@@ -486,21 +710,37 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                   onPressed: () => debugPrint('Help pressed'),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                  child: const Text('Help', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18), textScaleFactor: 1.0),
+                  child: const Text(
+                    'Help',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                    textScaleFactor: 1.0,
+                  ),
                 ),
 
                 const SizedBox(height: 16),
                 // --- Compact centered Timer display ---
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    constraints: const BoxConstraints(minWidth: 120, maxWidth: 360),
+                    constraints: const BoxConstraints(
+                      minWidth: 120,
+                      maxWidth: 360,
+                    ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return Column(
@@ -532,7 +772,9 @@ class _ProgramDetailPageState extends State<ProgramDetailPage> {
                             if (_lastProgStatus != null) ...[
                               const SizedBox(height: 6),
                               ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                                constraints: BoxConstraints(
+                                  maxWidth: constraints.maxWidth,
+                                ),
                                 child: Text(
                                   'Last progStatus: $_lastProgStatus',
                                   textAlign: TextAlign.center,
