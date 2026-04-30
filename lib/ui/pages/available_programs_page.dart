@@ -131,13 +131,17 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return SafeArea(
-          child: FractionallySizedBox(
-            heightFactor: 0.85,
-            child: Material(
-              color: AppColors.cardBackground,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: FractionallySizedBox(
+              heightFactor: 0.85,
+              child: Material(
+                color: AppColors.cardBackground,
+                elevation: 8,
+                shadowColor: Colors.black45,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(22)),
+                ),
               child: StatefulBuilder(
                 builder: (cctx, setModalState) {
                   List<ProgramItem> filtered() {
@@ -177,7 +181,21 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                   autofocus: true,
                                   decoration: InputDecoration(
                                     hintText: l10n.searchPrograms,
-                                    border: const OutlineInputBorder(),
+                                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                                    filled: true,
+                                    fillColor: Colors.white12,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(Radius.circular(18)),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(Radius.circular(18)),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(Radius.circular(18)),
+                                      borderSide: const BorderSide(color: Colors.white24, width: 1.5),
+                                    ),
                                   ),
                                   onChanged: (v) {
                                     query = v;
@@ -203,7 +221,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                               : ListView.separated(
                                   itemCount: list.length,
                                   separatorBuilder: (_, __) =>
-                                      const Divider(height: 1),
+                                      const Divider(height: 1, indent: 20, endIndent: 20),
                                   itemBuilder: (ctx2, idx) {
                                     final p = list[idx];
                                     final langCode =
@@ -218,6 +236,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                         );
 
                                     return ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                                      splashColor: Colors.white12,
                                       title: Text(
                                         label,
                                         style: const TextStyle(
@@ -226,126 +246,70 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                       ),
                                       subtitle: null,
                                       onTap: () async {
-                                        // show action sheet while keeping the search sheet (ctx) open until action chosen
-                                        await showModalBottomSheet<void>(
+                                        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                                        final confirmed = await showDialog<bool>(
                                           context: context,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (actionCtx) {
-                                            return SafeArea(
-                                              child: Material(
-                                                color: AppColors.cardBackground,
-                                                shape:
-                                                    const RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.vertical(
-                                                            top:
-                                                                Radius.circular(
-                                                                  12,
-                                                                ),
-                                                          ),
-                                                    ),
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    const SizedBox(height: 8),
-
-                                                    // Kept: only "Add to My Programs" action. Removed obsolete actions.
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                        Icons.favorite_border,
-                                                        color: AppColors
-                                                            .textPrimary,
-                                                      ),
-                                                      title: Text(
-                                                        l10n.addToMyPrograms,
-                                                        style: const TextStyle(
-                                                          color: AppColors
-                                                              .textPrimary,
-                                                        ),
-                                                      ),
-                                                      onTap: () async {
-                                                        final svc =
-                                                            MyProgramsService();
-                                                        await svc.add(p.id);
-                                                        if (!context.mounted)
-                                                          return;
-                                                        Navigator.of(
-                                                          actionCtx,
-                                                        ).pop(); // close actions
-                                                        // Premium floating success snackbar with program name
-                                                        final progTitle = ProgramNameLocalizer
-                                                            .instance
-                                                            .displayName(
-                                                              keyEn: p.name,
-                                                              langCode:
-                                                                  (ProgramLangController
-                                                                          .instance
-                                                                          .lang ==
-                                                                      ProgramLang
-                                                                          .de)
-                                                                  ? 'de'
-                                                                  : 'en',
-                                                            );
-                                                        ScaffoldMessenger.of(
-                                                          context,
-                                                        ).showSnackBar(
-                                                          SnackBar(
-                                                            behavior:
-                                                                SnackBarBehavior
-                                                                    .floating,
-                                                            duration:
-                                                                const Duration(
-                                                                  milliseconds:
-                                                                      1500,
-                                                                ),
-                                                            backgroundColor:
-                                                                Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .primary,
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            content: Row(
-                                                              children: [
-                                                                const Icon(
-                                                                  Icons.check,
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 12,
-                                                                ),
-                                                                Expanded(
-                                                                  child: Text(
-                                                                    ProgramLangController.instance.lang ==
-                                                                            ProgramLang.de
-                                                                        ? '$progTitle wurde zu „Meine Programme" hinzugefügt'
-                                                                        : '$progTitle added to "My Programs"',
-                                                                    style: const TextStyle(
-                                                                      color: Colors
-                                                                          .white,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-
-                                                    const SizedBox(height: 8),
-                                                  ],
+                                          builder: (dlgCtx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            backgroundColor: AppColors.cardBackground,
+                                            title: Text(
+                                              label,
+                                              style: const TextStyle(color: AppColors.textPrimary),
+                                            ),
+                                            content: Text(
+                                              isDe
+                                                  ? 'Dieses Programm zu „Meine Programme" hinzufügen?'
+                                                  : 'Add this program to "My Programs"?',
+                                              style: const TextStyle(color: AppColors.textSecondary),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.of(dlgCtx).pop(false),
+                                                child: Text(isDe ? 'Abbrechen' : 'Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.of(dlgCtx).pop(true),
+                                                child: Text(
+                                                  isDe ? 'Hinzufügen' : 'Add',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
                                               ),
-                                            );
-                                          },
+                                            ],
+                                          ),
+                                        );
+                                        if (confirmed != true) return;
+                                        if (!context.mounted) return;
+                                        await MyProgramsService().add(p.id);
+                                        if (!context.mounted) return;
+                                        Navigator.of(ctx).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            behavior: SnackBarBehavior.floating,
+                                            duration: const Duration(milliseconds: 1500),
+                                            backgroundColor: Theme.of(context).colorScheme.primary,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            content: Row(
+                                              children: [
+                                                const Icon(Icons.check, color: Colors.white),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    isDe
+                                                        ? '$label wurde zu „Meine Programme" hinzugefügt'
+                                                        : '$label added to "My Programs"',
+                                                    style: const TextStyle(color: Colors.white),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         );
                                       },
                                     );
@@ -360,7 +324,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }
