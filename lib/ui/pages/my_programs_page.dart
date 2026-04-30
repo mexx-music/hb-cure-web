@@ -411,7 +411,7 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
 
   bool _isMissingDeviceError(Object e) {
     final s = e.toString().toLowerCase();
-    return s.contains('uploadprogramandstart failed') ||
+    return (s.contains('uploadprogramandstart') && s.contains('failed')) ||
         s.contains('not connected') ||
         s.contains('no device') ||
         s.contains('device not found');
