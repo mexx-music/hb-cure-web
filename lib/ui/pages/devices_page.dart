@@ -15,6 +15,7 @@ import 'package:hbcure/core/config/cure_transport_mode.dart';
 import 'package:hbcure/services/qt_remote_program_encoder.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
 import 'package:hbcure/services/app_memory.dart';
+import 'package:hbcure/services/program_language_controller.dart';
 import 'dart:typed_data';
 
 class DevicesPage extends StatefulWidget {
@@ -30,6 +31,9 @@ class _DevicesPageState extends State<DevicesPage> {
   StreamSubscription<String?>? _bleErrorSub;
   String? _scanError;
   bool _isScanningLocal = false;
+  bool? _locationServiceEnabled; // null = not checked yet; only relevant on Android
+  bool _noDeviceHelpShown = false;
+  bool _hasFoundDevices = false;
   StreamSubscription<bool>? _unlockSub;
   bool _unlockInProgressLocal = false;
 
@@ -70,6 +74,11 @@ class _DevicesPageState extends State<DevicesPage> {
     Future.microtask(() async {
       await _checkLocationAndScan();
     });
+    if (Platform.isAndroid) {
+      _isLocationServiceEnabled().then((ok) {
+        if (mounted) setState(() => _locationServiceEnabled = ok);
+      });
+    }
   }
 
   @override
@@ -97,6 +106,58 @@ class _DevicesPageState extends State<DevicesPage> {
   Future<void> _openLocationSettings() async {
     try {
       await _nativeCh.invokeMethod('openLocationSettings');
+    } catch (_) {}
+  }
+
+  Future<void> _openAppSettings() async {
+    try {
+      await _nativeCh.invokeMethod('openAppSettings');
+    } catch (_) {}
+  }
+
+  Future<void> _guidedOpenLocationSettings() async {
+    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isDe ? 'Standort aktivieren' : 'Enable location'),
+        content: Text(
+          isDe
+              ? 'Damit Cure-Geräte gefunden werden können:\n\n'
+                '1. Standort aktivieren\n'
+                '2. App auswählen\n'
+                '3. „Während der Nutzung erlauben" wählen\n\n'
+                'Danach bitte zur App zurückkehren.'
+              : 'To find Cure devices:\n\n'
+                '1. Enable location\n'
+                '2. Select the app\n'
+                '3. Choose \'Allow while using the app\'\n\n'
+                'Then return to the app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isDe ? 'Abbrechen' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(isDe ? 'Jetzt öffnen' : 'Open settings'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await _openLocationSettings();
+  }
+
+  Future<void> _requestBlePermissions() async {
+    try {
+      await _nativeCh.invokeMethod('requestBlePermissions');
+      if (Platform.isAndroid && mounted) {
+        final ok = await _isLocationServiceEnabled();
+        if (mounted) setState(() => _locationServiceEnabled = ok);
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _checkLocationAndScan();
     } catch (_) {}
   }
 
@@ -230,6 +291,69 @@ class _DevicesPageState extends State<DevicesPage> {
           children: lines,
         );
       },
+    );
+  }
+
+  void _scheduleNoDeviceHelper() {
+    if (_noDeviceHelpShown) return;
+    Future.delayed(const Duration(seconds: 4), () async {
+      if (!mounted || _noDeviceHelpShown || _hasFoundDevices) return;
+      _noDeviceHelpShown = true;
+      await _guidedOpenLocationSettings();
+    });
+  }
+
+  Widget _buildPermissionCard(bool isDe) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isDe
+                ? 'Standort/Bluetooth-Berechtigung erforderlich'
+                : 'Location/Bluetooth permission required',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isDe
+                ? 'Damit Cure-Geräte gefunden werden können, müssen der Standortdienst und die App-Berechtigung aktiviert sein. Bitte erlaube den Zugriff während der Nutzung der App.'
+                : 'To find Cure devices, location services and app permission must be enabled. Please allow access while using the app.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton(
+                onPressed: _requestBlePermissions,
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: Text(isDe ? 'Berechtigung erlauben' : 'Allow permission'),
+              ),
+              if (_locationServiceEnabled == false)
+                OutlinedButton(
+                  onPressed: _guidedOpenLocationSettings,
+                  child: Text(isDe ? 'Standort aktivieren' : 'Enable location'),
+                ),
+              OutlinedButton(
+                onPressed: _openAppSettings,
+                child: Text(isDe ? 'App-Einstellungen öffnen' : 'Open app settings'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -741,11 +865,25 @@ class _DevicesPageState extends State<DevicesPage> {
                 // NOTE: main title is provided by the app shell — avoid duplicate in-page title
                 const SizedBox(height: 8),
 
+                // Permission / location guidance card (Android only)
+                if (Platform.isAndroid)
+                  StreamBuilder<BluetoothAdapterState>(
+                    stream: FlutterBluePlus.adapterState,
+                    builder: (context, snap) {
+                      final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                      final isUnauthorized = snap.data == BluetoothAdapterState.unauthorized;
+                      final locationMissing = _locationServiceEnabled == false;
+                      if (!isUnauthorized && !locationMissing) return const SizedBox.shrink();
+                      return _buildPermissionCard(isDe);
+                    },
+                  ),
+
                 // Devices + Current Device Card + Developer collapse
                 StreamBuilder<List<BluetoothDevice>>(
                   stream: _devicesStream,
                   builder: (context, snap) {
                     final rawDevices = snap.data ?? [];
+                    if (rawDevices.isNotEmpty) _hasFoundDevices = true;
 
                     // Sort: connected CureBase device always first
                     final connId = _ble.connectedDeviceId;
@@ -857,6 +995,7 @@ class _DevicesPageState extends State<DevicesPage> {
                                               try {
                                                 await _ble.stopScan();
                                                 await _checkLocationAndScan();
+                                                _scheduleNoDeviceHelper();
                                               } catch (e) {
                                                 final msg = e.toString();
                                                 if (context.mounted) {
