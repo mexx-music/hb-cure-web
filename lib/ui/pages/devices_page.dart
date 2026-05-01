@@ -72,9 +72,9 @@ class _DevicesPageState extends State<DevicesPage> {
 
     // Auto-Scan beim Start (mit Fehler-Handling)
     Future.microtask(() async {
-      await _checkLocationAndScan();
+      if (!kIsWeb) await _checkLocationAndScan();
     });
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       _isLocationServiceEnabled().then((ok) {
         if (mounted) setState(() => _locationServiceEnabled = ok);
       });
@@ -291,6 +291,43 @@ class _DevicesPageState extends State<DevicesPage> {
           children: lines,
         );
       },
+    );
+  }
+
+  Widget _buildWebUnavailableCard() {
+    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.bluetooth_disabled, size: 40, color: AppColors.textSecondary),
+          const SizedBox(height: 12),
+          Text(
+            isDe
+                ? 'Bluetooth ist in der Web-Version nicht verfügbar.'
+                : 'Bluetooth is not available in the web version.',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isDe
+                ? 'Bitte verwende die Android- oder iOS-App, um Cure-Geräte zu verbinden.'
+                : 'Please use the Android or iOS app to connect Cure devices.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
+        ],
+      ),
     );
   }
 
@@ -851,6 +888,18 @@ class _DevicesPageState extends State<DevicesPage> {
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final bottomPad = media.padding.bottom + 12;
+
+    if (kIsWeb) {
+      return GradientBackground(
+        child: SafeArea(
+          bottom: true,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildWebUnavailableCard(),
+          ),
+        ),
+      );
+    }
 
     return GradientBackground(
       child: SafeArea(
