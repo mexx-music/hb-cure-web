@@ -30,12 +30,13 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   // MyPrograms subscription + sync guard
   final MyProgramsService _myProgramsService = MyProgramsService();
   StreamSubscription<void>? _myProgramsSub;
+  StreamSubscription<void>? _disconnectSub;
   bool _syncInProgress = false;
 
   // ── Device-status polling during active playback ──────────────────────────
@@ -149,16 +150,26 @@ class _MainShellState extends State<MainShell> {
     // Listen to playerService so we can start/stop the device-status poll
     playerService.addListener(_onPlayerStateChanged);
 
+    WidgetsBinding.instance.addObserver(this);
+
+    _disconnectSub = BleCureDeviceService.instance.onDeviceDisconnected.listen((_) {
+      debugPrint('[BLE] disconnect event received – triggering auto-reconnect');
+      _attemptAutoReconnect();
+    });
+
     // Auto-reconnect to last Cube if enabled
     // _attemptAutoReconnect();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     AppMemory.instance.removeListener(_onModeChanged);
     playerService.removeListener(_onPlayerStateChanged);
     _myProgramsSub?.cancel();
     _myProgramsSub = null;
+    _disconnectSub?.cancel();
+    _disconnectSub = null;
     _stopPlaybackPolling();
     super.dispose();
   }
@@ -169,6 +180,14 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       // Rebuild to reflect mode-dependent pages / labels
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && playerService.state.isPlaying) {
+      debugPrint('[LifecycleResume] app resumed with active playback – polling device status');
+      _pollDeviceStatus();
+    }
   }
 
   // Called on every playerService change — starts/stops the device poll timer

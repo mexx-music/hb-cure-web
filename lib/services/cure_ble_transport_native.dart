@@ -24,6 +24,8 @@ class CureBleTransportNative implements CureBleTransport {
   // Cached latest central state (from native plugin). Possible values: null or strings like "poweredOn" etc.
   String? _latestCentralState;
   Completer<void>? _poweredOnCompleter;
+  final StreamController<void> _disconnectCtrl = StreamController<void>.broadcast();
+  Stream<void> get onDisconnected => _disconnectCtrl.stream;
 
   CureBleTransportNative._internal() {
     // single subscription to native notify channel — updates _latestCentralState
@@ -130,6 +132,9 @@ class CureBleTransportNative implements CureBleTransport {
         _poweredOnCompleter!.complete();
         _poweredOnCompleter = null;
       }
+    }
+    if (s.toUpperCase() == 'DISCONNECTED' && prev?.toUpperCase() != 'DISCONNECTED') {
+      _disconnectCtrl.add(null);
     }
   }
 

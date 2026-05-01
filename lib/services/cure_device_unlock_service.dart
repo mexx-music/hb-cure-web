@@ -92,6 +92,7 @@ class CureDeviceUnlockService {
 
   bool get isNativeConnected => _sharedDeviceId != null && _sharedTransport.isConnected;
   String? get nativeConnectedDeviceId => _sharedDeviceId;
+  Stream<void> get onTransportDisconnected => _sharedTransport.onDisconnected;
 
   // ===================== CONNECT =====================
 

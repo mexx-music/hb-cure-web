@@ -83,6 +83,10 @@ class BleCureDeviceService {
   final Map<String, BluetoothDevice> _found = {};
   final Map<String, int?> _batteryRawByDeviceId = {};
   Map<String, int?> get batteryRawByDeviceId => Map.unmodifiable(_batteryRawByDeviceId);
+  final Map<String, StreamSubscription<BluetoothConnectionState>> _connectionStateSubs = {};
+  StreamSubscription<void>? _nativeDisconnectSub;
+  final StreamController<void> _disconnectCtrl = StreamController<void>.broadcast();
+  Stream<void> get onDeviceDisconnected => _disconnectCtrl.stream;
   bool _isScanning = false;
 
   bool _isUnlocked = false;
@@ -160,6 +164,21 @@ class BleCureDeviceService {
           'CureProtocol not initialized for device $id – connect() must succeed first');
     }
     return proto;
+  }
+
+  void _onDeviceDisconnected(BluetoothDevice device) {
+    final deviceId = device.remoteId.toString();
+    debugPrint('[BLE] disconnected: $deviceId');
+    if (_connectedDeviceId == deviceId) {
+      _connectedDeviceId = null;
+      _isUnlocked = false;
+    }
+    if (_selectedDevice?.remoteId.toString() == deviceId) {
+      _selectedDevice = null;
+    }
+    _nativeStateCtrl.add(BluetoothConnectionState.disconnected);
+    _devicesCtrl?.add(_found.values.toList());
+    _disconnectCtrl.add(null);
   }
 
   // --------- Scan API --------------------------------------------------------
@@ -311,6 +330,13 @@ class BleCureDeviceService {
         }
       });
 
+      _nativeDisconnectSub?.cancel();
+      _nativeDisconnectSub = _native.onTransportDisconnected.listen((_) {
+        if (_connectedDeviceId == null) return;
+        debugPrint('[BLE] native DISCONNECTED event – calling _onDeviceDisconnected');
+        _onDeviceDisconnected(device);
+      });
+
       return;
     }
 
@@ -325,6 +351,14 @@ class BleCureDeviceService {
       if (isConnected != BluetoothConnectionState.connected) rethrow;
     }
     await Future.delayed(const Duration(milliseconds: 200));
+
+    _connectionStateSubs[_connectedDeviceId!]?.cancel();
+    _connectionStateSubs[_connectedDeviceId!] = device.connectionState.listen((s) {
+      if (s == BluetoothConnectionState.disconnected) {
+        debugPrint('[BLE] connectionState → disconnected for $_connectedDeviceId');
+        _onDeviceDisconnected(device);
+      }
+    });
 
     try {
       await device.discoverServices();
@@ -388,6 +422,8 @@ class BleCureDeviceService {
 
     // Native-Mode: delegiere an native Unlock-Service und aufräumen
     if (kCureTransportMode == CureTransportMode.native) {
+      _nativeDisconnectSub?.cancel();
+      _nativeDisconnectSub = null;
       // Wenn das native transport die gleiche DeviceId verwaltet, trenne dort
       try {
         await _native.nativeDisconnect();
@@ -409,6 +445,7 @@ class BleCureDeviceService {
     }
 
     // flutterBluePlus-Mode: Originalverhalten
+    _connectionStateSubs.remove(deviceId)?.cancel();
     try {
       await device.disconnect();
     } catch (_) {}
