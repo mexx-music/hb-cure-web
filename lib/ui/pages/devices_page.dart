@@ -242,6 +242,7 @@ class _DevicesPageState extends State<DevicesPage> {
         final connected = state == BluetoothConnectionState.connected;
 
         final deviceId = d.remoteId.toString();
+        final rawBattery = _ble.batteryRawByDeviceId[deviceId];
 
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
@@ -282,6 +283,10 @@ class _DevicesPageState extends State<DevicesPage> {
                     ),
                   ),
                 ),
+                if (rawBattery != null) ...[
+                  const SizedBox(width: 6),
+                  _buildBatteryWidget(rawBattery)!,
+                ],
               ],
             ),
             trailing: connected
@@ -701,6 +706,24 @@ class _DevicesPageState extends State<DevicesPage> {
     }
     // Generic short form
     return s.length > 12 ? '${s.substring(0, 8)}...' : s;
+  }
+
+  Widget? _buildBatteryWidget(int? raw) {
+    if (raw == null) return null;
+    final bool charging = raw >= 100;
+    final int pct = charging ? raw - 100 : raw;
+    final IconData icon = charging
+        ? Icons.battery_charging_full
+        : (pct >= 60 ? Icons.battery_full : (pct >= 20 ? Icons.battery_4_bar : Icons.battery_alert));
+    final Color color = charging ? Colors.greenAccent : (pct >= 20 ? AppColors.textSecondary : Colors.orange);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 2),
+        Text('$pct%', style: TextStyle(fontSize: 11, color: color)),
+      ],
+    );
   }
 
   @override

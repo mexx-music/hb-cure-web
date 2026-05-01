@@ -81,6 +81,8 @@ class BleCureDeviceService {
   StreamController<String?>? _errorCtrl;
   StreamSubscription<List<ScanResult>>? _scanSub;
   final Map<String, BluetoothDevice> _found = {};
+  final Map<String, int?> _batteryRawByDeviceId = {};
+  Map<String, int?> get batteryRawByDeviceId => Map.unmodifiable(_batteryRawByDeviceId);
   bool _isScanning = false;
 
   bool _isUnlocked = false;
@@ -184,6 +186,7 @@ class BleCureDeviceService {
       connectedDevice = _found[_connectedDeviceId!] ?? _selectedDevice;
     }
     _found.clear();
+    _batteryRawByDeviceId.clear();
     if (connectedDevice != null && _connectedDeviceId != null) {
       _found[_connectedDeviceId!] = connectedDevice;
     }
@@ -237,6 +240,12 @@ class BleCureDeviceService {
         // Only show real Cure devices (CureBase + CureClip).
         if (isCureDevice(combined)) {
           _found[id] = sr.device;
+          if (combined.contains('cureclip')) {
+            final mfBytes = sr.advertisementData.manufacturerData[1];
+            if (mfBytes != null && mfBytes.isNotEmpty) {
+              _batteryRawByDeviceId[id] = mfBytes[0];
+            }
+          }
           if (kDebugMode) {
             debugPrint('HBDBG scanFilter: ACCEPTED Cure device id=$id');
           }
