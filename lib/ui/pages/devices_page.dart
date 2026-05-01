@@ -658,8 +658,15 @@ class _DevicesPageState extends State<DevicesPage> {
   // keeping internal device ids unchanged. Minimal UI-only change.
 
   String _shortDeviceLabel(String? platformName, String? deviceId) {
-    // Prefer the human-readable platform name if available, but shorten it when it looks technical
-    String shortenCandidate(String s) {
+    bool looksLikeRawId(String s) {
+      // MAC address: XX:XX:XX:XX:XX:XX
+      if (RegExp(r'^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$').hasMatch(s)) return true;
+      // UUID-style remoteId: XXXXXXXX-XXXX-...
+      if (RegExp(r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-').hasMatch(s)) return true;
+      return false;
+    }
+
+    String shortenFriendly(String s) {
       if (s.contains('-')) {
         final parts = s.split('-');
         if (parts.length >= 2) {
@@ -672,40 +679,30 @@ class _DevicesPageState extends State<DevicesPage> {
       return s;
     }
 
-    // If platformName exists and looks like a friendly name, cache it for later reconnects
-    if (platformName != null && platformName.isNotEmpty) {
-      final shortened = shortenCandidate(platformName);
-      // store friendly name in cache keyed by deviceId to keep it across reconnects
+    String friendlyFallback() {
+      if (deviceId != null && _ble.batteryRawByDeviceId.containsKey(deviceId)) {
+        return 'CureClip';
+      }
+      return 'CureBase';
+    }
+
+    // Use platformName only when it is non-empty and not a raw address/UUID
+    if (platformName != null && platformName.isNotEmpty && !looksLikeRawId(platformName)) {
+      final shortened = shortenFriendly(platformName);
       if (deviceId != null && deviceId.isNotEmpty) {
-        try {
-          _cachedFriendlyNames[deviceId] = shortened;
-        } catch (_) {}
+        _cachedFriendlyNames[deviceId] = shortened;
       }
       return shortened;
     }
 
-    // If platformName missing, attempt to use cached friendly name
+    // Cache populated from a previous scan where a friendly name was available
     if (deviceId != null && deviceId.isNotEmpty) {
       final cached = _cachedFriendlyNames[deviceId];
       if (cached != null && cached.isNotEmpty) return cached;
     }
 
-    // Fallback to a shortened device id label
-    if (deviceId == null || deviceId.isEmpty)
-      return AppLocalizations.of(context)!.devicesConnected;
-    final s = deviceId;
-    // If the id looks like CureBase-441793E6C36C, keep prefix and short tail
-    if (s.contains('-')) {
-      final parts = s.split('-');
-      if (parts.length >= 2) {
-        final prefix = parts[0];
-        final tail = parts[1].replaceAll(':', '').replaceAll(' ', '');
-        final tailShort = tail.length > 4 ? tail.substring(0, 4) : tail;
-        return '$prefix-$tailShort...';
-      }
-    }
-    // Generic short form
-    return s.length > 12 ? '${s.substring(0, 8)}...' : s;
+    // Never show a raw MAC or remoteId — use a generic friendly label
+    return friendlyFallback();
   }
 
   Widget? _buildBatteryWidget(int? raw) {
