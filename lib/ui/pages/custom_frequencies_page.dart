@@ -9,6 +9,8 @@ import 'package:hbcure/services/custom_frequencies_store.dart' as store;
 import 'package:hbcure/services/my_programs_service.dart';
 import 'package:hbcure/services/custom_frequency_name_store.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
+import 'package:hbcure/app_services.dart';
+import 'package:hbcure/models/playlist_item_settings.dart';
 
 class CustomFrequenciesPage extends StatefulWidget {
   const CustomFrequenciesPage({super.key});
@@ -187,6 +189,17 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
             final l10n = AppLocalizations.of(context)!;
             try {
               await MyProgramsService().add(e.id);
+              playerService.setSettings(
+                e.id,
+                PlaylistItemSettings(
+                  durationMinutes: e.durationMin,
+                  intensity: e.intensityPct,
+                  electric: e.useElectric,
+                  electricWaveform: _wf(e.electricWaveform),
+                  magnetic: e.useMagnetic,
+                  magneticWaveform: _wf(e.magneticWaveform),
+                ),
+              );
               // Persist human-readable name so My Programs can show it
               try {
                 await CustomFrequencyNameStore.instance.setName(e.id, e.name);
@@ -469,7 +482,16 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
                   onTap: () {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.cfStartFlowNext)),
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(milliseconds: 1500),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        content: Text(
+                          l10n.cfStartFlowNext,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -527,6 +549,10 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
     );
   }
 }
+
+Waveform _wf(String s) => s == 'saw-tooth'
+    ? Waveform.sawtooth
+    : Waveform.values.firstWhere((w) => w.name == s, orElse: () => Waveform.sine);
 
 class _CustomFrequencyDialog extends StatefulWidget {
   final CustomFrequencyEntry? initial;
