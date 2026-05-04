@@ -296,7 +296,7 @@ class ProgramRepository {
         id: s.id,
         title: s.title,
         color: s.color,
-        programs: sortProgs(s.programs),
+        programs: s.id == 'viruses' ? s.programs.toList() : sortProgs(s.programs),
       )).toList();
       copy.sort((a, b) => displayName(a.title).compareTo(displayName(b.title)));
       return copy;

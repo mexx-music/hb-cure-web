@@ -7701,7 +7701,7 @@
         {
           "id": "therapeutic_30006",
           "title": "Hepatologie",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30006,
           "programs": [
             {
@@ -7884,7 +7884,7 @@
         {
           "id": "therapeutic_30007",
           "title": "Gynäkologie und Geburtshilfe",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30007,
           "programs": [
             {
@@ -8823,7 +8823,7 @@
         {
           "id": "therapeutic_30010",
           "title": "Kardiologie und Herz-Kreislauf-System",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30010,
           "programs": [
             {
@@ -9402,7 +9402,7 @@
         {
           "id": "therapeutic_30011",
           "title": "Lymphologie",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30011,
           "programs": [
             {
@@ -9987,7 +9987,7 @@
         {
           "id": "therapeutic_30014",
           "title": "Neurologie",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30014,
           "programs": [
             {
@@ -11004,7 +11004,7 @@
         {
           "id": "therapeutic_30016",
           "title": "Onkologie",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30016,
           "programs": [
             {
@@ -14286,7 +14286,7 @@
         {
           "id": "therapeutic_30028",
           "title": "Hormone",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30028,
           "programs": [
             {
@@ -14601,7 +14601,7 @@
         {
           "id": "therapeutic_30029",
           "title": "Physiologie",
-          "color": "yellow",
+          "color": "red",
           "internalId": 30029,
           "programs": [
             {
