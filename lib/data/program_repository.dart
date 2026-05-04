@@ -224,10 +224,12 @@ class ProgramRepository {
       if (l is num) level = l.toInt();
       else if (l is String) level = int.tryParse(l) ?? level;
 
-      // If name is missing or placeholder, try to fill from decoded entry
-      if ((name.isEmpty || name == '-') ) {
-        final decodedName = _decodedTitleEn(entry);
-        if (decodedName.isNotEmpty) name = decodedName;
+      // If name is missing or placeholder, fill from decoded entry using the
+      // current display language (DE/EN) to avoid EN-key collisions in the CSV
+      // (e.g. "Grippe 1" and "Grippe Basis 1" both have EN="Influenza 1").
+      if (name.isEmpty || name == '-') {
+        final decodedName = catalog.name(entry);
+        if (decodedName.isNotEmpty && decodedName != '(unnamed)') name = decodedName;
       }
     }
 
@@ -281,10 +283,10 @@ class ProgramRepository {
           keyEn: keyEn, langCode: langCode,
         ).toLowerCase();
 
-    // Sort programs inside a list
+    // Sort programs inside a list — natural sort so "Sklerose 2" < "Sklerose 10"
     List<ProgramItem> sortProgs(List<ProgramItem> progs) {
       final copy = progs.toList();
-      copy.sort((a, b) => displayName(a.name).compareTo(displayName(b.name)));
+      copy.sort((a, b) => _naturalCompare(displayName(a.name), displayName(b.name)));
       return copy;
     }
 
@@ -406,4 +408,22 @@ class _ExpandedCategory {
 // Top-level function for compute() to decode JSON string into Map
 Map<String, dynamic> _decodeJson(String jsonString) {
   return jsonDecode(jsonString) as Map<String, dynamic>;
+}
+
+// Natural sort: compares text alphabetically and embedded numbers numerically.
+// "Sklerose 2" < "Sklerose 10", "Candida" < "Cryptococcus" unchanged.
+int _naturalCompare(String a, String b) {
+  final pattern = RegExp(r'(\D+|\d+)');
+  final aTokens = pattern.allMatches(a).map((m) => m.group(0)!).toList();
+  final bTokens = pattern.allMatches(b).map((m) => m.group(0)!).toList();
+  final len = aTokens.length < bTokens.length ? aTokens.length : bTokens.length;
+  for (var i = 0; i < len; i++) {
+    final aNum = int.tryParse(aTokens[i]);
+    final bNum = int.tryParse(bTokens[i]);
+    final cmp = (aNum != null && bNum != null)
+        ? aNum.compareTo(bNum)
+        : aTokens[i].compareTo(bTokens[i]);
+    if (cmp != 0) return cmp;
+  }
+  return aTokens.length.compareTo(bTokens.length);
 }
