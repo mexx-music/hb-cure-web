@@ -263,7 +263,9 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
       // its debug logs are consistently executed. Removed temporary hardcoded
       // parity override that returned signatures early and bypassed logging.
       do {
-        let sigHex = try CureCryptoIos.buildUnlockResponse(challengeHex: challengeHex)
+        let (sigHex, pubkeyHex, selfVerifyOk) = try CureCryptoIos.buildUnlockResponse(challengeHex: challengeHex)
+        emitLine("IOS_DEBUG_DERIVED_PUBKEY=\(pubkeyHex)")
+        emitLine("IOS_DEBUG_SIG_SELF_VERIFY=\(selfVerifyOk)")
         emitLine("IOS_PLUGIN_SIG_RETURN challenge=\(challengeHex) sig=\(sigHex) len=\(sigHex.count)")
         result(sigHex)
       } catch {
@@ -517,16 +519,15 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     // For all other commands: use .withResponse if WNR not advertised (safe default).
     let candidateWriteType: CBCharacteristicWriteType
     if isResponse {
-      // FORCE WNR for response= — matches Android WRITE_TYPE_NO_RESPONSE behavior exactly.
+      // Always force .withoutResponse — CoreBluetooth transmits an ATT Write Command
+      // on the wire even when the characteristic advertises only WR. Matches Android
+      // WRITE_TYPE_NO_RESPONSE so the firmware NUS handler processes the data.
       candidateWriteType = .withoutResponse
       emitLine("IOS_RESPONSE_MODE WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — forcing WNR to match Android ATT Write Command)")
     } else if isProgClear {
-      // FORCE WNR for progClear — unlock verification command, uses ungated WNR path (Android parity).
       candidateWriteType = .withoutResponse
-      emitLine("IOS_PROGCLEAR_WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — forcing ungated WNR for progClear)")
-      emitLine("IOS_FORCE_WNR_FOR_CMD progClear")
+      emitLine("IOS_PROGCLEAR_WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — using WNR for progClear)")
     } else if isInfoCommand {
-      // FORCE WNR for getHardware/getBuild — post-unlock iOS stabilisation.
       candidateWriteType = .withoutResponse
       emitLine("IOS_FORCE_WNR_FOR_CMD \(line)")
     } else if hasWR {
@@ -551,18 +552,32 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     let delayMs: Int
 
     if isResponse {
-      // ANDROID PARITY: split into 20-byte chunks, 45ms inter-chunk delay.
-      // Android: 7 chunks × 20 bytes (last chunk 19 bytes + CRLF), delayMs=45.
-      // No canSendWriteWithoutResponse gating — pure timer-based pacing like Android.
-      let chunkSize = 20
-      var offset = 0
-      while offset < payloadData.count {
-        let end = min(offset + chunkSize, payloadData.count)
-        chunks.append(payloadData.subdata(in: offset..<end))
-        offset = end
+      if candidateWriteType == .withResponse {
+        // WR path: split into 20-byte chunks, timer-paced (no ACK gating).
+        // A single 139-byte WR triggers iOS long-write (Prepare/Execute), which
+        // Nordic NUS firmware does not handle. 20-byte chunks each fit in one
+        // ATT Write Request regardless of ATT_MTU.
+        let chunkSize = 20
+        var offset = 0
+        while offset < payloadData.count {
+          let end = min(offset + chunkSize, payloadData.count)
+          chunks.append(payloadData.subdata(in: offset..<end))
+          offset = end
+        }
+        delayMs = 45
+        emitLine("IOS_RESPONSE_WRITE_META totalBytes=\(payloadData.count) totalChunks=\(chunks.count) writeType=WR chunkSize=\(chunkSize) delayMs=\(delayMs) mode=WR_CHUNKED")
+      } else {
+        // WNR path: split into 20-byte chunks with 45ms inter-chunk delay (Android parity).
+        let chunkSize = 20
+        var offset = 0
+        while offset < payloadData.count {
+          let end = min(offset + chunkSize, payloadData.count)
+          chunks.append(payloadData.subdata(in: offset..<end))
+          offset = end
+        }
+        delayMs = 45
+        emitLine("IOS_RESPONSE_WRITE_META totalBytes=\(payloadData.count) totalChunks=\(chunks.count) writeType=WNR chunkSize=\(chunkSize) delayMs=\(delayMs) mode=WNR_ANDROID_PARITY")
       }
-      delayMs = 45
-      emitLine("IOS_RESPONSE_WRITE_META totalBytes=\(payloadData.count) totalChunks=\(chunks.count) writeType=WNR chunkSize=\(chunkSize) delayMs=\(delayMs) mode=WNR_ANDROID_PARITY")
     } else {
       let maxLen = (candidateWriteType == .withResponse) ? maxLenWR : maxLenWNR
       if maxLen > 0 && payloadData.count <= maxLen {
@@ -592,7 +607,14 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     // isInfoCommand (getHardware/getBuild) must also use the ungated WNR path so they
     // are not blocked by canSendWriteWithoutResponse after a post-unlock connection
     // parameter update — same reason as progClear.
-    startBurst(chunks: chunks, writeType: candidateWriteType, delayMs: delayMs, isResponseBurst: isResponse, isUngatedWnrBurst: isProgClear || isInfoCommand)
+    if isResponse {
+      emitLine("IOS_RESPONSE_PRE_DELAY 250ms")
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.250) { [weak self] in
+        self?.startBurst(chunks: chunks, writeType: candidateWriteType, delayMs: delayMs, isResponseBurst: isResponse, isUngatedWnrBurst: isProgClear || isInfoCommand)
+      }
+    } else {
+      startBurst(chunks: chunks, writeType: candidateWriteType, delayMs: delayMs, isResponseBurst: isResponse, isUngatedWnrBurst: isProgClear || isInfoCommand)
+    }
   }
 
   // MARK: - Burst sender
@@ -707,6 +729,41 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
 
     if pendingWriteType == .withResponse {
+      // response= burst: device firmware never sends ATT Write Responses, so the
+      // ACK-gated path stalls on each chunk. Mirror the ungated WNR timer path
+      // but keep .withResponse so iOS transmits on a WR-only characteristic.
+      if isResponseBurst {
+        guard !pendingChunks.isEmpty else { return }
+        let chunk = pendingChunks.removeFirst()
+        let idx = burstChunkIndex
+        burstChunkIndex += 1
+        let sendTs = currentTimeMs() - burstStartTimeMs
+        let hasCRLF = pendingChunks.isEmpty
+        emitLine("IOS_RESPONSE_CHUNK idx=\(idx + 1)/\(burstTotalChunks) len=\(chunk.count) hasCRLF=\(hasCRLF) tsMs=\(sendTs)")
+        emitLine("IOS_WRITE_CHUNK len=\(chunk.count) type=WR remaining=\(pendingChunks.count)")
+        p.delegate = self
+        p.writeValue(chunk, for: target, type: .withResponse)
+        if pendingChunks.isEmpty {
+          sending = false
+          let finishTs = currentTimeMs() - burstStartTimeMs
+          emitLine("IOS_RESPONSE_DONE totalChunks=\(burstTotalChunks) elapsedMs=\(finishTs)")
+          emitLine("IOS_WRITE_DONE ts=\(finishTs)ms")
+          emitLine("IOS_RESPONSE_BURST_FINISHED awaiting_device_reply=true totalChunks=\(burstTotalChunks) elapsed=\(finishTs)ms")
+          isResponseBurst = false
+          responseBurstFullySent = true
+          completePendingWithOkIfSilent(delayMs: 2000)
+          return
+        }
+        let myToken = token
+        let chunkDelayMs = pendingDelayMs
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(chunkDelayMs) / 1000.0) { [weak self] in
+          guard let self = self else { return }
+          guard self.sending, self.burstToken == myToken else { return }
+          self.sendNextChunk(token: myToken)
+        }
+        return
+      }
+
       // If still awaiting didWrite for previous chunk, do NOT send next chunk yet
       if awaitingDidWrite {
         emitLine("IOS_WR_SKIP_AWAITING_DIDWRITE chunkIdx=\(burstChunkIndex) remaining=\(pendingChunks.count)")
@@ -798,6 +855,10 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     }
 
     awaitingDidWrite = false
+    if isResponseBurst {
+      let ackTs = currentTimeMs() - burstStartTimeMs
+      emitLine("IOS_RESPONSE_WR_ACK chunkIdx=\(idx) ts=\(ackTs)ms remaining=\(pendingChunks.count)")
+    }
     let token = burstToken
     DispatchQueue.main.async { [weak self] in
       self?.sendNextChunk(token: token)

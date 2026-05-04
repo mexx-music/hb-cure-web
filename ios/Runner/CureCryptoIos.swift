@@ -47,7 +47,7 @@ final class CureCryptoIos {
 
     /// Attempt to build an unlock response on iOS using libsecp256k1 C API.
     /// Returns 128-char hex (r||s) lowercase on success.
-    static func buildUnlockResponse(challengeHex: String) throws -> String {
+    static func buildUnlockResponse(challengeHex: String) throws -> (sig: String, pubkeyHex: String, selfVerifyOk: Int32) {
         // Clean input
         let cleaned = hexClean(challengeHex)
         guard cleaned.count == 64, let msgData = Data(hex: cleaned) else { throw CureCryptoError.badChallengeLen }
@@ -58,18 +58,13 @@ final class CureCryptoIos {
         NSLog("IOS_DEBUG_MSG_RAW=%@", msgHex)
         NSLog("IOS_DEBUG_MSG_RAW_LEN=%d", msgData.count)
 
-        // CRITICAL: Android BouncyCastle ECDSASigner(HMacDSAKCalculator(SHA256Digest()))
-        // internally hashes the message with SHA-256 before signing.
-        // libsecp256k1 secp256k1_ecdsa_sign() expects ALREADY-HASHED 32 bytes.
-        // Therefore we must SHA-256 the challenge bytes first to match Android.
-        var sha256out = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        msgData.withUnsafeBytes { buf in
-            _ = CC_SHA256(buf.baseAddress, CC_LONG(msgData.count), &sha256out)
-        }
-        let hashedData = Data(sha256out)
-        let hashedHex = sha256out.map { String(format: "%02x", $0) }.joined()
-        NSLog("IOS_DEBUG_MSG_SHA256=%@", hashedHex)
-        NSLog("IOS_DEBUG_MSG_SHA256_LEN=%d", hashedData.count)
+        // Android BouncyCastle ECDSASigner.generateSignature(msg) does NOT hash the message.
+        // It calls calculateE(n, msg) which is just BigInteger(1, msg) — raw bytes as integer.
+        // HMacDSAKCalculator(SHA256Digest) only governs RFC6979 k-nonce derivation, not the message.
+        // libsecp256k1 secp256k1_ecdsa_sign() must therefore receive the RAW 32-byte challenge,
+        // not SHA256(challenge). Passing SHA256(challenge) produces a completely different signature.
+        let hashedHex = msgData.map { String(format: "%02x", $0) }.joined()
+        NSLog("IOS_DEBUG_MSG_RAW_USED_FOR_SIGN=%@", hashedHex)
 
         // Private key bytes - obtain via getter (env / userdefaults / embedded)
         let keyHex = getPrivateKeyHex()
@@ -92,16 +87,39 @@ final class CureCryptoIos {
 
         // Prepare buffers — use SHA-256 hashed challenge (Android parity)
         var sig = secp256k1_ecdsa_signature()
-        var msg32 = [UInt8](hashedData)
+        // Prepare buffers — raw challenge bytes (Android parity: BigInteger(1, challenge))
+        var msg32 = [UInt8](msgData)
 
         // Sign (RFC6979 deterministic nonce when noncefp is nil)
-        // NOTE: msg32 is SHA256(challenge), matching Android BouncyCastle behavior
+        // NOTE: msg32 is the raw 32-byte challenge, matching Android ECDSASigner.generateSignature(msg)
         let signOk = msg32.withUnsafeMutableBufferPointer { msgPtr -> Int32 in
             seckey.withUnsafeMutableBufferPointer { skPtr -> Int32 in
                 secp256k1_ecdsa_sign(ctx, &sig, msgPtr.baseAddress!, skPtr.baseAddress!, nil, nil)
             }
         }
         if signOk != 1 { throw CureCryptoError.signFailed }
+
+        // Derive public key from private key and log it (no private key value in log)
+        var derivedPubkeyHex: String = ""
+        var selfVerifyResult: Int32 = -1
+        var derivedPub = secp256k1_pubkey()
+        let pubCreateOk: Int32 = seckey.withUnsafeMutableBufferPointer { skPtr -> Int32 in
+            secp256k1_ec_pubkey_create(ctx, &derivedPub, skPtr.baseAddress!)
+        }
+        NSLog("IOS_DEBUG_PUBKEY_DERIVE_OK=%d", pubCreateOk)
+        if pubCreateOk == 1 {
+            var pubBytes = [UInt8](repeating: 0, count: 65)
+            var pubLen: Int = 65
+            secp256k1_ec_pubkey_serialize(ctx, &pubBytes, &pubLen, &derivedPub, UInt32(SECP256K1_EC_UNCOMPRESSED))
+            derivedPubkeyHex = pubBytes.prefix(pubLen).map { String(format: "%02x", $0) }.joined()
+            NSLog("IOS_DEBUG_DERIVED_PUBKEY=%@", derivedPubkeyHex)
+
+            // Self-verify: confirm produced sig verifies against derived pubkey + raw msg32
+            selfVerifyResult = msg32.withUnsafeMutableBufferPointer { msgPtr -> Int32 in
+                secp256k1_ecdsa_verify(ctx, &sig, msgPtr.baseAddress!, &derivedPub)
+            }
+            NSLog("IOS_DEBUG_SIG_SELF_VERIFY=%d (1=valid 0=invalid)", selfVerifyResult)
+        }
 
         // Serialize compact r||s (64 bytes raw) into out64
         var out64 = [UInt8](repeating: 0, count: 64)
@@ -165,7 +183,7 @@ final class CureCryptoIos {
         // use the above signing path which logs produced signatures.
 
         NSLog("IOS_DEBUG_SIG_RETURNING=%@", String(result.prefix(16))) // log only prefix to avoid huge repeated logs
-        return result.lowercased()
+        return (sig: result.lowercased(), pubkeyHex: derivedPubkeyHex, selfVerifyOk: selfVerifyResult)
     }
 
     /// Stub verify: returns false when native verification is not available.

@@ -130,6 +130,10 @@ class MainActivity : FlutterActivity() {
                         // TEMP DEBUG – REMOVE AFTER IOS/ANDROID CHALLENGE SIGNATURE COMPARISON
                         // Log the signature for a fixed challenge exactly once so we can compare Android vs iOS output.
                         try {
+                            if (!ANDROID_TEST_SIG_LOGGED) {
+                                CureCrypto.testSignFixed()
+                                ANDROID_TEST_SIG_LOGGED = true
+                            }
                             // One-time log for the runtime challenge signature (requested by QA)
                             if (!ANDROID_RUNTIME_SIG_LOGGED) {
                                 val runtimeChallenge = "6D7A385616CA4511DEFBDB3AB9AD0AC3C882259EF2BB4D16CFCC93BA0798D0FE"
@@ -256,6 +260,32 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("SETTINGS_ERROR", e.message ?: "unknown", null)
                     }
+                }
+
+                "openAppSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.data = android.net.Uri.fromParts("package", packageName, null)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("SETTINGS_ERROR", e.message ?: "unknown", null)
+                    }
+                }
+
+                "requestBlePermissions" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        requestPermissions(arrayOf(
+                            android.Manifest.permission.BLUETOOTH_SCAN,
+                            android.Manifest.permission.BLUETOOTH_CONNECT,
+                        ), 1001)
+                    } else {
+                        requestPermissions(arrayOf(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        ), 1001)
+                    }
+                    result.success(null)
                 }
 
                 else -> {

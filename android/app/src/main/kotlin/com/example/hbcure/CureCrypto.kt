@@ -39,6 +39,11 @@ object CureCrypto {
         val priv = BigInteger(privHex, 16)
         val privParams = ECPrivateKeyParameters(priv, domainParams)
 
+        val q = domainParams.g.multiply(priv).normalize()
+        val qx = q.xCoord.encoded
+        val qy = q.yCoord.encoded
+        Log.d("CureCrypto", "ANDROID_DEBUG_DERIVED_PUBKEY=${(byteArrayOf(0x04.toByte()) + qx + qy).toHexString()}")
+
         val signer = ECDSASigner(HMacDSAKCalculator(SHA256Digest()))
         signer.init(true, privParams)
 
@@ -54,6 +59,14 @@ object CureCrypto {
         Log.d("CureCrypto", "ANDROID_DEBUG_SIG=${(rBytes + sBytes).toHexString()}")
 
         return (rBytes + sBytes).toHexString()
+    }
+
+    @JvmStatic
+    fun testSignFixed() {
+        val testChallenge = "B4AAFF021B42DABFDE3D97F1A8D3A17743F94F618F2DCE4F330BB3F075A35080"
+        val testSig = buildUnlockResponse(testChallenge)
+        Log.d("CureCrypto", "ANDROID_TEST_SIG=$testSig")
+        Log.d("CureCrypto", "ANDROID_TEST_LEN=${testSig.length}")
     }
 
     /**
