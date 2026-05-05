@@ -97,31 +97,54 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     }
 
     const sep = Icon(Icons.chevron_right, size: 14, color: AppColors.textSecondary);
-    const tapStyle = TextStyle(color: AppColors.primary, fontSize: 13);
     const curStyle = TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600);
+
+    final chip = GestureDetector(
+      onTap: () => setState(() {
+        if (_categoryStack.isNotEmpty) {
+          _categoryStack.removeLast();
+          _selectedCategory =
+              _categoryStack.isNotEmpty ? _categoryStack.last : null;
+        } else {
+          _selectedCategory = null;
+        }
+      }),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white12,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.arrow_back_ios_new, size: 14, color: AppColors.textPrimary),
+            if (parentCat != null) ...[
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label(parentCat),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => setState(() {
-              _categoryStack.clear();
-              _selectedCategory = null;
-            }),
-            child: const Text('Home', style: tapStyle),
-          ),
-          sep,
-          if (parentCat != null) ...[
-            GestureDetector(
-              onTap: () => setState(() {
-                _categoryStack.removeLast();
-                _selectedCategory = _categoryStack.last;
-              }),
-              child: Text(label(parentCat), style: tapStyle),
-            ),
+          chip,
+          if (hasParent) ...[
+            const SizedBox(width: 4),
             sep,
-          ],
+            const SizedBox(width: 4),
+          ] else
+            const SizedBox(width: 8),
           Text(label(current), style: curStyle, overflow: TextOverflow.ellipsis),
         ],
       ),
@@ -418,27 +441,6 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                 padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: AppColors.textPrimary,
-                      ),
-                      onPressed: () {
-                        // Pop one level from the internal category stack. If the
-                        // stack becomes empty, clear the selection to return to
-                        // the overall overview.
-                        setState(() {
-                          if (_categoryStack.isNotEmpty) {
-                            _categoryStack.removeLast();
-                            _selectedCategory = _categoryStack.isNotEmpty
-                                ? _categoryStack.last
-                                : null;
-                          } else {
-                            _selectedCategory = null;
-                          }
-                        });
-                      },
-                    ),
                     Expanded(child: _buildBreadcrumb(category, langCode)),
                     IconButton(
                       icon: const Icon(Icons.search, color: AppColors.textPrimary),
