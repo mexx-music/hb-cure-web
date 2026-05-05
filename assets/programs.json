@@ -4090,6 +4090,39 @@
       "title": "Set of Programs",
       "subcategories": [
         {
+          "id": "emergency_treatment",
+          "title": "Notfall-Behandlung",
+          "color": "red",
+          "programs": [
+            {"internalId": 21892},
+            {"internalId": 21891},
+            {"internalId": 21911},
+            {"internalId": 21899},
+            {"internalId": 21900},
+            {"internalId": 21913},
+            {"internalId": 21908},
+            {"internalId": 21903},
+            {"internalId": 21901},
+            {"internalId": 21904},
+            {"internalId": 21905},
+            {"internalId": 21906},
+            {"internalId": 21902},
+            {"internalId": 21912},
+            {"internalId": 21895},
+            {"internalId": 21894},
+            {"internalId": 21890},
+            {"internalId": 21910},
+            {"internalId": 21893},
+            {"internalId": 21896},
+            {"internalId": 21897},
+            {"internalId": 21889},
+            {"internalId": 21914},
+            {"internalId": 21907},
+            {"internalId": 21898},
+            {"internalId": 21909}
+          ]
+        },
+        {
           "id": "allergy",
           "title": "Allergy",
           "programs": [

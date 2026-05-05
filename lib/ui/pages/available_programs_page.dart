@@ -80,6 +80,54 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     return AppColors.primaryMuted;
   }
 
+  Widget _buildBreadcrumb(ProgramCategory current, String langCode) {
+    final bool hasParent = _categoryStack.length >= 2;
+    final parentCat = hasParent ? _categoryStack[_categoryStack.length - 2] : null;
+
+    String label(ProgramCategory cat) {
+      if (cat.id == 'seven_chakras') {
+        return (ProgramLangController.instance.lang == ProgramLang.de)
+            ? '7 Chakra Frequenzen'
+            : '7 Chakra Frequencies';
+      }
+      return ProgramNameLocalizer.instance.displayName(
+        keyEn: cat.title,
+        langCode: langCode,
+      );
+    }
+
+    const sep = Icon(Icons.chevron_right, size: 14, color: AppColors.textSecondary);
+    const tapStyle = TextStyle(color: AppColors.primary, fontSize: 13);
+    const curStyle = TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() {
+              _categoryStack.clear();
+              _selectedCategory = null;
+            }),
+            child: const Text('Home', style: tapStyle),
+          ),
+          sep,
+          if (parentCat != null) ...[
+            GestureDetector(
+              onTap: () => setState(() {
+                _categoryStack.removeLast();
+                _selectedCategory = _categoryStack.last;
+              }),
+              child: Text(label(parentCat), style: tapStyle),
+            ),
+            sep,
+          ],
+          Text(label(current), style: curStyle, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
   void _openSearch() async {
     // --- helpers (lokal, minimal-invasiv) ---
     String _norm(String s) {
@@ -364,16 +412,11 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
         }).toList();
 
         return GradientBackground(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 20.0,
-            ),
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              children: [
-                // ---------- Header ----------
-                Row(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                child: Row(
                   children: [
                     IconButton(
                       icon: const Icon(
@@ -396,36 +439,20 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         });
                       },
                     ),
-                    Expanded(
-                      child: Builder(
-                        builder: (_) {
-                          final isDe =
-                              ProgramLangController.instance.lang ==
-                              ProgramLang.de;
-                          final id = category.id;
-                          final titleText = (id == 'seven_chakras')
-                              ? (isDe
-                                    ? '7 Chakra Frequenzen'
-                                    : '7 Chakra Frequencies')
-                              : ProgramNameLocalizer.instance.displayName(
-                                  keyEn: category.title,
-                                  langCode: langCode,
-                                );
-                          return Text(
-                            titleText,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 18,
-                                ),
-                          );
-                        },
-                      ),
+                    Expanded(child: _buildBreadcrumb(category, langCode)),
+                    IconButton(
+                      icon: const Icon(Icons.search, color: AppColors.textPrimary),
+                      onPressed: () => _openSearch(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // ---------- Programs in this category ----------
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 12.0),
+                  children: [
+                    // ---------- Programs in this category ----------
                 if (category.programs.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -609,8 +636,10 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                       ),
                     ),
                 ],
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
