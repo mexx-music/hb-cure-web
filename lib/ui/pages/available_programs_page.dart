@@ -238,7 +238,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
 
                   return Padding(
                     padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                      bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                          MediaQuery.of(ctx).padding.bottom + 16,
                     ),
                     child: Column(
                       children: [
@@ -253,6 +254,16 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                   decoration: InputDecoration(
                                     hintText: l10n.searchPrograms,
                                     prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                                    suffixIcon: query.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear, size: 18),
+                                            onPressed: () {
+                                              controller.clear();
+                                              query = '';
+                                              setModalState(() {});
+                                            },
+                                          )
+                                        : null,
                                     filled: true,
                                     fillColor: Colors.white12,
                                     border: OutlineInputBorder(
@@ -275,12 +286,8 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  controller.clear();
-                                  query = '';
-                                  setModalState(() {});
-                                },
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.of(ctx).pop(),
                               ),
                             ],
                           ),
@@ -289,10 +296,9 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         Expanded(
                           child: list.isEmpty
                               ? Center(child: Text(l10n.noResults))
-                              : ListView.separated(
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                                   itemCount: list.length,
-                                  separatorBuilder: (_, __) =>
-                                      const Divider(height: 1, indent: 20, endIndent: 20),
                                   itemBuilder: (ctx2, idx) {
                                     final p = list[idx];
                                     final langCode =
@@ -305,89 +311,135 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                           keyEn: p.name,
                                           langCode: langCode,
                                         );
+                                    final isDe = ProgramLangController.instance.lang == ProgramLang.de;
 
-                                    return ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                                      splashColor: Colors.white12,
-                                      title: Text(
-                                        label,
-                                        style: const TextStyle(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      subtitle: null,
-                                      onTap: () async {
-                                        final isDe = ProgramLangController.instance.lang == ProgramLang.de;
-                                        final confirmed = await showDialog<bool>(
-                                          context: context,
-                                          builder: (dlgCtx) => AlertDialog(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.cardBackground,
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: AppColors.borderSubtle),
+                                          ),
+                                          child: ListTile(
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            leading: CircleAvatar(
+                                              backgroundColor: AppColors.primaryMuted,
+                                              child: const _FrequencyWaveIcon(),
                                             ),
-                                            backgroundColor: AppColors.cardBackground,
                                             title: Text(
                                               label,
-                                              style: const TextStyle(color: AppColors.textPrimary),
-                                            ),
-                                            content: Text(
-                                              isDe
-                                                  ? 'Dieses Programm zu „Meine Programme" hinzufügen?'
-                                                  : 'Add this program to "My Programs"?',
-                                              style: const TextStyle(color: AppColors.textSecondary),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(dlgCtx).pop(false),
-                                                child: Text(isDe ? 'Abbrechen' : 'Cancel'),
+                                              style: const TextStyle(
+                                                color: AppColors.textPrimary,
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                              TextButton(
-                                                onPressed: () => Navigator.of(dlgCtx).pop(true),
-                                                child: Text(
-                                                  isDe ? 'Hinzufügen' : 'Add',
-                                                  style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.primary,
-                                                    fontWeight: FontWeight.w600,
+                                            ),
+                                            trailing: _AddButton(
+                                              onAdd: () async {
+                                                await MyProgramsService().add(p.id);
+                                                if (!context.mounted) return;
+                                                Navigator.of(ctx).pop();
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    behavior: SnackBarBehavior.floating,
+                                                    duration: const Duration(milliseconds: 1500),
+                                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    content: Row(
+                                                      children: [
+                                                        const Icon(Icons.check, color: Colors.white),
+                                                        const SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            isDe
+                                                                ? '$label wurde zu „Meine Programme" hinzugefügt'
+                                                                : '$label added to "My Programs"',
+                                                            style: const TextStyle(color: Colors.white),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirmed != true) return;
-                                        if (!context.mounted) return;
-                                        await MyProgramsService().add(p.id);
-                                        if (!context.mounted) return;
-                                        Navigator.of(ctx).pop();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            behavior: SnackBarBehavior.floating,
-                                            duration: const Duration(milliseconds: 1500),
-                                            backgroundColor: Theme.of(context).colorScheme.primary,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
+                                                );
+                                              },
                                             ),
-                                            content: Row(
-                                              children: [
-                                                const Icon(Icons.check, color: Colors.white),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Text(
+                                            onTap: () async {
+                                              final confirmed = await showDialog<bool>(
+                                                context: context,
+                                                builder: (dlgCtx) => AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(16),
+                                                  ),
+                                                  backgroundColor: AppColors.cardBackground,
+                                                  title: Text(
+                                                    label,
+                                                    style: const TextStyle(color: AppColors.textPrimary),
+                                                  ),
+                                                  content: Text(
                                                     isDe
-                                                        ? '$label wurde zu „Meine Programme" hinzugefügt'
-                                                        : '$label added to "My Programs"',
-                                                    style: const TextStyle(color: Colors.white),
+                                                        ? 'Dieses Programm zu „Meine Programme" hinzufügen?'
+                                                        : 'Add this program to "My Programs"?',
+                                                    style: const TextStyle(color: AppColors.textSecondary),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(dlgCtx).pop(false),
+                                                      child: Text(isDe ? 'Abbrechen' : 'Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(dlgCtx).pop(true),
+                                                      child: Text(
+                                                        isDe ? 'Hinzufügen' : 'Add',
+                                                        style: TextStyle(
+                                                          color: Theme.of(context).colorScheme.primary,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirmed != true) return;
+                                              if (!context.mounted) return;
+                                              await MyProgramsService().add(p.id);
+                                              if (!context.mounted) return;
+                                              Navigator.of(ctx).pop();
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  behavior: SnackBarBehavior.floating,
+                                                  duration: const Duration(milliseconds: 1500),
+                                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  content: Row(
+                                                    children: [
+                                                      const Icon(Icons.check, color: Colors.white),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: Text(
+                                                          isDe
+                                                              ? '$label wurde zu „Meine Programme" hinzugefügt'
+                                                              : '$label added to "My Programs"',
+                                                          style: const TextStyle(color: Colors.white),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ],
-                                            ),
+                                              );
+                                            },
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      ),
                                     );
                                   },
                                 ),
                         ),
-                        const SizedBox(height: 8),
                       ],
                     ),
                   );
@@ -481,10 +533,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor: categoryMarkerColor,
-                              child: const Icon(
-                                Icons.play_arrow,
-                                color: AppColors.textPrimary,
-                              ),
+                              child: const _FrequencyWaveIcon(),
                             ),
                             title: Text(
                               ProgramNameLocalizer.instance.displayName(
@@ -823,6 +872,47 @@ class _AddButton extends StatefulWidget {
 
   @override
   State<_AddButton> createState() => _AddButtonState();
+}
+
+class _FrequencyWaveIcon extends StatelessWidget {
+  const _FrequencyWaveIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(24, 24),
+      painter: _WavePainter(),
+    );
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.textPrimary
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+    final mid = h / 2;
+    final amp = h * 0.3;
+
+    final path = Path()
+      ..moveTo(w * (1 / 24), mid)
+      ..cubicTo(w * (3.5 / 24), mid, w * (4 / 24), mid - amp, w * (6.5 / 24), mid - amp)
+      ..cubicTo(w * (9 / 24), mid - amp, w * (9.5 / 24), mid, w * (12 / 24), mid)
+      ..cubicTo(w * (14.5 / 24), mid, w * (15 / 24), mid + amp, w * (17.5 / 24), mid + amp)
+      ..cubicTo(w * (20 / 24), mid + amp, w * (20.5 / 24), mid, w * (23 / 24), mid);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AddButtonState extends State<_AddButton>
