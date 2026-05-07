@@ -4014,12 +4014,12 @@
         {
           "id": "pain_joint_pain_1",
           "name": "Joint Pain",
-          "uuid": "a46165ef-9009-5c0c-9a27-6ad3d0aa2af9",
-          "internalId": 22357
+          "uuid": "09d24349-d873-502d-acaa-c929c9d018a2",
+          "internalId": 22334
         },
         {
           "id": "pain_joint_pain_2",
-          "name": "Joint Pain",
+          "name": "Joint Pain 2",
           "uuid": "a46165ef-9009-5c0c-9a27-6ad3d0aa2af9",
           "internalId": 22357
         },
