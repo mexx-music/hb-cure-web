@@ -7,7 +7,9 @@ import 'ui/pages/start_page.dart';
 import 'ui/theme/app_colors.dart';
 import 'dart:async';
 import 'services/app_memory.dart';
+import 'services/ble_cure_device_service.dart';
 import 'services/clients_store.dart';
+import 'services/cure_device_unlock_service.dart';
 import 'services/custom_frequencies_service.dart';
 import 'app_services.dart';
 import 'i18n/program_name_localizer.dart';
@@ -51,6 +53,17 @@ Future<void> main() async {
   // "Eigene Frequenzen" page survives app restarts and adding to playlist.
   try {
     await CustomFrequenciesService.instance.ensureLoaded();
+  } catch (_) {
+    // non-fatal
+  }
+
+  // Defensive: never start in a "connected" state from a stale singleton or
+  // a leftover device id. Real connections will re-emit after the transport
+  // handshake completes. AutoReconnect may still try to (re)connect — but the
+  // UI stays "disconnected" until that handshake is confirmed.
+  try {
+    BleCureDeviceService.instance.resetLocalConnectionState();
+    CureDeviceUnlockService.instance.resetLocalSharedDeviceId();
   } catch (_) {
     // non-fatal
   }

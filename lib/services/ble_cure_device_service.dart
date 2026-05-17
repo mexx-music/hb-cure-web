@@ -166,6 +166,19 @@ class BleCureDeviceService {
     return proto;
   }
 
+  /// Defensive reset of local connection-related state. Called at app start
+  /// so the UI never reflects a stale "connected" status without a real
+  /// transport handshake (e.g. after hot-restart or stale singleton).
+  /// Does NOT touch the native plugin or the FBP adapter.
+  void resetLocalConnectionState() {
+    _connectedDeviceId = null;
+    _isUnlocked = false;
+    _selectedDevice = null;
+    try {
+      _nativeStateCtrl.add(BluetoothConnectionState.disconnected);
+    } catch (_) {}
+  }
+
   void _onDeviceDisconnected(BluetoothDevice device) {
     final deviceId = device.remoteId.toString();
     debugPrint('[BLE] disconnected: $deviceId');
@@ -290,11 +303,12 @@ class BleCureDeviceService {
 
   // --------- Connect / Disconnect -------------------------------------------
   Future<void> connect(BluetoothDevice device) async {
-    // Gerät immer merken – unabhängig vom Modus
-    _selectedDevice = device;
+    final deviceId = device.remoteId.toString();
 
-    // Merke die deviceId für native transport mode
-    _connectedDeviceId = device.remoteId.toString();
+    // Gerät als "ausgewählt" merken (UI-Hinweis). Der eigentliche
+    // Connection-State (_connectedDeviceId / _nativeStateCtrl) bleibt
+    // 'disconnected', bis der Transport den Handshake bestätigt hat.
+    _selectedDevice = device;
 
     // Scan immer stoppen, wenn wir ein Gerät "ausgewählt" haben
     // Use our own stopScan() so that _isScanning is properly reset,
@@ -309,14 +323,26 @@ class BleCureDeviceService {
           'delegating to native connect',
         );
       }
-      // Delegiere an native Unlock-Service, damit _sharedDeviceId gesetzt wird
-      await _native.nativeConnect(_connectedDeviceId!);
+      // Defensive: claim "connected" only AFTER the native handshake returns.
+      // Otherwise an in-flight or failed nativeConnect would already paint
+      // the UI as connected (StreamBuilder re-subscribes use _connectedDeviceId).
+      try {
+        await _native.nativeConnect(deviceId);
+      } catch (e) {
+        // Rollback selection so the UI doesn't show a stale device entry.
+        if (_selectedDevice?.remoteId.toString() == deviceId) {
+          _selectedDevice = null;
+        }
+        if (kDebugMode) debugPrint('HBDBG connect(native): nativeConnect failed: $e');
+        rethrow;
+      }
 
-      // Emit connected state so DevicesPage UI reflects connection
+      // Native handshake confirmed: now mark connected and notify UI.
+      _connectedDeviceId = deviceId;
       _nativeStateCtrl.add(BluetoothConnectionState.connected);
 
       // Ensure the device appears in _found so DevicesPage shows it
-      _found[device.remoteId.toString()] = device;
+      _found[deviceId] = device;
       _devicesCtrl?.add(_found.values.toList());
 
       // Trigger automatic unlock asynchronously (do not block connect())
@@ -341,6 +367,8 @@ class BleCureDeviceService {
     }
 
     // --- Original-FBP-Verhalten (nur im flutterBluePlus-Mode) -------------
+    // FBP-Pfad braucht die Id für die nachfolgenden Listener-Bindings.
+    _connectedDeviceId = deviceId;
     try {
       await device.connect(license: License.free);
     } catch (e) {

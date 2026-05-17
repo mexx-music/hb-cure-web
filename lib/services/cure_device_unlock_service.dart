@@ -94,6 +94,13 @@ class CureDeviceUnlockService {
   String? get nativeConnectedDeviceId => _sharedDeviceId;
   Stream<void> get onTransportDisconnected => _sharedTransport.onDisconnected;
 
+  /// Defensive reset of the shared device id. Called at app start so a
+  /// stale singleton (hot-restart / dev hot-reload) cannot be mistaken
+  /// for a real active native connection. Does NOT touch the native plugin.
+  void resetLocalSharedDeviceId() {
+    _sharedDeviceId = null;
+  }
+
   // ===================== CONNECT =====================
 
   Future<void> nativeConnect(String deviceId) async {
