@@ -424,9 +424,16 @@ class BleCureDeviceService {
     if (kCureTransportMode == CureTransportMode.native) {
       _nativeDisconnectSub?.cancel();
       _nativeDisconnectSub = null;
-      // Wenn das native transport die gleiche DeviceId verwaltet, trenne dort
+      // Wenn das native transport die gleiche DeviceId verwaltet, trenne dort.
+      // BLE-fix #2: bounded wait so a hung MethodChannel cannot leave the
+      // UI in a stale "connected" state. The local-state reset below runs
+      // even when the timeout fires.
       try {
-        await _native.nativeDisconnect();
+        await _native.nativeDisconnect().timeout(const Duration(seconds: 3));
+      } on TimeoutException catch (_) {
+        if (kDebugMode) {
+          debugPrint('HBDBG disconnect(native): nativeDisconnect timeout — clearing local state anyway');
+        }
       } catch (_) {}
       _connectedDeviceId = null;
       _isUnlocked = false;

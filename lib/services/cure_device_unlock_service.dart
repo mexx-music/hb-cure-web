@@ -118,7 +118,17 @@ class CureDeviceUnlockService {
       debugPrint('[CureDeviceUnlockService] nativeDisconnect from $_sharedDeviceId');
     }
     try {
-      await _sharedTransport.disconnect();
+      // BLE-fix #2: bounded wait so a hung MethodChannel cannot block
+      // the disconnect path. Local state is cleared in the finally either way.
+      await _sharedTransport.disconnect().timeout(const Duration(seconds: 3));
+    } on TimeoutException catch (_) {
+      if (kDebugMode) {
+        debugPrint('[CureDeviceUnlockService] nativeDisconnect: timeout — clearing shared state anyway');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[CureDeviceUnlockService] nativeDisconnect: error $e — clearing shared state anyway');
+      }
     } finally {
       _sharedDeviceId = null;
       _notifyDeviceInfoChanged();
@@ -672,11 +682,13 @@ class CureDeviceUnlockService {
           debugPrint('[CureDeviceUnlockService] post-unlock info failed: $e');
         }
         // Note: unlock itself already succeeded – do NOT rethrow.
-      } finally {
-        if (!transport.isConnected) {
-          _sharedDeviceId = null;
-        }
       }
+      // NOTE (BLE-fix #1): do NOT clear _sharedDeviceId based on
+      // transport.isConnected here. The native transport's isConnected getter
+      // is unreliable (it only reflects adapter state, not GATT connection
+      // state) and would wrongly drop the shared device id after a successful
+      // unlock, causing the next progClear/progStart/progAppendHex to fail.
+      // _sharedDeviceId is cleared explicitly in nativeDisconnect().
       // -----------------------------------------
 
       // Persist device id for auto-reconnect on next app start
