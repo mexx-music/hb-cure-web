@@ -236,6 +236,10 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
 
     final controller = TextEditingController();
     String query = ''; // <-- MUSS ausserhalb vom StatefulBuilder liegen
+    // In-sheet confirmation state (visible above the result list). Lives
+    // outside StatefulBuilder so it survives rebuilds triggered by typing.
+    String? recentlyAddedLabel;
+    int recentlyAddedSeq = 0;
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -258,6 +262,26 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                 ),
               child: StatefulBuilder(
                 builder: (cctx, setModalState) {
+                  // Show a short in-sheet confirmation. Snackbars from
+                  // ScaffoldMessenger would render behind the modal sheet,
+                  // so the feedback lives inside the sheet itself.
+                  void showAddedConfirmation(String label) {
+                    recentlyAddedSeq++;
+                    final mySeq = recentlyAddedSeq;
+                    recentlyAddedLabel = label;
+                    setModalState(() {});
+                    Future.delayed(const Duration(milliseconds: 1800), () {
+                      if (mySeq != recentlyAddedSeq) return;
+                      try {
+                        setModalState(() {
+                          recentlyAddedLabel = null;
+                        });
+                      } catch (_) {
+                        // sheet was closed in the meantime — nothing to do
+                      }
+                    });
+                  }
+
                   List<ProgramItem> filtered() {
                     final langCode =
                         (ProgramLangController.instance.lang == ProgramLang.de)
@@ -337,6 +361,39 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                           ),
                         ),
                         const Divider(height: 1),
+                        if (recentlyAddedLabel != null)
+                          Container(
+                            width: double.infinity,
+                            color: AppColors.accentGreen,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    ProgramLangController.instance.lang ==
+                                            ProgramLang.de
+                                        ? '„$recentlyAddedLabel" zu Meinen Programmen hinzugefügt'
+                                        : '"$recentlyAddedLabel" added to My Programs',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         Expanded(
                           child: list.isEmpty
                               ? Center(child: Text(l10n.noResults))
@@ -399,8 +456,10 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                               onAdd: () async {
                                                 // Keep the search sheet open so the user can
                                                 // add several hits in a row. Confirmation is
-                                                // shown via the _AddButton check animation.
+                                                // shown via the _AddButton check animation plus
+                                                // an in-sheet banner above the result list.
                                                 await MyProgramsService().add(p.id);
+                                                showAddedConfirmation(label);
                                               },
                                             ),
                                             onTap: () async {
@@ -440,34 +499,11 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                 ),
                                               );
                                               if (confirmed != true) return;
-                                              if (!context.mounted) return;
+                                              // Keep the search sheet open after the dialog
+                                              // is confirmed. Visual feedback comes from the
+                                              // in-sheet banner via showAddedConfirmation().
                                               await MyProgramsService().add(p.id);
-                                              if (!context.mounted) return;
-                                              Navigator.of(ctx).pop();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  behavior: SnackBarBehavior.floating,
-                                                  duration: const Duration(milliseconds: 1500),
-                                                  backgroundColor: Theme.of(context).colorScheme.primary,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
-                                                  content: Row(
-                                                    children: [
-                                                      const Icon(Icons.check, color: Colors.white),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Text(
-                                                          isDe
-                                                              ? '$label wurde zu „Meine Programme" hinzugefügt'
-                                                              : '$label added to "My Programs"',
-                                                          style: const TextStyle(color: Colors.white),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
+                                              showAddedConfirmation(label);
                                             },
                                           ),
                                         ),
