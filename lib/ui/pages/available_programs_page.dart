@@ -162,21 +162,40 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
           .replaceAll('ß', 'ss');
     }
 
+    // Map: programId -> path info (English titles + ids).
+    // Built once during flatten so the search list can show the original
+    // category > subcategory path next to each program name.
+    final pathById =
+        <String, ({String catId, String catTitleEn, String? subId, String? subTitleEn})>{};
+
     List<ProgramItem> _collectPrograms(List<ProgramCategory> cats) {
       final out = <ProgramItem>[];
       final seen = <String>{}; // dedupe by program.id
 
-      void addAll(List<ProgramItem>? items) {
-        if (items == null) return;
-        for (final p in items) {
-          if (seen.add(p.id)) out.add(p);
-        }
-      }
-
       for (final c in cats) {
-        addAll(c.programs);
-        for (final s in (c.subcategories ?? const [])) {
-          addAll(s.programs);
+        for (final p in (c.programs)) {
+          if (seen.add(p.id)) {
+            out.add(p);
+            pathById[p.id] = (
+              catId: c.id,
+              catTitleEn: c.title,
+              subId: null,
+              subTitleEn: null,
+            );
+          }
+        }
+        for (final s in (c.subcategories)) {
+          for (final p in (s.programs)) {
+            if (seen.add(p.id)) {
+              out.add(p);
+              pathById[p.id] = (
+                catId: c.id,
+                catTitleEn: c.title,
+                subId: s.id,
+                subTitleEn: s.title,
+              );
+            }
+          }
         }
       }
       return out;
@@ -189,6 +208,30 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
     } else {
       final cats = await _repo.loadCategories();
       programs = _collectPrograms(cats);
+    }
+
+    // Localized label for a single path segment. Mirrors the special
+    // 'seven_chakras' handling used by the breadcrumb so the search path
+    // reads identically to the navigated view.
+    String segmentLabel(String id, String englishTitle, String langCode) {
+      if (id == 'seven_chakras') {
+        return (ProgramLangController.instance.lang == ProgramLang.de)
+            ? '7 Chakra Frequenzen'
+            : '7 Chakra Frequencies';
+      }
+      return ProgramNameLocalizer.instance.displayName(
+        keyEn: englishTitle,
+        langCode: langCode,
+      );
+    }
+
+    String localizedPathFor(String programId, String langCode) {
+      final info = pathById[programId];
+      if (info == null) return '';
+      final cat = segmentLabel(info.catId, info.catTitleEn, langCode);
+      if (info.subId == null || info.subTitleEn == null) return cat;
+      final sub = segmentLabel(info.subId!, info.subTitleEn!, langCode);
+      return '$cat  ›  $sub';
     }
 
     final controller = TextEditingController();
@@ -227,8 +270,9 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                         .where((p) {
                           final label = ProgramNameLocalizer.instance
                               .displayName(keyEn: p.name, langCode: langCode);
+                          final path = localizedPathFor(p.id, langCode);
 
-                          final hay = _norm('$label ${p.name} ${p.id}');
+                          final hay = _norm('$label ${p.name} ${p.id} $path');
                           return hay.contains(q);
                         })
                         .toList(growable: false);
@@ -312,6 +356,7 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                           langCode: langCode,
                                         );
                                     final isDe = ProgramLangController.instance.lang == ProgramLang.de;
+                                    final pathText = localizedPathFor(p.id, langCode);
 
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 6),
@@ -336,35 +381,26 @@ class _AvailableProgramsPageState extends State<AvailableProgramsPage> {
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            trailing: _AddButton(
-                                              onAdd: () async {
-                                                await MyProgramsService().add(p.id);
-                                                if (!context.mounted) return;
-                                                Navigator.of(ctx).pop();
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    behavior: SnackBarBehavior.floating,
-                                                    duration: const Duration(milliseconds: 1500),
-                                                    backgroundColor: Theme.of(context).colorScheme.primary,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(12),
-                                                    ),
-                                                    content: Row(
-                                                      children: [
-                                                        const Icon(Icons.check, color: Colors.white),
-                                                        const SizedBox(width: 12),
-                                                        Expanded(
-                                                          child: Text(
-                                                            isDe
-                                                                ? '$label wurde zu „Meine Programme" hinzugefügt'
-                                                                : '$label added to "My Programs"',
-                                                            style: const TextStyle(color: Colors.white),
-                                                          ),
-                                                        ),
-                                                      ],
+                                            subtitle: pathText.isEmpty
+                                                ? null
+                                                : Padding(
+                                                    padding: const EdgeInsets.only(top: 2),
+                                                    child: Text(
+                                                      pathText,
+                                                      style: const TextStyle(
+                                                        color: AppColors.textSecondary,
+                                                        fontSize: 11.5,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
-                                                );
+                                            trailing: _AddButton(
+                                              onAdd: () async {
+                                                // Keep the search sheet open so the user can
+                                                // add several hits in a row. Confirmation is
+                                                // shown via the _AddButton check animation.
+                                                await MyProgramsService().add(p.id);
                                               },
                                             ),
                                             onTap: () async {
