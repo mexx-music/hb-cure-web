@@ -26,6 +26,8 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
   final _myPrograms = MyProgramsService.instance;
   late final VoidCallback _langListener;
 
+  late final VoidCallback _cfListener;
+
   @override
   void initState() {
     super.initState();
@@ -33,11 +35,20 @@ class _CustomFrequenciesPageState extends State<CustomFrequenciesPage> {
       if (mounted) setState(() {});
     };
     ProgramLangController.instance.addListener(_langListener);
+
+    _cfListener = () {
+      if (mounted) setState(() {});
+    };
+    CustomFrequenciesService.instance.addListener(_cfListener);
+    // Best-effort hydration from persistent store in case it wasn't loaded
+    // yet (e.g. first frame after cold start).
+    CustomFrequenciesService.instance.ensureLoaded();
   }
 
   @override
   void dispose() {
     ProgramLangController.instance.removeListener(_langListener);
+    CustomFrequenciesService.instance.removeListener(_cfListener);
     super.dispose();
   }
 

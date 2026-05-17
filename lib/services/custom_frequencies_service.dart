@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'custom_frequencies_store.dart' as store;
+
 class CustomFrequencyEntry {
   final String id;
   final String name;
@@ -52,8 +54,48 @@ class CustomFrequenciesService extends ChangeNotifier {
   CustomFrequenciesService._();
 
   final List<CustomFrequencyEntry> _items = [];
+  bool _loaded = false;
+  Future<void>? _loading;
 
   List<CustomFrequencyEntry> get items => List.unmodifiable(_items);
+
+  /// Hydrate the in-memory list from the persistent store. Safe to call
+  /// multiple times; the first call performs the load and subsequent calls
+  /// either await the in-flight future or no-op.
+  Future<void> ensureLoaded() {
+    if (_loaded) return Future.value();
+    return _loading ??= _loadFromStore();
+  }
+
+  Future<void> _loadFromStore() async {
+    try {
+      final persisted = await store.CustomFrequenciesStore.instance.loadAll();
+      // Merge: keep any items already added in this session, then add
+      // persisted ones that aren't present yet. This preserves entries
+      // created before ensureLoaded() finishes.
+      final existingIds = _items.map((e) => e.id).toSet();
+      for (final p in persisted) {
+        if (existingIds.contains(p.id)) continue;
+        _items.add(CustomFrequencyEntry(
+          id: p.id,
+          name: p.name,
+          frequencyHz: p.frequencyHz,
+          durationMin: p.durationMin,
+          intensityPct: p.intensityPct,
+          useElectric: p.useElectric,
+          electricWaveform: p.electricWaveform,
+          useMagnetic: p.useMagnetic,
+          magneticWaveform: p.magneticWaveform,
+        ));
+      }
+    } catch (_) {
+      // best-effort: leave list as-is on failure
+    } finally {
+      _loaded = true;
+      _loading = null;
+      notifyListeners();
+    }
+  }
 
   CustomFrequencyEntry? getById(String id) {
     for (final e in _items) {

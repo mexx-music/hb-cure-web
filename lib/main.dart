@@ -8,6 +8,7 @@ import 'ui/theme/app_colors.dart';
 import 'dart:async';
 import 'services/app_memory.dart';
 import 'services/clients_store.dart';
+import 'services/custom_frequencies_service.dart';
 import 'app_services.dart';
 import 'i18n/program_name_localizer.dart';
 import 'l10n/gen/app_localizations.dart';
@@ -42,6 +43,14 @@ Future<void> main() async {
   try {
     final activeId = await ClientsStore.instance.loadActiveClientId();
     await playerService.loadSettingsForClient(activeId ?? 'default');
+  } catch (_) {
+    // non-fatal
+  }
+
+  // Hydrate in-memory custom frequencies from persistent store so the
+  // "Eigene Frequenzen" page survives app restarts and adding to playlist.
+  try {
+    await CustomFrequenciesService.instance.ensureLoaded();
   } catch (_) {
     // non-fatal
   }
