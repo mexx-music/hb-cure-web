@@ -46,7 +46,8 @@ class _DevicesPageState extends State<DevicesPage> {
   // UI-only: remember expansion state
   bool _devExpanded = false;
 
-  // UI-only: cache friendly platform names per device id to keep stable labels across reconnects
+  // UI-only: cache friendly platform names per device id to keep stable labels across reconnects.
+  // Cached value is the FULL platformName (e.g. "CureClip-FCE8AAFFCC"), not a shortened form.
   final Map<String, String> _cachedFriendlyNames = {};
 
   @override
@@ -435,14 +436,7 @@ class _DevicesPageState extends State<DevicesPage> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    _shortDeviceLabel(d.platformName, deviceId),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _buildDeviceLabel(d.platformName, deviceId),
                 ),
                 if (rawBattery != null) ...[
                   const SizedBox(width: 6),
@@ -815,29 +809,33 @@ class _DevicesPageState extends State<DevicesPage> {
     );
   }
 
-  // Explanation: Shorten visible device labels. Update _shortDeviceLabel to also shorten platformName when it contains a technical suffix (prefix-tail),
-  // keeping internal device ids unchanged. Minimal UI-only change.
-
-  String _shortDeviceLabel(String? platformName, String? deviceId) {
+  // Split a device label into (name, idSuffix) so the full identifier remains visible.
+  // - name: human-friendly prefix ("CureClip", "CureBase") shown on line 1
+  // - idSuffix: full technical tail (e.g. "FCE8AAFFCC") shown on line 2 in monospace.
+  //   Empty when there is no distinct suffix; callers should hide line 2 then.
+  ({String name, String idSuffix}) _deviceLabelParts(
+    String? platformName,
+    String? deviceId,
+  ) {
     bool looksLikeRawId(String s) {
-      // MAC address: XX:XX:XX:XX:XX:XX
-      if (RegExp(r'^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$').hasMatch(s)) return true;
-      // UUID-style remoteId: XXXXXXXX-XXXX-...
+      if (RegExp(r'^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$').hasMatch(s)) {
+        return true;
+      }
       if (RegExp(r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-').hasMatch(s)) return true;
       return false;
     }
 
-    String shortenFriendly(String s) {
-      if (s.contains('-')) {
-        final parts = s.split('-');
-        if (parts.length >= 2) {
-          final prefix = parts[0];
-          final tail = parts[1].replaceAll(':', '').replaceAll(' ', '');
-          final tailShort = tail.length > 4 ? tail.substring(0, 4) : tail;
-          return '$prefix-$tailShort...';
-        }
+    ({String name, String idSuffix}) splitFriendly(String s) {
+      final dashIdx = s.indexOf('-');
+      if (dashIdx > 0 && dashIdx < s.length - 1) {
+        final prefix = s.substring(0, dashIdx);
+        final tail = s
+            .substring(dashIdx + 1)
+            .replaceAll(':', '')
+            .replaceAll(' ', '');
+        return (name: prefix, idSuffix: tail);
       }
-      return s;
+      return (name: s, idSuffix: '');
     }
 
     String friendlyFallback() {
@@ -847,23 +845,62 @@ class _DevicesPageState extends State<DevicesPage> {
       return 'CureBase';
     }
 
-    // Use platformName only when it is non-empty and not a raw address/UUID
-    if (platformName != null && platformName.isNotEmpty && !looksLikeRawId(platformName)) {
-      final shortened = shortenFriendly(platformName);
+    if (platformName != null &&
+        platformName.isNotEmpty &&
+        !looksLikeRawId(platformName)) {
       if (deviceId != null && deviceId.isNotEmpty) {
-        _cachedFriendlyNames[deviceId] = shortened;
+        _cachedFriendlyNames[deviceId] = platformName;
       }
-      return shortened;
+      return splitFriendly(platformName);
     }
 
-    // Cache populated from a previous scan where a friendly name was available
     if (deviceId != null && deviceId.isNotEmpty) {
       final cached = _cachedFriendlyNames[deviceId];
-      if (cached != null && cached.isNotEmpty) return cached;
+      if (cached != null && cached.isNotEmpty) return splitFriendly(cached);
     }
 
-    // Never show a raw MAC or remoteId — use a generic friendly label
-    return friendlyFallback();
+    return (name: friendlyFallback(), idSuffix: '');
+  }
+
+  // Two-line device label: friendly name on top, full id suffix below in monospace.
+  // Keeps every device uniquely distinguishable without horizontal overflow.
+  Widget _buildDeviceLabel(
+    String? platformName,
+    String? deviceId, {
+    Color? nameColor,
+    double nameFontSize = 14,
+    FontWeight nameWeight = FontWeight.w700,
+  }) {
+    final parts = _deviceLabelParts(platformName, deviceId);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          parts.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: nameColor ?? AppColors.textPrimary,
+            fontWeight: nameWeight,
+            fontSize: nameFontSize,
+          ),
+        ),
+        if (parts.idSuffix.isNotEmpty)
+          Text(
+            parts.idSuffix,
+            maxLines: 2,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontFamily: 'monospace',
+              letterSpacing: 0.2,
+            ),
+          ),
+      ],
+    );
   }
 
   Widget? _buildBatteryWidget(int? raw) {
@@ -985,16 +1022,12 @@ class _DevicesPageState extends State<DevicesPage> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      _shortDeviceLabel(
-                                        devices.first.platformName,
-                                        connId,
-                                      ),
-                                      style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
+                                    _buildDeviceLabel(
+                                      devices.first.platformName,
+                                      connId,
+                                      nameColor: Colors.green,
+                                      nameFontSize: 16,
+                                      nameWeight: FontWeight.w600,
                                     ),
                                     const SizedBox(height: 6),
                                   ],
