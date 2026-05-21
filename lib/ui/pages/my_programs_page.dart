@@ -20,6 +20,7 @@ import '../widgets/playlist_item_setup.dart';
 import '../../services/cube_device_service.dart';
 import 'package:hbcure/services/custom_frequencies_store.dart';
 import 'package:hbcure/services/clients_store.dart';
+import 'package:hbcure/services/device_playlist_store.dart';
 
 class MyProgramsPage extends StatefulWidget {
   const MyProgramsPage({super.key});
@@ -527,6 +528,10 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
     // After successful upload, sync app timer with device's actual compiled
     // total to eliminate the ~20s drift caused by step-rounding overhead.
     if (uploadOk && mounted) {
+      // Persist a per-device snapshot so reconnect can recognize the running
+      // playlist later (strictly keyed by deviceId, never global).
+      await _persistDevicePlaylistSnapshot(ids: ids, titleKeyEnById: keyEnMap);
+
       bool synced = false;
       try {
         await Future.delayed(const Duration(seconds: 2));
@@ -557,6 +562,67 @@ class _MyProgramsPageState extends State<MyProgramsPage> {
         );
         playerService.markStarted();
       }
+    }
+  }
+
+  /// Persist a snapshot of the just-uploaded playlist for the currently
+  /// connected device. Single-program uploads intentionally do not call this.
+  Future<void> _persistDevicePlaylistSnapshot({
+    required List<String> ids,
+    required Map<String, String> titleKeyEnById,
+  }) async {
+    try {
+      final deviceId =
+          CureDeviceUnlockService.instance.nativeConnectedDeviceId ?? '';
+      if (deviceId.isEmpty) {
+        debugPrint('[DevicePlaylistStore] skip snapshot – no connected device');
+        return;
+      }
+      final mergedUuidHex =
+          CubeDeviceService.instance.computeMergedUuidHex(ids);
+
+      final durationsMin = <String, int>{};
+      int totalSec = 0;
+      for (final id in ids) {
+        final m = playerService.settingsFor(id).durationMinutes;
+        durationsMin[id] = m;
+        totalSec += m * 60;
+      }
+
+      String? clientId;
+      String? clientName;
+      try {
+        clientId = await ClientsStore.instance.loadActiveClientId();
+        if (clientId != null) {
+          final clients = await ClientsStore.instance.loadClients();
+          final found = clients.firstWhere(
+            (c) => c.id == clientId,
+            orElse: () => ClientProfile(id: clientId!, name: ''),
+          );
+          if (found.name.trim().isNotEmpty) clientName = found.name.trim();
+        }
+      } catch (_) {
+        // best-effort
+      }
+
+      final snap = DevicePlaylistSnapshot(
+        deviceId: deviceId,
+        clientId: clientId,
+        clientName: clientName,
+        mergedUuidHex: mergedUuidHex,
+        ids: List<String>.unmodifiable(ids),
+        titleKeyEnById: Map<String, String>.unmodifiable(titleKeyEnById),
+        durationsMin: durationsMin,
+        totalSec: totalSec,
+        uploadedAt: DateTime.now(),
+      );
+      await DevicePlaylistStore.instance.save(snap);
+      debugPrint(
+        '[DevicePlaylistStore] saved snapshot device=$deviceId '
+        'uuid=$mergedUuidHex items=${ids.length} totalSec=$totalSec',
+      );
+    } catch (e) {
+      debugPrint('[DevicePlaylistStore] persist error: $e');
     }
   }
 

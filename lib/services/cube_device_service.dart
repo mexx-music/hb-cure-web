@@ -485,6 +485,19 @@ class CubeDeviceService {
     return CureWaveForm.sine;
   }
 
+  /// Compute the deterministic merged-program UUID (32-char hex string) for a
+  /// given ordered list of playlist IDs. The bytes match what
+  /// [sendMyProgramsAsMergedSingleFromIds] uploads, so the result can be
+  /// compared against `progStatus.programIdHex` on reconnect.
+  String computeMergedUuidHex(List<String> ids) {
+    final bytes = _uuid16FromString('merged:${ids.join(',')}');
+    final sb = StringBuffer();
+    for (final b in bytes) {
+      sb.write(b.toRadixString(16).padLeft(2, '0'));
+    }
+    return sb.toString();
+  }
+
   // Helper: produce deterministic 16-byte id from a string (same algorithm as factory)
   Uint8List _uuid16FromString(String s) {
     // BigInt-based FNV-1a 64-bit implementation (web-safe)

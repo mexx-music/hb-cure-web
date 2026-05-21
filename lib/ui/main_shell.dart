@@ -20,6 +20,7 @@ import 'package:hbcure/ui/pages/custom_frequencies_page.dart';
 import 'package:hbcure/l10n/gen/app_localizations.dart';
 import 'package:hbcure/services/cure_device_unlock_service.dart';
 import 'package:hbcure/services/ble_cure_device_service.dart';
+import 'package:hbcure/services/device_playlist_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -363,6 +364,48 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         // try to provide a meaningful queue id so the UI shows the actual running
         // program instead of falling back to index 0 of a saved list.
         if (playerService.state.queueIds.isEmpty) {
+          // 0) Per-device snapshot match: strictly keyed by deviceId. If the
+          // device reports a programIdHex equal to the snapshot's
+          // mergedUuidHex, restore the playlist that was uploaded to THIS
+          // device (never use another device's snapshot).
+          try {
+            final snap = await DevicePlaylistStore.instance.load(lastId);
+            if (snap != null && snap.ids.isNotEmpty) {
+              final devHex = DevicePlaylistStore.normalizeHex(
+                status.programIdHex,
+              );
+              final snapHex = DevicePlaylistStore.normalizeHex(
+                snap.mergedUuidHex,
+              );
+              if (devHex.isNotEmpty && devHex == snapHex) {
+                debugPrint(
+                  '[AutoReconnect] device playlist snapshot MATCH '
+                  'device=$lastId uuid=$snapHex items=${snap.ids.length}',
+                );
+                playerService.syncWithDeviceStatus(
+                  deviceTotalMs: status.totalSec,
+                  deviceElapsedMs: status.elapsedSec,
+                  deviceRunning: true,
+                  queueIds: snap.ids,
+                  titleKeyEnById: snap.titleKeyEnById,
+                );
+                if (mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _openPlayerPopupForReconnect();
+                  });
+                }
+                return;
+              } else {
+                debugPrint(
+                  '[AutoReconnect] device snapshot present but uuid mismatch '
+                  '(device=$devHex snapshot=$snapHex) – falling through',
+                );
+              }
+            }
+          } catch (e) {
+            debugPrint('[AutoReconnect] device snapshot load error: $e');
+          }
+
           // First: attempt to restore a previously persisted session (rich UI queue)
           try {
             final lastSess = await playerService.loadLastSession();
