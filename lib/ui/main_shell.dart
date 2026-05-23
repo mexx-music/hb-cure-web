@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:hbcure/ui/pages/my_programs_page.dart';
 import 'package:hbcure/ui/pages/available_programs_page.dart';
 import 'package:hbcure/ui/pages/devices_page.dart';
@@ -40,13 +41,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   StreamSubscription<void>? _disconnectSub;
   bool _syncInProgress = false;
 
-  // BLE-fix #3: track whether a playlist upload was running in the previous
-  // playerService tick. When isUploading flips back to false we may need to
-  // run a deferred auto-reconnect (see _onPlayerStateChanged).
-  bool _wasUploading = false;
-  // BLE-fix #3: remember a disconnect event that arrived during upload/unlock
-  // so we can honour it once the blocking operation finishes.
-  bool _deferredReconnectPending = false;
+  // Single-flight guard for _attemptAutoReconnect. Set synchronously BEFORE
+  // any `await` so two concurrent triggers (initState chain + disconnect
+  // listener firing during the scan-gate) cannot launch two parallel
+  // nativeConnect attempts on the shared transport.
+  bool _isAttemptingAutoReconnect = false;
 
   // ── Device-status polling during active playback ──────────────────────────
   /// Adaptive poll interval based on remaining playback time.
@@ -162,24 +161,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _disconnectSub = BleCureDeviceService.instance.onDeviceDisconnected.listen((_) {
-      // BLE-fix #3: a transient native DISCONNECTED event arriving while a
-      // playlist upload or unlock handshake is in flight must NOT immediately
-      // kick off auto-reconnect. The reconnect path would run nativeConnect +
-      // a full unlockDevice flow (including iOS post-unlock force-reconnect)
-      // in parallel with the still-pending progAppendHex chunks, interleave
-      // GATT writes on the shared transport, and corrupt the upload. Defer
-      // until the blocking operation settles (see _onPlayerStateChanged) –
-      // the upload will fail fast on its own if the GATT really is gone.
-      if (playerService.isUploading ||
-          BleCureDeviceService.instance.unlockInProgress) {
-        _deferredReconnectPending = true;
-        debugPrint(
-          '[BLE] disconnect during upload/unlock – deferring auto-reconnect '
-          '(isUploading=${playerService.isUploading} '
-          'unlockInProgress=${BleCureDeviceService.instance.unlockInProgress})',
-        );
-        return;
-      }
       debugPrint('[BLE] disconnect event received – triggering auto-reconnect');
       _attemptAutoReconnect();
     });
@@ -219,28 +200,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   // Called on every playerService change — starts/stops the device poll timer
   void _onPlayerStateChanged() {
-    // BLE-fix #3: when a playlist upload finishes (success or failure), honour
-    // any disconnect event we deferred during the upload. We only act on the
-    // upload→idle transition so we don't trigger reconnect spam on every tick.
-    final isUploading = playerService.isUploading;
-    if (_wasUploading && !isUploading && _deferredReconnectPending) {
-      _deferredReconnectPending = false;
-      final stillConnected = CureDeviceUnlockService.instance.isNativeConnected;
-      if (!stillConnected) {
-        debugPrint(
-          '[BLE] upload finished and transport not connected – '
-          'running deferred auto-reconnect',
-        );
-        _attemptAutoReconnect();
-      } else {
-        debugPrint(
-          '[BLE] upload finished – deferred reconnect not needed '
-          '(transport still connected)',
-        );
-      }
-    }
-    _wasUploading = isUploading;
-
     final playing = playerService.state.isPlaying;
     if (playing && _playbackPollTimer == null) {
       _startPlaybackPolling();
@@ -346,36 +305,32 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   /// pipeline so that _selectedDevice / _connectedDeviceId are properly set and
   /// the manual Unlock button keeps working afterwards.
   Future<void> _attemptAutoReconnect() async {
-    // BLE-fix #3: never run the reconnect/unlock pipeline while a playlist
-    // upload is in flight or an unlock handshake is already in progress.
-    // Running them in parallel interleaves nativeConnect/challenge/response
-    // commands with progAppendHex chunks on the shared transport. The
-    // disconnect listener marks _deferredReconnectPending so _onPlayerStateChanged
-    // can retry the reconnect once the blocking operation finishes.
-    if (playerService.isUploading) {
-      _deferredReconnectPending = true;
-      debugPrint('[AutoReconnect] skipped – upload in progress');
+    // Single-flight: check + set synchronously BEFORE any await. A second
+    // trigger (initState chain vs disconnect listener vs deferred fire) must
+    // bounce off this guard, not start a parallel nativeConnect.
+    if (_isAttemptingAutoReconnect) {
+      debugPrint('[AUTO_RECONNECT] skipped – another attempt already running');
       return;
     }
-    if (BleCureDeviceService.instance.unlockInProgress) {
-      _deferredReconnectPending = true;
-      debugPrint('[AutoReconnect] skipped – unlock in progress');
-      return;
-    }
+    _isAttemptingAutoReconnect = true;
 
     final mem = AppMemory.instance;
     if (!mem.reconnectEnabled) {
       debugPrint('[AutoReconnect] disabled in settings');
+      _isAttemptingAutoReconnect = false;
       return;
     }
     final lastId = mem.lastConnectedDeviceId;
     if (lastId == null || lastId.isEmpty) {
       debugPrint('[AutoReconnect] no last device id stored');
+      _isAttemptingAutoReconnect = false;
       return;
     }
 
     debugPrint('[AutoReconnect] scheduled for $lastId – waiting for BLE adapter ...');
 
+    final bleSvc = BleCureDeviceService.instance;
+    bool connectStarted = false;
     try {
       // ── Wait for FlutterBluePlus to be ready ──────────────────────────
       final adapterState = await FlutterBluePlus.adapterState
@@ -391,13 +346,41 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
 
+      // ── Scan-gate (original-app parity) ───────────────────────────────
+      // The Qt original (availablecuredevices.cpp:132-135) only triggers
+      // startConnect(lastDevice) AFTER a fresh scan finished and the
+      // lastDevice was actually visible. Blindly calling
+      // BluetoothDevice.fromId(lastId) + connect() against a device that is
+      // asleep / out of range / re-bonded under a different address blocks
+      // the OS GATT stack for up to ~30 s and is the trigger for "unlock
+      // sometimes fails until manual disconnect/reconnect".
+      debugPrint('[AUTO_RECONNECT] scan-gate start');
+      try {
+        await bleSvc.startScan();
+      } catch (e) {
+        debugPrint('[AUTO_RECONNECT] scan-gate startScan error: $e');
+        // continue – stopScan below is a noop if scan never started
+      }
+      await Future.delayed(const Duration(milliseconds: 2500));
+      try {
+        await bleSvc.stopScan();
+      } catch (_) {}
+      if (!mounted) return;
+
+      final visible = bleSvc.lastFoundDeviceIds.contains(lastId);
+      if (!visible) {
+        debugPrint('[AUTO_RECONNECT] last device not visible, skipping');
+        return;
+      }
+      debugPrint('[AUTO_RECONNECT] last device seen, connecting');
+
       debugPrint('[AutoReconnect] BLE adapter ready – attempting reconnect to $lastId ...');
 
       // ── Step 1: Connect through BleCureDeviceService ──────────────────
       // This sets _selectedDevice, _connectedDeviceId, and in native mode
       // delegates to the native transport. The normal UI flow remains intact.
       final bleDevice = BluetoothDevice.fromId(lastId);
-      final bleSvc = BleCureDeviceService.instance;
+      connectStarted = true;
       await bleSvc.connect(bleDevice);
 
       if (!mounted) return;
@@ -407,6 +390,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       final unlocked = await bleSvc.ensureUnlockedForCurrentDevice();
       if (!unlocked) {
         debugPrint('[AutoReconnect] unlock failed');
+        // Force clean tear-down so the next manual scan/connect starts from
+        // a known-clean state instead of inheriting a half-open GATT + an
+        // _isUnlocked=false / _connectedDeviceId=<lastId> contradiction.
+        debugPrint('[AUTO_RECONNECT] failed, clearing stale state');
+        await _forceCleanReconnectState();
         return;
       }
 
@@ -564,7 +552,50 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     } catch (e, st) {
       debugPrint('[AutoReconnect] failed: $e');
       if (kDebugMode) debugPrint('[AutoReconnect] stack: $st');
+
+      // BLE-fix #7: PlatformException(CANCELLED, "Previous connect cancelled
+      // by new connect()") means a parallel bleSvc.connect() (typically a
+      // user tap on the device list during auto-reconnect's connect await)
+      // has superseded ours on the native side and is now in charge of
+      // finishing the GATT connect + scheduling the auto-unlock microtask.
+      // We MUST NOT run _forceCleanReconnectState() here — it would null
+      // out _selectedDevice while that superseding connect's auto-unlock
+      // microtask is still pending, surfacing as "No selected CureBase
+      // device in native transport mode" and leaving the user connected
+      // but NOT unlocked.
+      final bool isCancelled =
+          e is PlatformException && e.code == 'CANCELLED';
+      if (isCancelled) {
+        debugPrint(
+          '[AUTO_RECONNECT] superseded by parallel connect – not clearing state',
+        );
+      } else if (connectStarted) {
+        // Real failure (not a supersede): if we got far enough to start a
+        // connect we may now hold a half-open GATT and mismatched local
+        // flags. Tear them down so a manual retry has a clean baseline.
+        debugPrint('[AUTO_RECONNECT] failed, clearing stale state');
+        try {
+          await _forceCleanReconnectState();
+        } catch (_) {}
+      }
+    } finally {
+      _isAttemptingAutoReconnect = false;
     }
+  }
+
+  /// Force a clean disconnect + local-state reset after a failed
+  /// auto-reconnect. Used by the auto-reconnect path only; does not touch
+  /// upload / playlist / unlock-algorithm code.
+  Future<void> _forceCleanReconnectState() async {
+    try {
+      await CureDeviceUnlockService.instance.nativeDisconnect();
+    } catch (_) {}
+    try {
+      BleCureDeviceService.instance.resetLocalConnectionState();
+    } catch (_) {}
+    try {
+      CureDeviceUnlockService.instance.resetLocalSharedDeviceId();
+    } catch (_) {}
   }
 
   // Try to resolve a device programIdHex (hex string) to a real app program id.

@@ -839,10 +839,15 @@ class _DevicesPageState extends State<DevicesPage> {
     }
 
     String friendlyFallback() {
+      // Only commit to a specific family name when we have positive evidence:
+      // manufacturerData[1] (battery SoC) is published by CureClip firmware
+      // only. Without it we MUST NOT default to "CureBase" — that hardcoded
+      // fallback is what produces the "shows up as Cure Base" symptom for a
+      // CureClip whose first advertisement packet arrived without advName.
       if (deviceId != null && _ble.batteryRawByDeviceId.containsKey(deviceId)) {
         return 'CureClip';
       }
-      return 'CureBase';
+      return 'Cure Device';
     }
 
     if (platformName != null &&

@@ -316,12 +316,46 @@ class CubeDeviceService {
 
   // Minimal stopProgram: delegates to native shared progClear
   /// Stop the running program on the Cube device.
-  /// Uses the underlying native command to clear/stop the running program.
-  /// Throws StateError on failure.
-  Future<void> stopProgram() async {
-    final ok = await CureDeviceUnlockService.instance.progClear();
-    if (!ok) {
-      throw StateError('progClear (stop) failed');
+  ///
+  /// Best-effort: when the BLE transport is already disconnected (or progClear
+  /// fails on a half-torn-down GATT) this is treated as a SOFT failure. The
+  /// caller (PlayerPopup) is responsible for resetting the local player /
+  /// playlist state BEFORE invoking stopProgram, so the UI never gets stuck
+  /// just because the device is no longer reachable.
+  ///
+  /// Returns true if the device confirmed progClear with OK, false otherwise.
+  /// Never throws.
+  Future<bool> stopProgram() async {
+    final unlock = CureDeviceUnlockService.instance;
+
+    // Pre-check: if the shared native transport is not currently connected
+    // there is no point in issuing a writeLine — it would fail in the native
+    // layer with "no GATT or RX characteristic" and surface as an exception.
+    if (!unlock.isNativeConnected) {
+      debugPrint(
+        '[CubeDeviceService] stopProgram skipped – native transport not connected',
+      );
+      return false;
+    }
+
+    try {
+      // Original-app parity (Qt `terminateProgram()`, curebasestatemachine.cpp:219):
+      // a user-initiated stop sends `progStop`, NOT `progClear`. `progClear`
+      // is reserved for the start of a NEW upload — using it as a stop wipes
+      // the program slot mid-flight and was the trigger for the second-upload
+      // ~30 s freeze. The firmware keeps the program in memory after progStop
+      // and is ready to accept the next upload's progClear cleanly.
+      final ok = await unlock.progStop();
+      if (!ok) {
+        debugPrint(
+          '[CubeDeviceService] stopProgram: progStop returned false (soft fail)',
+        );
+      }
+      return ok;
+    } catch (e) {
+      // Treat missing GATT / RX char / transport error during stop as soft fail.
+      debugPrint('[CubeDeviceService] stopProgram error (soft fail): $e');
+      return false;
     }
   }
 

@@ -166,6 +166,12 @@ class BleCureDeviceService {
     return proto;
   }
 
+  /// Snapshot of device IDs currently held in the scan-result buffer.
+  /// Used by the auto-reconnect scan-gate (original-app parity) to decide
+  /// whether the stored lastConnectedDeviceId is actually visible before
+  /// committing to a potentially long OS-level GATT connect.
+  Set<String> get lastFoundDeviceIds => _found.keys.toSet();
+
   /// Defensive reset of local connection-related state. Called at app start
   /// so the UI never reflects a stale "connected" status without a real
   /// transport handshake (e.g. after hot-restart or stale singleton).
@@ -261,7 +267,13 @@ class BleCureDeviceService {
     _scanSub = FlutterBluePlus.scanResults.listen((results) {
       for (final sr in results) {
         final advName = sr.advertisementData.advName ?? '';
-        final name = (sr.device.name).isNotEmpty ? sr.device.name : advName;
+        // Original-app parity (Qt `dev.name()` reads the live advertised name):
+        // prefer the LIVE advertisement advName over BluetoothDevice.getName(),
+        // which Android caches from previous sessions. The cached value can be
+        // a stale "CureBase" string for a device that now advertises as
+        // "CureClip" — that mismatch is what causes the "shows up as Cure Base"
+        // mislabel. Only fall back to sr.device.name when advName is empty.
+        final name = advName.isNotEmpty ? advName : sr.device.name;
         final id = sr.device.id.id;
         final rssi = sr.rssi;
         if (kDebugMode) debugPrint('HBDBG scanResult: name="$name" advName="$advName" id=$id rssi=$rssi');

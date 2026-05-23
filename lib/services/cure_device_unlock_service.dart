@@ -792,6 +792,15 @@ class CureDeviceUnlockService {
   Future<bool> progClear() async {
     debugPrint('[PLAYLIST_TIME] progClear() called');
     debugPrint('[PLAYLIST_TIME] progClear stackTrace:\n${StackTrace.current.toString().split('\n').take(8).join('\n')}');
+    // Soft-guard: don't attempt a write when the shared transport is already
+    // gone — the native side would just log "no GATT or RX characteristic"
+    // and surface an exception that callers (stopProgram) would have to
+    // swallow anyway. Upload paths still get the same false return and can
+    // react cleanly.
+    if (_sharedDeviceId == null || !_sharedTransport.isConnected) {
+      debugPrint('[CureDeviceUnlockService] progClear skipped – transport not connected');
+      return false;
+    }
     return _sendAndCheckOk('progClear', timeout: const Duration(seconds: 10));
   }
 
@@ -799,6 +808,24 @@ class CureDeviceUnlockService {
     debugPrint('[PLAYLIST_TIME] progStart() called');
     debugPrint('[PLAYLIST_TIME] progStart stackTrace:\n${StackTrace.current.toString().split('\n').take(8).join('\n')}');
     return _sendAndCheckOk('progStart', timeout: const Duration(seconds: 10));
+  }
+
+  /// User-initiated stop. Matches the Qt original `terminateProgram()` which
+  /// sends ONLY `progStop\n` — NOT `progClear`. `progClear` is reserved for
+  /// the start of a new upload (see `uploadProgramAndStart`); using it as a
+  /// stop confuses the firmware and was the trigger for the ~30 s freeze on
+  /// the second upload.
+  ///
+  /// Soft-guard: if the shared transport is already gone, return false
+  /// without touching the native layer (caller is expected to clear local
+  /// playback state regardless).
+  Future<bool> progStop() async {
+    debugPrint('[STOP] sending progStop');
+    if (_sharedDeviceId == null || !_sharedTransport.isConnected) {
+      debugPrint('[CureDeviceUnlockService] progStop skipped – transport not connected');
+      return false;
+    }
+    return _sendAndCheckOk('progStop', timeout: const Duration(seconds: 10));
   }
 
   Future<bool> progAppendHex(String hex) async {
@@ -809,24 +836,75 @@ class CureDeviceUnlockService {
     return _sendAndCheckOk('progAppend=$cleaned', timeout: const Duration(seconds: 10));
   }
 
+  // BLE-fix #5: single-flight guard for the whole upload/start pipeline so a
+  // second upload (or a stop-then-reupload before cleanup finished) cannot
+  // overlap with an in-flight progClear/progAppend/progStart sequence on the
+  // shared transport. Also protects against re-entry while a previous
+  // post-progStart status-poll loop is still running.
+  bool _uploadInFlight = false;
+
+  /// Basic transport guard used before issuing upload/start commands.
+  ///
+  /// Original-app parity (Qt `CureBaseTransferCureProgram`,
+  /// curebasestatemachine.cpp:972-980): the original sends `progClear` as
+  /// the FIRST upload command without any pre-check / status probe — it
+  /// just relies on the existing BLE session being healthy. Previously this
+  /// helper performed a `fetchProgStatus` round-trip (BLE-fix #5) right
+  /// before progClear, which was an extra notify path the original never
+  /// uses and which contributed to the second-upload freeze.
+  ///
+  /// We keep ONLY the cheap checks the original implicitly relies on:
+  /// shared device id present and the cached transport state says connected.
+  /// No live probe.
+  bool _isTransportReadyForUpload() {
+    if (_sharedDeviceId == null) {
+      debugPrint('[CureDeviceUnlockService] readiness: no shared device id');
+      return false;
+    }
+    if (!_sharedTransport.isConnected) {
+      debugPrint('[CureDeviceUnlockService] readiness: transport.isConnected=false');
+      return false;
+    }
+    return true;
+  }
+
   Future<bool> uploadProgramBytes(Uint8List bytes,
       {int chunkSize = 64}) async {
     if (_sharedDeviceId == null || bytes.isEmpty) return false;
 
-    if (!await progClear()) return false;
-
-    int offset = 0;
-    while (offset < bytes.length) {
-      final end = (offset + chunkSize).clamp(0, bytes.length);
-      final slice = bytes.sublist(offset, end);
-      final hex = slice
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join();
-      if (!await progAppendHex(hex)) return false;
-      await Future.delayed(const Duration(milliseconds: 80));
-      offset = end;
+    // BLE-fix #5: mutex + readiness gate (see uploadProgramAndStart).
+    if (_uploadInFlight) {
+      debugPrint('[CureDeviceUnlockService] uploadProgramBytes skipped – another upload in flight');
+      return false;
     }
-    return true;
+    _uploadInFlight = true;
+    try {
+      if (!_isTransportReadyForUpload()) {
+        debugPrint('[CureDeviceUnlockService] uploadProgramBytes skipped – transport not ready');
+        return false;
+      }
+
+      // Original-app parity: progClear is the FIRST command of a new upload,
+      // sent without a preceding status probe.
+      debugPrint('[UPLOAD] no pre-status probe');
+      debugPrint('[UPLOAD] sending initial progClear');
+      if (!await progClear()) return false;
+
+      int offset = 0;
+      while (offset < bytes.length) {
+        final end = (offset + chunkSize).clamp(0, bytes.length);
+        final slice = bytes.sublist(offset, end);
+        final hex = slice
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join();
+        if (!await progAppendHex(hex)) return false;
+        await Future.delayed(const Duration(milliseconds: 80));
+        offset = end;
+      }
+      return true;
+    } finally {
+      _uploadInFlight = false;
+    }
   }
 
   /// Append raw program bytes (already encoded) in chunks by calling progAppendHex
@@ -852,11 +930,34 @@ class CureDeviceUnlockService {
       return false;
     }
 
+    // BLE-fix #5: single-flight mutex. Blocks overlap with a second tap on
+    // play (during a still-pending post-progStart status-poll), a stop that
+    // races a new upload, or a stale upload whose await is still suspended.
+    if (_uploadInFlight) {
+      debugPrint('[CureDeviceUnlockService] uploadProgramAndStart skipped – another upload in flight');
+      return false;
+    }
+    _uploadInFlight = true;
+
     try {
+      // Basic transport guard. NOTE: we deliberately do NOT send a
+      // `progStatus` probe here — the Qt original
+      // (curebasestatemachine.cpp:972-980) goes straight from state-entry to
+      // `progClear\n` and that was the working behaviour. The extra probe
+      // we used to do (BLE-fix #5) contributed to the second-upload freeze.
+      if (!_isTransportReadyForUpload()) {
+        debugPrint('[CureDeviceUnlockService] uploadProgramAndStart aborted – transport not ready');
+        return false;
+      }
+
       // Compile program bytes
       final compiler = CureProgramCompiler();
       final programBytes = compiler.compile(program);
 
+      // Original-app parity: progClear is the FIRST command of a new upload,
+      // sent without a preceding status probe.
+      debugPrint('[UPLOAD] no pre-status probe');
+      debugPrint('[UPLOAD] sending initial progClear');
       // Clear existing program
       if (!await progClear()) {
         debugPrint('[CureDeviceUnlockService] progClear failed.');
@@ -902,6 +1003,12 @@ class CureDeviceUnlockService {
     } catch (e) {
       debugPrint('[CureDeviceUnlockService] uploadProgramAndStart failed: $e');
       return false;
+    } finally {
+      // BLE-fix #5: always release the mutex, no matter which return / throw
+      // path inside the try block was taken. The next upload attempt will
+      // re-probe transport readiness from scratch, so any stale GATT state
+      // from a failed run is naturally invalidated.
+      _uploadInFlight = false;
     }
   }
 
