@@ -2,7 +2,8 @@ name: hbcure
 description: "HB Cure application."
 publish_to: 'none'
 
-version: 1.0.1+42
+version: 1.0.1+50
+
 environment:
   sdk: ^3.9.2
 

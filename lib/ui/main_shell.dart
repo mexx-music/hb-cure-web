@@ -40,6 +40,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   StreamSubscription<void>? _disconnectSub;
   bool _syncInProgress = false;
 
+  // BLE-fix #3: track whether a playlist upload was running in the previous
+  // playerService tick. When isUploading flips back to false we may need to
+  // run a deferred auto-reconnect (see _onPlayerStateChanged).
+  bool _wasUploading = false;
+  // BLE-fix #3: remember a disconnect event that arrived during upload/unlock
+  // so we can honour it once the blocking operation finishes.
+  bool _deferredReconnectPending = false;
+
   // ── Device-status polling during active playback ──────────────────────────
   /// Adaptive poll interval based on remaining playback time.
   Duration get _pollInterval {
@@ -154,6 +162,24 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _disconnectSub = BleCureDeviceService.instance.onDeviceDisconnected.listen((_) {
+      // BLE-fix #3: a transient native DISCONNECTED event arriving while a
+      // playlist upload or unlock handshake is in flight must NOT immediately
+      // kick off auto-reconnect. The reconnect path would run nativeConnect +
+      // a full unlockDevice flow (including iOS post-unlock force-reconnect)
+      // in parallel with the still-pending progAppendHex chunks, interleave
+      // GATT writes on the shared transport, and corrupt the upload. Defer
+      // until the blocking operation settles (see _onPlayerStateChanged) –
+      // the upload will fail fast on its own if the GATT really is gone.
+      if (playerService.isUploading ||
+          BleCureDeviceService.instance.unlockInProgress) {
+        _deferredReconnectPending = true;
+        debugPrint(
+          '[BLE] disconnect during upload/unlock – deferring auto-reconnect '
+          '(isUploading=${playerService.isUploading} '
+          'unlockInProgress=${BleCureDeviceService.instance.unlockInProgress})',
+        );
+        return;
+      }
       debugPrint('[BLE] disconnect event received – triggering auto-reconnect');
       _attemptAutoReconnect();
     });
@@ -193,6 +219,28 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   // Called on every playerService change — starts/stops the device poll timer
   void _onPlayerStateChanged() {
+    // BLE-fix #3: when a playlist upload finishes (success or failure), honour
+    // any disconnect event we deferred during the upload. We only act on the
+    // upload→idle transition so we don't trigger reconnect spam on every tick.
+    final isUploading = playerService.isUploading;
+    if (_wasUploading && !isUploading && _deferredReconnectPending) {
+      _deferredReconnectPending = false;
+      final stillConnected = CureDeviceUnlockService.instance.isNativeConnected;
+      if (!stillConnected) {
+        debugPrint(
+          '[BLE] upload finished and transport not connected – '
+          'running deferred auto-reconnect',
+        );
+        _attemptAutoReconnect();
+      } else {
+        debugPrint(
+          '[BLE] upload finished – deferred reconnect not needed '
+          '(transport still connected)',
+        );
+      }
+    }
+    _wasUploading = isUploading;
+
     final playing = playerService.state.isPlaying;
     if (playing && _playbackPollTimer == null) {
       _startPlaybackPolling();
@@ -298,6 +346,23 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   /// pipeline so that _selectedDevice / _connectedDeviceId are properly set and
   /// the manual Unlock button keeps working afterwards.
   Future<void> _attemptAutoReconnect() async {
+    // BLE-fix #3: never run the reconnect/unlock pipeline while a playlist
+    // upload is in flight or an unlock handshake is already in progress.
+    // Running them in parallel interleaves nativeConnect/challenge/response
+    // commands with progAppendHex chunks on the shared transport. The
+    // disconnect listener marks _deferredReconnectPending so _onPlayerStateChanged
+    // can retry the reconnect once the blocking operation finishes.
+    if (playerService.isUploading) {
+      _deferredReconnectPending = true;
+      debugPrint('[AutoReconnect] skipped – upload in progress');
+      return;
+    }
+    if (BleCureDeviceService.instance.unlockInProgress) {
+      _deferredReconnectPending = true;
+      debugPrint('[AutoReconnect] skipped – unlock in progress');
+      return;
+    }
+
     final mem = AppMemory.instance;
     if (!mem.reconnectEnabled) {
       debugPrint('[AutoReconnect] disabled in settings');
