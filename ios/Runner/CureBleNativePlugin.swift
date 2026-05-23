@@ -490,54 +490,31 @@ public final class CureBleNativePlugin: NSObject, FlutterPlugin, FlutterStreamHa
     // Determine if this is a response=<sig> command
     let isResponse = line.hasPrefix("response=")
 
-    // iOS-STABILISATION (2026-04-02):
-    // After unlock the firmware triggers a BLE connection-parameter update.
-    // Sending getHardware / getBuild as ATT Write Request (.withResponse) causes
-    // an ACK round-trip that races with the parameter update and often leads to
-    // a disconnect on iOS. Force .withoutResponse (ATT Write Command) for these
-    // two commands — same as Android — to avoid the race condition.
-    //
-    // progClear is the unlock verification command. It must also use .withoutResponse
-    // AND the ungated timer-driven WNR path (no canSendWriteWithoutResponse gate),
-    // because the peripheral does not advertise WNR in its characteristic properties.
+    // Kept as locals because the downstream burst pipeline still references
+    // them via `isUngatedWnrBurst: isProgClear || isInfoCommand` when calling
+    // startBurst(...). The pre-burst 250 ms delay still keys off `isResponse`.
     let isInfoCommand = (line == "getHardware" || line == "getBuild")
     let isProgClear   = (line == "progClear")
 
-    // Determine write type:
-    // ANDROID PARITY FIX (2026-03-30):
-    // Android sends response= with WRITE_TYPE_NO_RESPONSE (ATT Write Command, no ACK expected).
-    // The firmware expects ATT Write Commands and does NOT send an ATT Write Response.
-    // When iOS uses .withResponse (ATT Write Request), the firmware never ACKs it → disconnect.
+    // iOS BLE-fix #8 (full Android parity, original Qt parity):
+    // The Cure firmware's NUS RX characteristic advertises only `Write` (0x08),
+    // not `WriteWithoutResponse` (0x04). Android (MainActivity.kt:568) sets
+    //   rx.writeType = WRITE_TYPE_NO_RESPONSE
+    // for every command regardless of the advertised property bits, and the
+    // Qt original (bleuart.cpp:199, 203) uses
+    //   QLowEnergyService::WriteWithoutResponse
+    // unconditionally. The firmware accepts ATT Write Commands; ATT Write
+    // Requests on the NUS endpoint are not reliably handled — using
+    // .withResponse stalls or drops responses for `challenge`,
+    // `progAppend`, `progStart`, `progStop`, `progStatus`, etc. on iOS.
     //
-    // CoreBluetooth DOES send .withoutResponse writes even if WNR is not in the property bits.
-    // The property check in the iOS stack does not block the actual BLE packet — it only blocks
-    // if you use the canSendWriteWithoutResponse API. Direct writeValue(...type:.withoutResponse)
-    // always sends the ATT Write Command regardless of the advertised properties.
-    //
-    // Therefore: for response=, ALWAYS use .withoutResponse (Android parity).
-    // For getHardware/getBuild: FORCE .withoutResponse (iOS post-unlock stabilisation).
-    // For all other commands: use .withResponse if WNR not advertised (safe default).
-    let candidateWriteType: CBCharacteristicWriteType
-    if isResponse {
-      // Always force .withoutResponse — CoreBluetooth transmits an ATT Write Command
-      // on the wire even when the characteristic advertises only WR. Matches Android
-      // WRITE_TYPE_NO_RESPONSE so the firmware NUS handler processes the data.
-      candidateWriteType = .withoutResponse
-      emitLine("IOS_RESPONSE_MODE WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — forcing WNR to match Android ATT Write Command)")
-    } else if isProgClear {
-      candidateWriteType = .withoutResponse
-      emitLine("IOS_PROGCLEAR_WNR_ANDROID_PARITY (hasWNR=\(hasWNR) hasWR=\(hasWR) — using WNR for progClear)")
-    } else if isInfoCommand {
-      candidateWriteType = .withoutResponse
-      emitLine("IOS_FORCE_WNR_FOR_CMD \(line)")
-    } else if hasWR {
-      candidateWriteType = .withResponse
-    } else if hasWNR {
-      candidateWriteType = .withoutResponse
-    } else {
-      emitError("RX char not writable")
-      return
-    }
+    // CoreBluetooth transmits an ATT Write Command on the wire when called
+    // with .withoutResponse regardless of the advertised property bits, so
+    // overriding here is safe. Previous per-command "force WNR" exceptions
+    // (response= / progClear / getHardware / getBuild) become subsumed by
+    // this blanket and remain correct.
+    let candidateWriteType: CBCharacteristicWriteType = .withoutResponse
+    emitLine("IOS_WRITE_TYPE_ANDROID_PARITY_BLANKET line=\(line) hasWNR=\(hasWNR) hasWR=\(hasWR) forced=WNR")
     pendingWriteType = candidateWriteType
 
     let wtStr = candidateWriteType == .withoutResponse ? "WNR" : "WR"
